@@ -8,10 +8,10 @@ COPY cmd ./cmd
 COPY internal ./internal
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/spotdiggz-api ./cmd/api
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM scratch
 
 COPY --from=builder /out/spotdiggz-api /spotdiggz-api
 EXPOSE 8080
-USER nonroot:nonroot
+USER 65532:65532
 
 ENTRYPOINT ["/spotdiggz-api"]

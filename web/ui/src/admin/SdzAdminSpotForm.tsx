@@ -27,10 +27,10 @@ function sdzValidateUrl(value: string): string | null {
   }
 }
 
-// Firestore に保存されるフィールドのマッピング定義
+// API payload preview shown after a successful save.
 interface SdzSavedField {
   label: string;
-  firestoreKey: string;
+  apiKey: string;
   type: string;
   value: string | number | string[] | undefined;
 }
@@ -39,46 +39,46 @@ function sdzBuildSavedFieldsSummary(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: Record<string, any>,
 ): SdzSavedField[] {
-  const mapping: { key: string; label: string; firestoreKey: string; type: string }[] = [
-    { key: 'name', label: 'スポット名', firestoreKey: 'name', type: 'string' },
-    { key: 'description', label: '説明', firestoreKey: 'description', type: 'string?' },
+  const mapping: { key: string; label: string; apiKey: string; type: string }[] = [
+    { key: 'name', label: 'スポット名', apiKey: 'name', type: 'string' },
+    { key: 'description', label: '説明', apiKey: 'description', type: 'string?' },
     {
       key: 'location',
       label: '位置情報',
-      firestoreKey: 'location',
+      apiKey: 'location',
       type: '{lat: number, lng: number}?',
     },
-    { key: 'tags', label: 'タグ', firestoreKey: 'tags', type: 'string[]' },
-    { key: 'images', label: '画像', firestoreKey: 'images', type: 'string[]' },
-    { key: 'parkAttributes', label: 'パーク属性', firestoreKey: 'parkAttributes', type: 'object?' },
+    { key: 'tags', label: 'タグ', apiKey: 'tags', type: 'string[]' },
+    { key: 'images', label: '画像', apiKey: 'images', type: 'string[]' },
+    { key: 'parkAttributes', label: 'パーク属性', apiKey: 'parkAttributes', type: 'object?' },
     {
       key: 'instagramLocationUrl',
       label: 'Instagram URL',
-      firestoreKey: 'instagramLocationUrl',
+      apiKey: 'instagramLocationUrl',
       type: 'string?',
     },
     {
       key: 'googlePlaceId',
       label: 'Google Place ID',
-      firestoreKey: 'googlePlaceId',
+      apiKey: 'googlePlaceId',
       type: 'string?',
     },
     {
       key: 'googleMapsUrl',
       label: 'Google Maps URL',
-      firestoreKey: 'googleMapsUrl',
+      apiKey: 'googleMapsUrl',
       type: 'string?',
     },
-    { key: 'address', label: '住所', firestoreKey: 'address', type: 'string?' },
-    { key: 'phoneNumber', label: '電話番号', firestoreKey: 'phoneNumber', type: 'string?' },
-    { key: 'googleRating', label: 'Google 評価', firestoreKey: 'googleRating', type: 'number?' },
+    { key: 'address', label: '住所', apiKey: 'address', type: 'string?' },
+    { key: 'phoneNumber', label: '電話番号', apiKey: 'phoneNumber', type: 'string?' },
+    { key: 'googleRating', label: 'Google 評価', apiKey: 'googleRating', type: 'number?' },
     {
       key: 'googleRatingCount',
       label: 'レビュー件数',
-      firestoreKey: 'googleRatingCount',
+      apiKey: 'googleRatingCount',
       type: 'number?',
     },
-    { key: 'googleTypes', label: '施設タイプ', firestoreKey: 'googleTypes', type: 'string[]' },
+    { key: 'googleTypes', label: '施設タイプ', apiKey: 'googleTypes', type: 'string[]' },
   ];
 
   return mapping
@@ -98,7 +98,7 @@ function sdzBuildSavedFieldsSummary(
       } else {
         displayValue = String(v);
       }
-      return { label: m.label, firestoreKey: m.firestoreKey, type: m.type, value: displayValue };
+      return { label: m.label, apiKey: m.apiKey, type: m.type, value: displayValue };
     });
 }
 
@@ -336,23 +336,23 @@ export function SdzAdminSpotForm() {
               }}
             >
               <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                Firestore に保存されたデータ ({sdzSavedFields.length} フィールド)
+                APIに送信したデータ ({sdzSavedFields.length} フィールド)
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #c8e6c9', textAlign: 'left' }}>
                     <th style={{ padding: '4px 8px' }}>フィールド名</th>
-                    <th style={{ padding: '4px 8px' }}>Firestore キー</th>
+                    <th style={{ padding: '4px 8px' }}>APIキー</th>
                     <th style={{ padding: '4px 8px' }}>データ型</th>
                     <th style={{ padding: '4px 8px' }}>値</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sdzSavedFields.map((f) => (
-                    <tr key={f.firestoreKey} style={{ borderBottom: '1px solid #e8f5e9' }}>
+                    <tr key={f.apiKey} style={{ borderBottom: '1px solid #e8f5e9' }}>
                       <td style={{ padding: '4px 8px' }}>{f.label}</td>
                       <td style={{ padding: '4px 8px', fontFamily: 'monospace', fontSize: 11 }}>
-                        {f.firestoreKey}
+                        {f.apiKey}
                       </td>
                       <td
                         style={{

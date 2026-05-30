@@ -2,13 +2,13 @@
 
 ## Evidence Map
 
-[事実] 既存APIは `web/api/` のRust実装で、health、spots、upload-url、users、mylist、admin系handlerを持つ。
+[事実] Active APIは `cmd/api`、`internal/httpapi`、`internal/spot`、`internal/postgres` に置く。
 
-[事実] 既存OpenAPIはRust/Axumの内部契約として書かれている。
+[事実] Active OpenAPI contractは `docs/openapi.yaml` に置く。
 
-[事実] 既存CIはRust、React、Terraform、Docker、Trivyを実行する。
+[事実] Active CIはGo API、Browser UI、Docker build、Trivy fs scanを対象にする。
 
-[推測] 既存APIは投稿、画像URL、mylist、Firebase Auth、Firestoreなどの責務を含んでおり、今回の「Skate Spot Metadata API」より広い。
+[推測] Skate Spot Metadata APIに責務を絞ることで、地図表示、投稿画像、SNS、mobile固有workflowをAPI本体から切り離せる。
 
 ## Target Architecture
 
@@ -80,6 +80,6 @@ db/migrations
 
 [推測] in-memory storeはAPI境界確認用であり、アプリを再起動するとデータは消える。
 
-[未検証] iOS/Web clientが期待するfieldと新OpenAPIの差分。
+[未検証] Browser UIと将来のclientが期待するfieldと新OpenAPIの差分。
 
 [未検証] PostgreSQL運用先と費用。

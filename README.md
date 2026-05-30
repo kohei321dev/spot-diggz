@@ -1,71 +1,105 @@
 # spot-diggz
 
-スケートスポット検索・シェアアプリケーション（旧SkateSpotSearchのリプレイス）
+SpotDiggz is a Go-based Skate Spot Metadata API with a browser UI.
+
+## Repository Scope
+
+[事実] This repository is the active home for:
+
+- Go API implementation
+- OpenAPI contract
+- PostgreSQL schema and migrations
+- Browser UI
+- API / Browser CI
+
+[事実] The following are not active source trees in this repository:
+
+- Rust API implementation
+- GCP deployment / Terraform configuration
+- iOS app implementation
+- Android app implementation
+
+[事実] Legacy code is kept on archive branches instead of the active tree.
+
+- Rails archive: `backup/rails-original`
+- Rust / GCP / mobile archive: `archive/rust-gcp-legacy-20260530`
 
 ## Tech Stack
 
-| Layer              | Technology                                |
-| ------------------ | ----------------------------------------- |
-| **Backend**        | Go (Skate Spot Metadata API)              |
-| **Frontend**       | React + TypeScript                        |
-| **Mobile**         | iOS (Swift / SwiftUI)                     |
-| **Infrastructure** | Local Docker Compose / PostgreSQL（初期） |
-| **IaC**            | Terraform                                 |
-| **CI/CD**          | GitHub Actions                            |
+| Layer | Technology |
+| --- | --- |
+| API | Go, chi, pgx |
+| Database | PostgreSQL |
+| Browser UI | React, TypeScript, Vite |
+| API Spec | OpenAPI |
+| Local runtime | Docker Compose for PostgreSQL |
+| CI | GitHub Actions |
 
 ## Project Structure
 
-```
+```text
 spot-diggz/
-├── cmd/
-│   └── api/               # Go APIエントリポイント
-├── db/                    # PostgreSQL schema / goose migration
-├── internal/              # Go API内部package
-├── web/
-│   ├── api/               # Rust legacy APIサーバー（移行完了まで保持）
-│   ├── ui/                # React UIアプリ
-│   ├── resources/         # Terraform Infrastructure
-│   ├── scripts/           # 開発用スクリプト
-│   └── sample/            # Seed用画像サンプル
-├── iOS/                   # iOSアプリ
-├── android/               # Androidアプリ（予定）
-├── docs/                  # ドキュメント
-├── .github/workflows/     # CI/CD
-└── CLAUDE.md              # 開発・運用ルール
+  cmd/api/                 Go API entrypoint
+  internal/httpapi/        HTTP routing and JSON / GeoJSON responses
+  internal/postgres/       PostgreSQL-backed repository
+  internal/spot/           spot domain model, validation, repository interface
+  db/                      PostgreSQL schema and goose migrations
+  docs/                    ADR, OpenAPI, architecture notes
+  web/ui/                  Browser UI
+  .github/workflows/       CI
+  Dockerfile               Go API container image
+  compose.yaml             local PostgreSQL
 ```
 
-## 開発・運用
+## Local API
 
-開発環境セットアップ、スラッシュコマンド、コーディング規約、運用ルール等の詳細は [CLAUDE.md](CLAUDE.md) を参照。
+Without `DATABASE_URL`, the API uses an in-memory store.
 
-## 使うコマンド一覧
+```bash
+go run ./cmd/api
+```
 
-| コマンド | 意味 |
-| --- | --- |
-| `go fmt ./...` | Go APIのformatを適用する |
-| `go vet ./...` | Go APIの静的検査を実行する |
-| `go test ./...` | Go APIのユニットテストを実行する |
-| `go build -o bin/spotdiggz-api ./cmd/api` | Go APIの単一バイナリを生成する |
-| `govulncheck ./...` | Go source/dependencyの脆弱性を確認する |
-| `govulncheck -mode=binary ./bin/spotdiggz-api` | 生成済みGo binaryの脆弱性を確認する |
-
-## ローカルPostgreSQL
-
-初期実装では `DATABASE_URL` が未設定の場合は in-memory store、設定済みの場合は PostgreSQL store を使います。
+For local PostgreSQL:
 
 ```bash
 docker compose up -d postgres
 DATABASE_URL='postgres://spotdiggz:spotdiggz@localhost:5432/spotdiggz?sslmode=disable' go run ./cmd/api
 ```
 
-停止する場合は `docker compose down` を使います。永続化volumeを消したい場合だけ `docker compose down -v` を使います。
+Build the API binary:
 
-ローカルDBの初期化SQLは [db/schema.sql](db/schema.sql) です。migration管理用に同等の goose migration を [db/migrations/00001_create_sdz_spots.sql](db/migrations/00001_create_sdz_spots.sql) に置いています。
+```bash
+go build -o bin/spotdiggz-api ./cmd/api
+```
 
-## API設計メモ
+## Browser UI
 
-- Go runtimeは `go.mod` の `go 1.25.10` を基準にする。
-- ADR: [docs/adr/001-go-skate-spot-metadata-api.md](docs/adr/001-go-skate-spot-metadata-api.md)
-- ADR: [docs/adr/002-repository-boundary-api-browser-mobile.md](docs/adr/002-repository-boundary-api-browser-mobile.md)
-- 実装計画: [docs/go-api-implementation-plan.md](docs/go-api-implementation-plan.md)
+```bash
+cd web/ui
+npm ci
+npm run dev
+```
+
+## Verification
+
+```bash
+go fmt ./cmd/... ./internal/...
+go vet ./cmd/... ./internal/...
+go test ./cmd/... ./internal/...
+go build -o bin/spotdiggz-api ./cmd/api
+
+cd web/ui
+npm ci
+npm run lint
+npm run type-check
+npm test -- --watch=false
+npm run build
+```
+
+## Documentation
+
+- ADR-001: [docs/adr/001-go-skate-spot-metadata-api.md](docs/adr/001-go-skate-spot-metadata-api.md)
+- ADR-002: [docs/adr/002-repository-boundary-api-browser-mobile.md](docs/adr/002-repository-boundary-api-browser-mobile.md)
+- API architecture: [docs/api_architecture.md](docs/api_architecture.md)
+- API implementation plan: [docs/go-api-implementation-plan.md](docs/go-api-implementation-plan.md)
 - OpenAPI: [docs/openapi.yaml](docs/openapi.yaml)

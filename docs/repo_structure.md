@@ -1,40 +1,51 @@
-# リポジトリ構成方針
+# Repository Structure
 
-spot-diggz は web/ 配下に Web版（API/UI/IaC/運用スクリプト）を集約し、
-モバイルは iOS/android で分離するモノレポ構成を採用する。
+[事実] spot-diggz の active tree は Go API と Browser UI で構成する。
 
-## 現状
+[事実] iOS / Android は別project / 別repositoryで扱う。過去の途中実装は archive branch に残す。
 
-- `web/` : Webアプリ一式（API/UI/IaC/スクリプト/seed資材）
-- `iOS/` : iOSアプリ（準備中）
-- `android/` : Androidアプリ（準備中）
-- `docs/` : 設計/運用ドキュメント
-- `AGENTS.md` : Codex向け運用ルール
-
-```
+```text
 spot-diggz/
-  .devcontainer/
-  .github/
-  web/
+  .github/workflows/
+    ci.yml
+  cmd/
     api/
-    ui/
-    resources/
-    scripts/
-    sample/
-    sdz_seed_spots.sh
-    firebase.json
-    firestore.rules
-    .firebaserc
-    .terraform-version
-  iOS/
-  android/
+  db/
+    migrations/
+    schema.sql
   docs/
+    adr/
+    api_architecture.md
+    go-api-implementation-plan.md
+    openapi.yaml
+    repo_structure.md
+  internal/
+    httpapi/
+    postgres/
+    spot/
+  web/
+    ui/
   AGENTS.md
-  .gitignore
+  CLAUDE.md
+  Dockerfile
   README.md
-  spot-diggz.code-workspace
+  compose.yaml
+  go.mod
+  go.sum
 ```
 
-## 補足
-- Terraform / Firebase の設定ファイルは web/ に集約する。
-- seed用の画像とスクリプトも web/ 配下にまとめる。
+## Directory Ownership
+
+- `cmd/`, `internal/`, `db/`: Go API
+- `docs/openapi.yaml`: API contract
+- `docs/adr/`: accepted architecture decisions
+- `web/ui/`: Browser UI
+- `.github/workflows/ci.yml`: Go API / Browser UI / security checks
+
+## Not Active In This Repository
+
+- Rust API implementation
+- GCP deployment configuration
+- Terraform configuration
+- iOS app implementation
+- Android app implementation

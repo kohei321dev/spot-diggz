@@ -788,8 +788,8 @@ function App() {
         <div className="sdz-card sdz-mode-card">
           <div className="sdz-mode-content">
             <div>
-              <strong>閲覧専用モード</strong>
-              <div className="sdz-meta">新規登録・画像登録はモバイルアプリからのみ行えます。</div>
+              <strong>API接続モード</strong>
+              <div className="sdz-meta">スポット登録・更新はGo API契約に合わせて段階的に有効化します。</div>
             </div>
             <button type="button" onClick={handleRefresh}>
               再読み込み
@@ -1024,19 +1024,15 @@ function App() {
 
                 <div className="sdz-map-footer">
                   <div className="sdz-card sdz-app-box">
-                    <h3>アプリでスポット登録</h3>
+                    <h3>API連携を整備中</h3>
                     <p className="sdz-meta">
-                      Webは閲覧と整理専用です。スポット登録や画像投稿はモバイルアプリから行います。
+                      Browser UIはGo APIと同じrepositoryで育て、OpenAPI契約に合わせて更新します。
                     </p>
                     <div className="sdz-app-links">
-                      <button type="button" className="sdz-ghost" disabled>
-                        iOSアプリ（準備中）
-                      </button>
-                      <button type="button" className="sdz-ghost" disabled>
-                        Androidアプリ（準備中）
+                      <button type="button" className="sdz-ghost" onClick={handleRefresh}>
+                        再読み込み
                       </button>
                     </div>
-                    <div className="sdz-meta">QR/リンクは後日追加予定</div>
                   </div>
                   {sdzSelectedSpot && (
                     <div className="sdz-card sdz-map-highlight">
