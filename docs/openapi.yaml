@@ -1,9 +1,11 @@
 openapi: 3.0.3
 info:
-  title: spot-diggz API
-  version: "0.1.0"
+  title: SpotDiggz Skate Spot Metadata API
+  version: "0.2.0"
   description: |
-    spot-diggz API contract (Rust/Axum). This is an internal contract for client development.
+    SpotDiggz API contract for skate spot metadata.
+    The API stores and returns independent spot metadata for clients that render maps with Google Maps,
+    MapKit, MapLibre, Leaflet, or another map UI.
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -11,10 +13,6 @@ paths:
   /sdz/health:
     get:
       summary: Health check
-      x-sdz-client:
-        - web
-        - ios
-        - android
       responses:
         "200":
           description: OK
@@ -22,63 +20,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
-  /sdz/users/me:
-    get:
-      summary: Get current user profile
-      security:
-        - BearerAuth: []
-      x-sdz-client:
-        - web
-        - ios
-        - android
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "401":
-          $ref: "#/components/responses/ErrorUnauthorized"
-        "404":
-          $ref: "#/components/responses/ErrorNotFound"
   /sdz/spots:
-    post:
-      summary: Create a skate spot (mobile only)
-      security:
-        - BearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ClientHeader"
-      x-sdz-client:
-        - ios
-        - android
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateSpotInput"
-      responses:
-        "200":
-          description: Created spot
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Spot"
-        "400":
-          $ref: "#/components/responses/ErrorBadRequest"
-        "401":
-          $ref: "#/components/responses/ErrorUnauthorized"
-        "403":
-          $ref: "#/components/responses/ErrorForbidden"
-        "500":
-          $ref: "#/components/responses/ErrorInternal"
     get:
-      summary: List spots
-      x-sdz-client:
-        - web
-        - ios
-        - android
+      summary: List skate spots
+      parameters:
+        - $ref: "#/components/parameters/BBox"
+        - $ref: "#/components/parameters/Tags"
+        - $ref: "#/components/parameters/Visibility"
       responses:
         "200":
           description: OK
@@ -88,21 +36,50 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Spot"
-        "500":
-          $ref: "#/components/responses/ErrorInternal"
-  /sdz/spots/{spot_id}:
+        "400":
+          $ref: "#/components/responses/ErrorBadRequest"
+    post:
+      summary: Create a skate spot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSpotInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Spot"
+        "400":
+          $ref: "#/components/responses/ErrorBadRequest"
+  /sdz/spots.geojson:
     get:
-      summary: Get a spot by ID
+      summary: List skate spots as GeoJSON FeatureCollection
       parameters:
-        - name: spot_id
-          in: path
-          required: true
-          schema:
-            type: string
-      x-sdz-client:
-        - web
-        - ios
-        - android
+        - $ref: "#/components/parameters/BBox"
+        - $ref: "#/components/parameters/Tags"
+        - $ref: "#/components/parameters/Visibility"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeoJSONFeatureCollection"
+        "400":
+          $ref: "#/components/responses/ErrorBadRequest"
+  /sdz/spots/{spotId}:
+    parameters:
+      - name: spotId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get a skate spot by ID
       responses:
         "200":
           description: OK
@@ -112,54 +89,57 @@ paths:
                 $ref: "#/components/schemas/Spot"
         "404":
           $ref: "#/components/responses/ErrorNotFound"
-        "500":
-          $ref: "#/components/responses/ErrorInternal"
-  /sdz/spots/upload-url:
-    post:
-      summary: Generate signed upload URL (mobile only)
-      security:
-        - BearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ClientHeader"
-      x-sdz-client:
-        - ios
-        - android
+    patch:
+      summary: Update a skate spot
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UploadUrlRequest"
+              $ref: "#/components/schemas/UpdateSpotInput"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UploadUrlResponse"
+                $ref: "#/components/schemas/Spot"
         "400":
           $ref: "#/components/responses/ErrorBadRequest"
-        "401":
-          $ref: "#/components/responses/ErrorUnauthorized"
-        "403":
-          $ref: "#/components/responses/ErrorForbidden"
-        "500":
-          $ref: "#/components/responses/ErrorInternal"
+        "404":
+          $ref: "#/components/responses/ErrorNotFound"
+    delete:
+      summary: Soft-delete a skate spot
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          $ref: "#/components/responses/ErrorNotFound"
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   parameters:
-    ClientHeader:
-      name: X-SDZ-Client
-      in: header
-      required: true
-      description: Client type (`ios` or `android`) for mobile-only endpoints.
+    BBox:
+      name: bbox
+      in: query
+      required: false
+      description: Bounding box in `minLng,minLat,maxLng,maxLat` order.
       schema:
         type: string
-        enum: [ios, android]
+        example: "139.0,35.0,140.0,36.0"
+    Tags:
+      name: tags
+      in: query
+      required: false
+      description: Comma-separated tags. All listed tags must match.
+      schema:
+        type: string
+        example: "ledge,street"
+    Visibility:
+      name: visibility
+      in: query
+      required: false
+      description: Visibility filter. Defaults to `public` in the current minimal implementation.
+      schema:
+        $ref: "#/components/schemas/Visibility"
   schemas:
     HealthResponse:
       type: object
@@ -170,7 +150,153 @@ components:
           example: healthy
         message:
           type: string
-          example: spot-diggz api is running
+          example: spotdiggz metadata api is running
+    Location:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 35.6812
+        lng:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: 139.7671
+    Visibility:
+      type: string
+      enum: [public, private, unlisted]
+      default: public
+    Spot:
+      type: object
+      required:
+        - spotId
+        - name
+        - location
+        - tags
+        - visibility
+        - createdAt
+        - updatedAt
+      properties:
+        spotId:
+          type: string
+          example: spot_4f7c0c7d4b7c6a8e2f001122
+        name:
+          type: string
+          maxLength: 120
+          example: Tokyo Demo Ledge
+        description:
+          type: string
+          example: short ledge near the station
+        location:
+          $ref: "#/components/schemas/Location"
+        tags:
+          type: array
+          items:
+            type: string
+          example: [ledge, street]
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+    CreateSpotInput:
+      type: object
+      required: [name, location]
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+        location:
+          $ref: "#/components/schemas/Location"
+        tags:
+          type: array
+          items:
+            type: string
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+    UpdateSpotInput:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+        location:
+          $ref: "#/components/schemas/Location"
+        tags:
+          type: array
+          items:
+            type: string
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+    GeoJSONFeatureCollection:
+      type: object
+      required: [type, features]
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeoJSONFeature"
+    GeoJSONFeature:
+      type: object
+      required: [type, geometry, properties]
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        geometry:
+          type: object
+          required: [type, coordinates]
+          properties:
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: number
+              description: "[lng, lat]"
+        properties:
+          type: object
+          required: [spotId, name, tags, visibility, createdAt, updatedAt]
+          properties:
+            spotId:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            visibility:
+              $ref: "#/components/schemas/Visibility"
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
     ErrorResponse:
       type: object
       required: [code, errorCode, message]
@@ -178,248 +304,13 @@ components:
         code:
           type: integer
           format: int32
-          example: 401
+          example: 400
         errorCode:
           type: string
-          example: SDZ-E-1001
+          example: SDZ-E-4001
         message:
           type: string
-          example: Unauthorized
-    SpotLocation:
-      type: object
-      required: [lat, lng]
-      properties:
-        lat:
-          type: number
-          format: double
-          example: 35.6812
-        lng:
-          type: number
-          format: double
-          example: 139.7671
-    SpotTimeRange:
-      type: object
-      required: [startMinutes, endMinutes]
-      properties:
-        startMinutes:
-          type: integer
-          format: int32
-          example: 540
-        endMinutes:
-          type: integer
-          format: int32
-          example: 1260
-    SpotBusinessHours:
-      type: object
-      required: [is24Hours, sameAsWeekday]
-      properties:
-        scheduleType:
-          type: string
-          nullable: true
-          enum:
-            - regular
-            - weekdayOnly
-            - weekendOnly
-            - irregular
-            - schoolOnly
-            - manual
-        is24Hours:
-          type: boolean
-          example: false
-        sameAsWeekday:
-          type: boolean
-          example: true
-        weekday:
-          $ref: "#/components/schemas/SpotTimeRange"
-          nullable: true
-        weekend:
-          $ref: "#/components/schemas/SpotTimeRange"
-          nullable: true
-        note:
-          type: string
-          nullable: true
-    SpotParkAttributes:
-      type: object
-      properties:
-        officialUrl:
-          type: string
-          nullable: true
-        businessHours:
-          $ref: "#/components/schemas/SpotBusinessHours"
-          nullable: true
-        accessInfo:
-          type: string
-          nullable: true
-        phoneNumber:
-          type: string
-          nullable: true
-    SpotStreetSurfaceCondition:
-      type: object
-      properties:
-        roughness:
-          type: string
-          nullable: true
-        crack:
-          type: string
-          nullable: true
-    SpotStreetSection:
-      type: object
-      required: [type]
-      properties:
-        type:
-          type: string
-        count:
-          type: integer
-          format: int32
-          nullable: true
-        heightCm:
-          type: integer
-          format: int32
-          nullable: true
-        widthCm:
-          type: integer
-          format: int32
-          nullable: true
-        notes:
-          type: string
-          nullable: true
-    SpotStreetAttributes:
-      type: object
-      properties:
-        surfaceMaterial:
-          type: string
-          nullable: true
-        surfaceCondition:
-          $ref: "#/components/schemas/SpotStreetSurfaceCondition"
-          nullable: true
-        sections:
-          type: array
-          items:
-            $ref: "#/components/schemas/SpotStreetSection"
-          nullable: true
-        difficulty:
-          type: string
-          nullable: true
-        notes:
-          type: string
-          nullable: true
-    Spot:
-      type: object
-      required:
-        - spotId
-        - name
-        - tags
-        - images
-        - userId
-        - createdAt
-        - updatedAt
-      properties:
-        spotId:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        location:
-          $ref: "#/components/schemas/SpotLocation"
-          nullable: true
-        tags:
-          type: array
-          items:
-            type: string
-        images:
-          type: array
-          items:
-            type: string
-          maxItems: 3
-          description: 1スポット3枚まで。画像付きスポットは1ユーザーあたり最大10件まで。
-        approvalStatus:
-          type: string
-          description: Spot approval status (pending/approved/rejected). Omitted when no request yet.
-          enum:
-            - pending
-            - approved
-            - rejected
-        parkAttributes:
-          $ref: "#/components/schemas/SpotParkAttributes"
-          nullable: true
-        streetAttributes:
-          $ref: "#/components/schemas/SpotStreetAttributes"
-          nullable: true
-        instagramTag:
-          type: string
-          nullable: true
-        userId:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-    CreateSpotInput:
-      type: object
-      required: [name]
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        location:
-          $ref: "#/components/schemas/SpotLocation"
-          nullable: true
-        tags:
-          type: array
-          items:
-            type: string
-        images:
-          type: array
-          items:
-            type: string
-          maxItems: 3
-          description: 1スポット3枚まで
-        parkAttributes:
-          $ref: "#/components/schemas/SpotParkAttributes"
-          nullable: true
-        streetAttributes:
-          $ref: "#/components/schemas/SpotStreetAttributes"
-          nullable: true
-        instagramTag:
-          type: string
-          nullable: true
-    UploadUrlRequest:
-      type: object
-      required: [contentType]
-      properties:
-        contentType:
-          type: string
-          example: image/jpeg
-    UploadUrlResponse:
-      type: object
-      required: [uploadUrl, objectUrl, objectName, expiresAt]
-      properties:
-        uploadUrl:
-          type: string
-        objectUrl:
-          type: string
-        objectName:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
-    User:
-      type: object
-      required: [userId, displayName]
-      properties:
-        userId:
-          type: string
-        displayName:
-          type: string
-        email:
-          type: string
-          nullable: true
+          example: name is required
   responses:
     ErrorBadRequest:
       description: Bad Request
@@ -427,26 +318,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-    ErrorUnauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-    ErrorForbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
     ErrorNotFound:
       description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-    ErrorInternal:
-      description: Internal Server Error
       content:
         application/json:
           schema:

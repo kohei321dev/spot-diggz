@@ -1,6 +1,11 @@
 /.DS_Store
 .iterm-color
 /node_modules/
+/bin/
+/.gocache/
+/coverage.out
+/.env
+/.env.local
 /web/api/target/
 # 秘匿値を含む .env ファイル（.env.tpl はコミット対象）
 /web/api/.env

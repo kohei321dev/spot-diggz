@@ -2,6 +2,18 @@
 
 ## 📋 アーキテクチャ変更履歴
 
+- 2026-05-30: ADR-001として、API本体をGo製のSkate Spot Metadata APIへ再設計。
+  - Go API本体: `cmd/api`, `internal/httpapi`, `internal/spot`
+  - build: `go build -o bin/spotdiggz-api ./cmd/api`
+  - 初期store: in-memory（API境界固定用）
+  - 次フェーズ: PostgreSQL + pgx + sqlc + goose
+  - Rust/GCP/mobile legacy: archive branchへ退避し、active CI/CDから外す
+  - 詳細: `docs/adr/001-go-skate-spot-metadata-api.md`, `docs/go-api-implementation-plan.md`
+- 2026-05-30: ADR-002として、repository boundaryをAPI + Browser UIとMobile Clientsに分離。
+  - 本repository: Go API、OpenAPI、PostgreSQL schema/migration、Browser UI
+  - iOS / Android: 別project / 別repositoryで管理
+  - Browser UI: API契約と同時に育てる間は本repositoryに保持
+  - 詳細: `docs/adr/002-repository-boundary-api-browser-mobile.md`
 - 2026-02-28: データアーキテクチャ再設計。APIの役割を「読み取り専用の Tier 1 マスターデータ配信」に縮小。
   - Firestore: 読み取り専用（マスターデータ配信専用）
   - ユーザーデータ（Tier 2）: iOS SwiftData + CloudKit に移行（API不使用）
@@ -12,7 +24,29 @@
 ## OpenAPI 定義
 - `docs/openapi.yaml`
 
-## STAR: API開発の目的と狙い
+## Target: Go Skate Spot Metadata API
+
+[事実] SpotDiggz APIは、地図描画・ルート検索・ナビゲーションを担当しない。
+
+[事実] APIは、スケートスポットの緯度経度と関連メタデータを保存・検索・返却する。
+
+[推測] Google Maps / MapKit / MapLibre / Leaflet はクライアント側で使い、APIは独自スポットデータ基盤として境界を保つのが妥当。
+
+### 初期エンドポイント
+
+- `GET /sdz/health`
+- `POST /sdz/spots`
+- `GET /sdz/spots`
+- `GET /sdz/spots/{spotId}`
+- `PATCH /sdz/spots/{spotId}`
+- `DELETE /sdz/spots/{spotId}`
+- `GET /sdz/spots.geojson`
+
+### legacy reference
+
+[事実] 以下のRust API計画・実装はlegacy referenceである。新規のAPI本体設計ではADR-001を、repository boundaryではADR-002を優先する。
+
+## Legacy: Rust API開発の目的と狙い
 ### Situation
 - Rustスクラッチ実装でCloud Run上にデプロイするマイクロサービスを構築する計画がある。
 - 既存Rails版のAPIは機能が肥大化しメンテナンスが困難だった。

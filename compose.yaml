@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: spotdiggz
+      POSTGRES_USER: spotdiggz
+      POSTGRES_PASSWORD: spotdiggz
+    ports:
+      - "5432:5432"
+    volumes:
+      - spotdiggz-postgres-data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotdiggz -d spotdiggz"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  spotdiggz-postgres-data:

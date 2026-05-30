@@ -10,12 +10,49 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  GO_VERSION: "1.25.10"
   SDZ_ENABLE_STAGING_DEPLOY: "false"
 
 jobs:
+  # Go API のテスト・ビルド
+  go-ci:
+    name: 🐹 Go API CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: 📋 Check code formatting
+        run: test -z "$(gofmt -l cmd internal)"
+
+      - name: 🔍 Run go vet
+        run: go vet ./...
+
+      - name: 🧪 Run unit tests
+        run: go test ./...
+
+      - name: 🛡️ Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: 🛡️ Scan Go source dependencies
+        run: govulncheck ./...
+
+      - name: 🏗️ Build API binary
+        run: go build -o bin/spotdiggz-api ./cmd/api
+
+      - name: 🛡️ Scan Go binary
+        run: govulncheck -mode=binary ./bin/spotdiggz-api
+
   # Rust API のテスト・ビルド
   rust-ci:
-    name: 🦀 Rust API CI
+    name: 🦀 Legacy Rust API CI
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -152,7 +189,7 @@ jobs:
   docker-ci:
     name: 🐳 Docker CI
     runs-on: ubuntu-latest
-    needs: [rust-ci, react-ci]
+    needs: [go-ci, react-ci]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
     steps:
@@ -183,7 +220,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: .devcontainer/Dockerfile
+          file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -232,7 +269,7 @@ jobs:
   deploy-dev:
     name: 🚀 Deploy to Development
     runs-on: ubuntu-latest
-    needs: [rust-ci, react-ci, terraform-ci]
+    needs: [go-ci, react-ci, terraform-ci]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment: development
     permissions:
@@ -295,7 +332,7 @@ jobs:
   deploy-staging:
     name: 🎭 Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [rust-ci, react-ci, terraform-ci]
+    needs: [go-ci, react-ci, terraform-ci]
     if: false
     environment: staging
     
@@ -320,7 +357,7 @@ jobs:
   deploy-production:
     name: 🌟 Deploy to Production
     runs-on: ubuntu-latest
-    needs: [rust-ci, react-ci, terraform-ci, security-scan]
+    needs: [go-ci, react-ci, terraform-ci, security-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     
@@ -1647,13 +1684,13 @@ jobs:
   notify:
     name: 📢 Notify Results
     runs-on: ubuntu-latest
-    needs: [rust-ci, react-ci, terraform-ci]
+    needs: [go-ci, react-ci, terraform-ci]
     if: always()
 
     steps:
       - name: 📢 Notify status
         run: |
-          if [[ "${{ needs.rust-ci.result }}" == "success" && "${{ needs.react-ci.result }}" == "success" && "${{ needs.terraform-ci.result }}" == "success" ]]; then
+          if [[ "${{ needs.go-ci.result }}" == "success" && "${{ needs.react-ci.result }}" == "success" && "${{ needs.terraform-ci.result }}" == "success" ]]; then
             echo "✅ All CI jobs passed successfully!"
           else
             echo "❌ Some CI jobs failed. Please check the logs."

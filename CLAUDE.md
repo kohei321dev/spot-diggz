@@ -6,7 +6,8 @@
 
 spot-diggz: スケートスポット検索・シェアアプリ（旧SkateSpotSearchのリプレイス）
 
-- バックエンド: Rust（スクラッチ実装、フレームワーク非使用） → `web/api/`
+- バックエンド: Go（Skate Spot Metadata API） → `cmd/api`, `internal/`
+- Legacyバックエンド: Rust（移行完了まで保持） → `web/api/`
 - フロントエンド: React + TypeScript → `web/ui/`
 - インフラ: GCP (Cloud Run, Firestore, BigQuery, Cloud Functions) + Terraform → `web/resources/`
 - モバイル: iOS (`iOS/`), Android (`android/`) ※予定
@@ -15,7 +16,18 @@ spot-diggz: スケートスポット検索・シェアアプリ（旧SkateSpotSe
 
 ## ビルド・テスト・Lintコマンド
 
-### Rust API (`web/api/`)
+### Go API (`cmd/api`, `internal/`)
+
+```bash
+go fmt ./...                  # フォーマット
+go vet ./...                  # 静的検査
+go test ./...                 # ユニットテスト
+go build -o bin/spotdiggz-api ./cmd/api  # 単一バイナリ生成
+govulncheck ./...             # source/dependency脆弱性チェック
+govulncheck -mode=binary ./bin/spotdiggz-api  # binary脆弱性チェック
+```
+
+### Legacy Rust API (`web/api/`)
 
 ```bash
 cargo fmt -- --check          # フォーマットチェック
@@ -53,8 +65,9 @@ terraform init -backend=false && terraform validate  # バリデーション
 
 **テストはpre-commitに含まれない**ため、`/verify` で別途実行すること:
 
-1. Rust: `cd web/api && cargo test`
-2. React: `cd web/ui && npm run type-check && npm test -- --watch=false`
+1. Go: `go test ./...`
+2. Legacy Rust: `cd web/api && cargo test`
+3. React: `cd web/ui && npm run type-check && npm test -- --watch=false`
 
 ## コーディング規約
 
@@ -103,6 +116,7 @@ terraform init -backend=false && terraform validate  # バリデーション
 
 | 言語       | 変数・関数                       | 型・構造体                  | 定数                                  | ファイル名            |
 | ---------- | -------------------------------- | --------------------------- | ------------------------------------- | --------------------- |
+| Go         | `camelCase`: `sdzUserProfile`    | `PascalCase`: `SdzSpotData` | `PascalCase`/`SCREAMING_SNAKE`        | `sdz_spot_service.go` |
 | TypeScript | `camelCase`: `sdzUserProfile`    | `PascalCase`: `SdzSpotData` | `SCREAMING_SNAKE`: `SDZ_API_BASE_URL` | `SdzSpotCard.tsx`     |
 | Rust       | `snake_case`: `sdz_user_profile` | `PascalCase`: `SdzSpotData` | `SCREAMING_SNAKE`: `SDZ_MAX_SPOTS`    | `sdz_spot_service.rs` |
 | Terraform  | `snake_case`: `sdz_api`          | -                           | -                                     | `sdz_cloud_run.tf`    |

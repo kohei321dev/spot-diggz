@@ -13,11 +13,12 @@ options:
 steps:
   - name: gcr.io/cloud-builders/docker
     id: build-api-image
-    dir: web/api
     args:
       - build
       - -t
       - ${_API_IMAGE}
+      - -f
+      - Dockerfile
       - .
 
   - name: gcr.io/cloud-builders/docker
