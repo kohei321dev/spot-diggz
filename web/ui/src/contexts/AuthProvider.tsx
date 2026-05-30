@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
 } from 'firebase/auth';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -24,8 +25,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [idToken, setIdToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // users/{uid} を存在しなければ作成（createdAtのみセット、updatedAtはnull）
-  const ensureUserDoc = useCallback(async (uid: string, email: string | null) => {
+  // users/{uid} を存在しなければ作成（email/表示名/createdAtをセット、updatedAtはnull）
+  const ensureUserDoc = useCallback(async (
+    uid: string,
+    email: string | null,
+    displayName: string | null,
+  ) => {
     try {
       if (!email) {
         throw new Error('メールアドレスが取得できませんでした。');
@@ -34,22 +39,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const docRef = doc(db, 'users', uid);
       const snap = await getDoc(docRef);
       if (!snap.exists()) {
+        const payload: Record<string, unknown> = {
+          email,
+          createdAt: serverTimestamp(),
+          updatedAt: null, // 初回はnull、更新時に上書きする想定
+        };
+        if (displayName) {
+          payload.displayName = displayName;
+        }
         await setDoc(
           docRef,
-          {
-            email,
-            createdAt: serverTimestamp(),
-            updatedAt: null, // 初回はnull、更新時に上書きする想定
-          },
+          payload,
           { merge: true },
         );
       } else {
         // 既存ドキュメントでもemailが空なら補完する
         const current = snap.data();
-        if (!current?.email) {
+        if (!current?.email || (displayName && !current?.displayName)) {
+          const updates: Record<string, unknown> = {
+            updatedAt: serverTimestamp(),
+          };
+          if (!current?.email) {
+            updates.email = email;
+          }
+          if (displayName && !current?.displayName) {
+            updates.displayName = displayName;
+          }
           await setDoc(
             docRef,
-            { email, updatedAt: serverTimestamp() },
+            updates,
             { merge: true },
           );
         }
@@ -90,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = await user.getIdToken();
     setIdToken(token ?? null);
 
-    await ensureUserDoc(user.uid, user.email);
+    await ensureUserDoc(user.uid, user.email, user.displayName);
 
     // 初回ログイン時のFirestore作成は後続のサーバーサイド処理や別タイミングで実施する想定
   }, [ensureUserDoc]);
@@ -102,7 +120,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIdToken(null);
       throw new Error('メールアドレスが未認証です。受信トレイの認証メールを確認してください。');
     }
-    await ensureUserDoc(credential.user.uid, credential.user.email);
+    await ensureUserDoc(
+      credential.user.uid,
+      credential.user.email,
+      credential.user.displayName,
+    );
     const token = await credential.user.getIdToken();
     setIdToken(token ?? null);
   }, [ensureUserDoc]);
@@ -114,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 認証完了までは保護するため、トークンはクリアしておく
     setIdToken(null);
 
-    await ensureUserDoc(user.uid, email);
+    await ensureUserDoc(user.uid, email, user.displayName);
   }, [ensureUserDoc]);
 
   const logout = useCallback(async () => {
@@ -137,6 +159,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await sendPasswordResetEmail(auth, auth.currentUser.email);
   }, []);
 
+  const updateDisplayName = useCallback(async (displayName: string) => {
+    if (!auth.currentUser) {
+      throw new Error('ログインが必要です。');
+    }
+    await updateProfile(auth.currentUser, { displayName });
+    const db = getFirestore();
+    const docRef = doc(db, 'users', auth.currentUser.uid);
+    await setDoc(
+      docRef,
+      { displayName, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    setUser(auth.currentUser);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -147,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signupWithEmail,
       resendVerification,
       sendPasswordReset,
+      updateDisplayName,
       logout,
     }),
     [
@@ -158,6 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signupWithEmail,
       resendVerification,
       sendPasswordReset,
+      updateDisplayName,
       logout,
     ],
   );

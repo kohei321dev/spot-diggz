@@ -1,0 +1,118 @@
+# CodeRabbit Configuration
+# https://docs.coderabbit.ai/reference/configuration
+
+language: ja-JP
+
+tone_instructions: >
+  レビューは建設的かつ簡潔に。CLAUDE.md の4層命名規約（sdz/Sdz/SDZ プレフィックス）と
+  各レイヤーのアーキテクチャ規約に沿った指摘を行う。
+
+early_access: false
+enable_free_tier: true
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  changed_files_summary: true
+  assess_linked_issues: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - master
+
+  path_instructions:
+    # ── Rust API ──
+    - path: "web/api/src/domain/**"
+      instructions: >
+        ドメイン層。外部依存（HTTP, DB, ファイルI/O）がないことを確認する。
+        型名は Sdz プレフィックス + PascalCase（例: SdzSpotData）。
+    - path: "web/api/src/application/**"
+      instructions: >
+        アプリケーション層（ユースケース + リポジトリインターフェース）。
+        infrastructure 層への直接依存がないこと、trait 経由でのみアクセスしていることを確認する。
+    - path: "web/api/src/infrastructure/**"
+      instructions: >
+        インフラ層（Firestore/Storage/インメモリ実装）。
+        application 層の trait を実装していること、エラーハンドリングが適切なことを確認する。
+        Firestore REST API のレスポンスパースに安全でない unwrap がないか注意する。
+    - path: "web/api/src/presentation/**"
+      instructions: >
+        プレゼンテーション層（ハンドラー・ルーター・ミドルウェア）。
+        認証ミドルウェアのバイパスがないこと、CORS設定が適切なこと、
+        レスポンスにシークレット情報が含まれていないことを確認する。
+    - path: "web/api/**/*.rs"
+      instructions: >
+        Rust コード全般。変数・関数は sdz_ プレフィックス + snake_case、
+        定数は SDZ_ プレフィックス + SCREAMING_SNAKE_CASE。
+        unsafe ブロックの使用がないか、適切なエラー伝播（? 演算子）を使っているか確認する。
+
+    # ── React UI ──
+    - path: "web/ui/src/**/*.{ts,tsx}"
+      instructions: >
+        TypeScript/React コード。変数・関数は sdz プレフィックス + camelCase、
+        型・コンポーネントは Sdz プレフィックス + PascalCase、
+        定数は SDZ_ プレフィックス + SCREAMING_SNAKE_CASE。
+        Firebase API キーや秘匿情報がハードコードされていないことを確認する。
+    - path: "web/ui/src/contexts/**"
+      instructions: >
+        React Context / カスタムフック。認証状態の管理が適切か、
+        不要な再レンダリングを引き起こすコンテキスト設計になっていないか確認する。
+
+    # ── Terraform ──
+    - path: "web/resources/**/*.tf"
+      instructions: >
+        Terraform 定義。リソース名は sdz_ プレフィックス + snake_case。
+        GCP リソースの実名は Tier 3 命名規約（sdz-{env}-{purpose}、全小文字・ハイフンのみ）に
+        準拠しているか確認する。IAM 権限が最小権限原則に従っているか注意する。
+    - path: "web/resources/environments/**/*.tfvars"
+      instructions: >
+        環境変数値。シークレット情報が含まれていないこと、
+        バケット名等が Tier 3 命名規約（ハイフンのみ、冗長サフィックスなし）に
+        準拠していることを確認する。
+    - path: "web/resources/cloudbuild/**"
+      instructions: >
+        Cloud Build パイプライン。ビルドステップの権限が最小限か、
+        シークレットがログに出力されていないかを確認する。
+
+    # ── iOS ──
+    - path: "iOS/Domain/**"
+      instructions: >
+        iOS ドメイン層。UIKit/SwiftUI への依存がないことを確認する。
+        エンティティ名は Sdz プレフィックス + PascalCase。
+    - path: "iOS/Data/**"
+      instructions: >
+        iOS データ層（API クライアント・認証・位置情報）。
+        API レスポンスのエラーハンドリング、認証トークンの安全な管理を確認する。
+    - path: "iOS/Presentation/**"
+      instructions: >
+        iOS プレゼンテーション層。View と ロジックの責務分離、
+        @State/@Binding/@Observable の適切な使い分けを確認する。
+        ハードコードされた文字列がローカライズ対象になっているか注意する。
+    - path: "iOS/**/*.swift"
+      instructions: >
+        Swift コード全般。Sdz プレフィックスの命名規約準拠を確認する。
+        async/await の適切な使用と、MainActor の適用漏れがないか確認する。
+
+    # ── CI/CD ──
+    - path: ".github/workflows/**"
+      instructions: >
+        GitHub Actions ワークフロー。シークレットの安全な参照、
+        サードパーティ Action のバージョン固定（SHA ピニング推奨）を確認する。
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: local
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CLAUDE.md"

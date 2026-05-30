@@ -1,4 +1,7 @@
-use axum::{extract::FromRequestParts, http::request::Parts};
+use axum::{
+    extract::FromRequestParts,
+    http::{header::AUTHORIZATION, request::Parts},
+};
 use axum_extra::{
     headers::{authorization::Bearer, Authorization},
     TypedHeader,
@@ -42,6 +45,45 @@ where
 
             Ok(SdzAuthUser {
                 sdz_user_id: claims.sdz_user_id(),
+            })
+        }
+    }
+}
+
+/// 任意の認証ユーザー情報（Authorizationが無ければNone）
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub struct SdzOptionalAuthUser {
+    pub sdz_user_id: Option<String>,
+}
+
+impl<S> FromRequestParts<S> for SdzOptionalAuthUser
+where
+    S: Send + Sync,
+{
+    type Rejection = SdzApiError;
+
+    #[allow(clippy::manual_async_fn)]
+    fn from_request_parts(
+        parts: &mut Parts,
+        _state: &S,
+    ) -> impl std::future::Future<Output = Result<Self, Self::Rejection>> + Send {
+        async move {
+            let Some(header_value) = parts.headers.get(AUTHORIZATION) else {
+                return Ok(SdzOptionalAuthUser { sdz_user_id: None });
+            };
+            let header_value = header_value
+                .to_str()
+                .map_err(|_| SdzApiError::Unauthorized)?;
+            let token = header_value
+                .strip_prefix("Bearer ")
+                .ok_or(SdzApiError::Unauthorized)?;
+            let claims = verify_firebase_token(token).await.map_err(|e| {
+                tracing::error!("JWT verification failed: {:?}", e);
+                SdzApiError::Unauthorized
+            })?;
+            Ok(SdzOptionalAuthUser {
+                sdz_user_id: Some(claims.sdz_user_id()),
             })
         }
     }
@@ -125,6 +167,7 @@ async fn verify_firebase_token(token: &str) -> Result<FirebaseClaims, SdzApiErro
     let issuer = format!("https://securetoken.google.com/{}", project_id);
 
     let mut validation = Validation::new(Algorithm::RS256);
+    validation.set_required_spec_claims(&["exp", "iss", "aud"]);
     validation.set_issuer(&[issuer]);
     validation.set_audience(&[project_id]);
     validation.validate_exp = true;

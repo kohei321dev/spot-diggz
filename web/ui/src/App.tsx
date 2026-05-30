@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SdzSpot } from './types/spot';
 import { useAuth } from './contexts/useAuth';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import { SdzAdminGuard } from './admin/SdzAdminGuard';
+import { SdzAdminLayout } from './admin/SdzAdminLayout';
+import { SdzAdminSpotList } from './admin/SdzAdminSpotList';
+import { SdzAdminSpotForm } from './admin/SdzAdminSpotForm';
 
 const apiUrl = import.meta.env.VITE_SDZ_API_URL || 'http://localhost:8080';
 const SDZ_FAVORITES_PAGE_SIZE = 8;
+const SDZ_TYPE_TAGS = new Set(['パーク', 'ストリート', 'スケートパーク', 'スケートボードパーク']);
+const SDZ_PARK_TAGS = new Set(['パーク', 'スケートパーク', 'スケートボードパーク']);
+const SDZ_STREET_TAGS = new Set(['ストリート']);
 
 function formatCoords(location?: SdzSpot['location']) {
   if (!location) return 'N/A';
@@ -47,11 +56,113 @@ function getInitialFavorites(): string[] {
   }
 }
 
+function getSpotTypeLabel(tags?: string[]) {
+  const tagList = tags ?? [];
+  if (tagList.some((tag) => SDZ_PARK_TAGS.has(tag))) return 'スケートパーク';
+  if (tagList.some((tag) => SDZ_STREET_TAGS.has(tag))) return 'ストリート';
+  return 'スポット';
+}
+
+function getSpotTone(tags?: string[]) {
+  const typeLabel = getSpotTypeLabel(tags);
+  if (typeLabel === 'スケートパーク') {
+    return { label: typeLabel, color: '#32b990' };
+  }
+  if (typeLabel === 'ストリート') {
+    return { label: typeLabel, color: '#ff7a45' };
+  }
+  return { label: typeLabel, color: '#7b8a94' };
+}
+
+type SdzMapCameraControllerProps = {
+  selectedSpot?: SdzSpot;
+  spots: SdzSpot[];
+};
+
+function SdzMapCameraController({ selectedSpot, spots }: SdzMapCameraControllerProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedSpot?.location) {
+      map.flyTo([selectedSpot.location.lat, selectedSpot.location.lng], 15, { duration: 0.6 });
+      return;
+    }
+    const located = spots.filter((spot) => spot.location);
+    if (located.length === 0) return;
+    if (located.length === 1) {
+      const { lat, lng } = located[0].location!;
+      map.setView([lat, lng], 13);
+      return;
+    }
+    const bounds = L.latLngBounds(
+      located.map((spot) => [spot.location!.lat, spot.location!.lng] as [number, number]),
+    );
+    map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
+  }, [map, selectedSpot, spots]);
+
+  return null;
+}
+
+type SdzSpotMapProps = {
+  spots: SdzSpot[];
+  selectedSpotId: string | null;
+  onSelect: (spotId: string) => void;
+};
+
+function SdzSpotMap({ spots, selectedSpotId, onSelect }: SdzSpotMapProps) {
+  const fallbackCenter: [number, number] = [35.6812, 139.7671];
+  const selectedSpot = spots.find((spot) => spot.spotId === selectedSpotId);
+  const mapCenter: [number, number] = selectedSpot?.location
+    ? [selectedSpot.location.lat, selectedSpot.location.lng]
+    : fallbackCenter;
+
+  return (
+    <MapContainer center={mapCenter} zoom={13} className="sdz-map-canvas" scrollWheelZoom>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      />
+      <SdzMapCameraController selectedSpot={selectedSpot} spots={spots} />
+      {spots.map((spot) => {
+        if (!spot.location) return null;
+        const { color, label } = getSpotTone(spot.tags);
+        const isSelected = spot.spotId === selectedSpotId;
+        return (
+          <CircleMarker
+            key={spot.spotId}
+            center={[spot.location.lat, spot.location.lng]}
+            radius={isSelected ? 12 : 6}
+            pathOptions={{
+              color: isSelected ? '#101820' : '#ffffff',
+              weight: isSelected ? 3 : 1.5,
+              fillColor: color,
+              fillOpacity: 0.95,
+            }}
+            eventHandlers={{
+              click: () => onSelect(spot.spotId),
+            }}
+          >
+            {isSelected && (
+              <Tooltip direction="top" offset={[0, -12]} opacity={1} permanent>
+                <div className="sdz-map-tooltip">
+                  <span className="sdz-map-tooltip-title">{spot.name}</span>
+                  <span className="sdz-map-tooltip-tag">{label}</span>
+                </div>
+              </Tooltip>
+            )}
+          </CircleMarker>
+        );
+      })}
+    </MapContainer>
+  );
+}
+
 type SdzSpotDetailProps = {
   spots: SdzSpot[];
   apiUrl: string;
   favorites: string[];
   onToggleFavorite: (spotId: string) => void;
+  idToken: string | null;
 };
 
 function SdzSpotDetailPage({
@@ -59,6 +170,7 @@ function SdzSpotDetailPage({
   apiUrl,
   favorites,
   onToggleFavorite,
+  idToken,
 }: SdzSpotDetailProps) {
   const { spotId } = useParams();
   const navigate = useNavigate();
@@ -77,7 +189,8 @@ function SdzSpotDetailPage({
     let isActive = true;
     setSdzDetailLoading(true);
     setSdzDetailError(null);
-    fetch(`${apiUrl}/sdz/spots/${spotId}`)
+    const headers = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
+    fetch(`${apiUrl}/sdz/spots/${spotId}`, { headers })
       .then((res) => {
         if (res.status === 404) {
           return null;
@@ -106,7 +219,7 @@ function SdzSpotDetailPage({
     return () => {
       isActive = false;
     };
-  }, [apiUrl, spotId, spots]);
+  }, [apiUrl, idToken, spotId, spots]);
 
   const sdzRelatedSpots = useMemo(() => {
     if (!sdzDetail) return [];
@@ -240,6 +353,7 @@ function SdzSpotDetailPage({
 
 function App() {
   const {
+    idToken,
     user,
     loginWithGoogle,
     loginWithEmail,
@@ -248,6 +362,7 @@ function App() {
     logout,
     loading: authLoading,
     sendPasswordReset,
+    updateDisplayName,
   } = useAuth();
   const [spots, setSpots] = useState<SdzSpot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -257,59 +372,91 @@ function App() {
   const [loginPassword, setLoginPassword] = useState('');
   const [sdzAuthMode, setSdzAuthMode] = useState<'login' | 'signup'>('login');
   const [sdzSearchText, setSdzSearchText] = useState('');
-  const [sdzSelectedTag, setSdzSelectedTag] = useState('all');
+  const [sdzSelectedTags, setSdzSelectedTags] = useState<string[]>([]);
+  const [sdzTagToAdd, setSdzTagToAdd] = useState('');
+  const [sdzSelectedType, setSdzSelectedType] = useState('all');
   const [sdzFavorites, setSdzFavorites] = useState<string[]>(getInitialFavorites);
   const [sdzProfileMessage, setSdzProfileMessage] = useState<string | null>(null);
   const [sdzFavoritesPage, setSdzFavoritesPage] = useState(1);
+  const [sdzDisplayName, setSdzDisplayName] = useState('');
+  const [sdzSelectedSpotId, setSdzSelectedSpotId] = useState<string | null>(null);
+  const sdzMapCardsContainerRef = useRef<HTMLDivElement | null>(null);
+  const sdzMapCardElementRefs = useRef<Record<string, HTMLElement | null>>({});
+  const sdzMapCardsScrollRafRef = useRef<number | null>(null);
 
+  const isTestEnv = import.meta.env.MODE === 'test';
   const subtitle = `API base: ${apiUrl}（GET /sdz/spots を表示中）`;
   const isEmailPending = user && !user.emailVerified;
   const sdzAvailableTags = useMemo(() => {
     const tagSet = new Set<string>();
     spots.forEach((spot) => {
-      spot.tags?.forEach((tag) => tagSet.add(tag));
+      spot.tags?.forEach((tag) => {
+        if (!SDZ_TYPE_TAGS.has(tag)) {
+          tagSet.add(tag);
+        }
+      });
     });
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   }, [spots]);
-  const sdzFilteredSpots = useMemo(() => {
-    const normalizedQuery = sdzSearchText.trim().toLowerCase();
-    return spots.filter((spot) => {
-      if (sdzSelectedTag !== 'all' && !spot.tags?.includes(sdzSelectedTag)) {
-        return false;
-      }
-      if (!normalizedQuery) return true;
-      const nameMatch = spot.name.toLowerCase().includes(normalizedQuery);
-      const descMatch = spot.description
-        ? spot.description.toLowerCase().includes(normalizedQuery)
-        : false;
-      const tagMatch = spot.tags?.some((tag) =>
-        tag.toLowerCase().includes(normalizedQuery),
-      );
-      return nameMatch || descMatch || tagMatch;
-    });
-  }, [spots, sdzSearchText, sdzSelectedTag]);
+  const sdzFilteredSpots = useMemo(() => spots, [spots]);
+  const sdzMapSpots = useMemo(
+    () => sdzFilteredSpots.filter((spot) => spot.location),
+    [sdzFilteredSpots],
+  );
+  const sdzSelectableTags = useMemo(
+    () => sdzAvailableTags.filter((tag) => !sdzSelectedTags.includes(tag)),
+    [sdzAvailableTags, sdzSelectedTags],
+  );
+  const sdzSearchRequest = useMemo(() => {
+    return {
+      query: sdzSearchText,
+      type: sdzSelectedType,
+      tags: sdzSelectedTags,
+    };
+  }, [sdzSearchText, sdzSelectedTags, sdzSelectedType]);
 
-  const fetchSpots = async (signal?: AbortSignal) => {
-    try {
-      const res = await fetch(`${apiUrl}/sdz/spots`, { signal });
-      if (!res.ok) {
-        throw new Error(`Failed to fetch spots: ${res.status}`);
+  const fetchSpots = useCallback(
+    async (signal?: AbortSignal, options?: { query?: string; type?: string; tags?: string[] }) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const headers = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
+        const params = new URLSearchParams();
+        const query = options?.query?.trim();
+        if (query) params.set('q', query);
+        const type = options?.type && options.type !== 'all' ? options.type : '';
+        if (type) params.set('type', type);
+        if (options?.tags && options.tags.length > 0) {
+          params.set('tags', options.tags.join(','));
+        }
+        const queryString = params.toString();
+        const url = queryString ? `${apiUrl}/sdz/spots?${queryString}` : `${apiUrl}/sdz/spots`;
+        const res = await fetch(url, { signal, headers });
+        if (!res.ok) {
+          throw new Error(`Failed to fetch spots: ${res.status}`);
+        }
+        const data: SdzSpot[] = await res.json();
+        setSpots(data);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
       }
-      const data: SdzSpot[] = await res.json();
-      setSpots(data);
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return;
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [idToken],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchSpots(controller.signal);
-    return () => controller.abort();
-  }, []);
+    const timer = window.setTimeout(() => {
+      fetchSpots(controller.signal, sdzSearchRequest);
+    }, 300);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [fetchSpots, sdzSearchRequest]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -317,8 +464,40 @@ function App() {
   }, [sdzFavorites]);
 
   useEffect(() => {
+    setSdzDisplayName(user?.displayName ?? '');
+  }, [user]);
+
+  useEffect(() => {
     setSdzFavoritesPage(1);
   }, [sdzFavorites.length]);
+
+  useEffect(() => {
+    if (sdzMapSpots.length === 0) {
+      setSdzSelectedSpotId(null);
+      return;
+    }
+    if (!sdzSelectedSpotId || !sdzMapSpots.some((spot) => spot.spotId === sdzSelectedSpotId)) {
+      setSdzSelectedSpotId(sdzMapSpots[0].spotId);
+    }
+  }, [sdzMapSpots, sdzSelectedSpotId]);
+
+  useEffect(() => {
+    const spotIds = new Set(sdzMapSpots.map((spot) => spot.spotId));
+    Object.keys(sdzMapCardElementRefs.current).forEach((spotId) => {
+      if (!spotIds.has(spotId)) {
+        delete sdzMapCardElementRefs.current[spotId];
+      }
+    });
+  }, [sdzMapSpots]);
+
+  useEffect(
+    () => () => {
+      if (sdzMapCardsScrollRafRef.current !== null) {
+        window.cancelAnimationFrame(sdzMapCardsScrollRafRef.current);
+      }
+    },
+    [],
+  );
 
   const handleLoginWithGoogle = async () => {
     setAuthError(null);
@@ -363,6 +542,22 @@ function App() {
     }
   };
 
+  const handleDisplayNameUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSdzProfileMessage(null);
+    const trimmed = sdzDisplayName.trim();
+    if (!trimmed) {
+      setSdzProfileMessage('表示名を入力してください。');
+      return;
+    }
+    try {
+      await updateDisplayName(trimmed);
+      setSdzProfileMessage('表示名を更新しました。');
+    } catch (err) {
+      setSdzProfileMessage((err as Error).message);
+    }
+  };
+
   const handleResendVerification = async () => {
     setAuthError(null);
     try {
@@ -388,9 +583,7 @@ function App() {
 
   const handleToggleFavorite = (spotId: string) => {
     setSdzFavorites((prev) =>
-      prev.includes(spotId)
-        ? prev.filter((id) => id !== spotId)
-        : [...prev, spotId],
+      prev.includes(spotId) ? prev.filter((id) => id !== spotId) : [...prev, spotId],
     );
   };
 
@@ -404,12 +597,70 @@ function App() {
     }
   };
 
-  const handleRefresh = () => fetchSpots();
+  const handleRefresh = () => fetchSpots(undefined, sdzSearchRequest);
   const handleResetFilters = () => {
     setSdzSearchText('');
-    setSdzSelectedTag('all');
+    setSdzSelectedTags([]);
+    setSdzTagToAdd('');
+    setSdzSelectedType('all');
   };
+  const handleAddTag = () => {
+    if (!sdzTagToAdd) return;
+    setSdzSelectedTags((prev) => (prev.includes(sdzTagToAdd) ? prev : [...prev, sdzTagToAdd]));
+    setSdzTagToAdd('');
+  };
+  const handleRemoveTag = (tag: string) => {
+    setSdzSelectedTags((prev) => prev.filter((item) => item !== tag));
+  };
+  const handleMapCardsScroll = useCallback(() => {
+    if (sdzMapCardsScrollRafRef.current !== null) {
+      window.cancelAnimationFrame(sdzMapCardsScrollRafRef.current);
+    }
+    sdzMapCardsScrollRafRef.current = window.requestAnimationFrame(() => {
+      const container = sdzMapCardsContainerRef.current;
+      if (!container) return;
+      const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-spot-id]'));
+      if (cards.length === 0) return;
+      const centerX = container.scrollLeft + container.clientWidth / 2;
+      let nearestSpotId: string | null = null;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      cards.forEach((card) => {
+        const spotId = card.dataset.spotId;
+        if (!spotId) return;
+        const cardCenterX = card.offsetLeft + card.offsetWidth / 2;
+        const distance = Math.abs(cardCenterX - centerX);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestSpotId = spotId;
+        }
+      });
+
+      if (nearestSpotId && nearestSpotId !== sdzSelectedSpotId) {
+        setSdzSelectedSpotId(nearestSpotId);
+      }
+    });
+  }, [sdzSelectedSpotId]);
+  const setSdzMapCardRef = useCallback((spotId: string, element: HTMLElement | null) => {
+    sdzMapCardElementRefs.current[spotId] = element;
+  }, []);
   const navigate = useNavigate();
+  const sdzSelectedSpot = useMemo(
+    () => sdzMapSpots.find((spot) => spot.spotId === sdzSelectedSpotId) ?? null,
+    [sdzMapSpots, sdzSelectedSpotId],
+  );
+
+  useEffect(() => {
+    if (!sdzSelectedSpotId) return;
+    const targetCard = sdzMapCardElementRefs.current[sdzSelectedSpotId];
+    if (!targetCard) return;
+    if (typeof targetCard.scrollIntoView !== 'function') return;
+    targetCard.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  }, [sdzSelectedSpotId]);
   const sdzMySpots = useMemo(
     () => spots.filter((spot) => (user ? spot.userId === user.uid : false)),
     [spots, user],
@@ -438,11 +689,7 @@ function App() {
           <button type="button" className="sdz-ghost" onClick={() => navigate('/')}>
             Spots
           </button>
-          <button
-            type="button"
-            className="sdz-ghost"
-            onClick={() => navigate('/favorites')}
-          >
+          <button type="button" className="sdz-ghost" onClick={() => navigate('/favorites')}>
             Favorites
           </button>
           <button type="button" className="sdz-ghost" onClick={() => navigate('/me')}>
@@ -517,7 +764,8 @@ function App() {
         <div className="sdz-card" style={{ marginBottom: 16 }}>
           <h2>メール認証が必要です</h2>
           <p>
-            {user?.email} 宛に認証メールを送信しました。受信トレイ（迷惑メール含む）でリンクを開いて認証してください。
+            {user?.email}{' '}
+            宛に認証メールを送信しました。受信トレイ（迷惑メール含む）でリンクを開いて認証してください。
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <button type="button" onClick={handleResendVerification}>
@@ -541,9 +789,7 @@ function App() {
           <div className="sdz-mode-content">
             <div>
               <strong>閲覧専用モード</strong>
-              <div className="sdz-meta">
-                新規登録・画像登録はモバイルアプリからのみ行えます。
-              </div>
+              <div className="sdz-meta">新規登録・画像登録はモバイルアプリからのみ行えます。</div>
             </div>
             <button type="button" onClick={handleRefresh}>
               再読み込み
@@ -560,39 +806,75 @@ function App() {
           path="/"
           element={
             <>
-              <section className="sdz-hero">
-                <div className="sdz-hero-copy">
-                  <p className="sdz-eyebrow">Skate Spot Finder</p>
-                  <h1>Spotを掘る。滑りに行く。旅を作る。</h1>
-                  <p className="sdz-hero-lead">
-                    spot-diggzは、スケートスポットを探し、保存し、次のライドプランに組み込むための
-                    シンプルなディレクトリです。モバイルアプリで投稿、Webは閲覧と整理に集中します。
-                  </p>
-                  <div className="sdz-hero-actions">
-                    <div className="sdz-search">
-                      <label htmlFor="sdz-search-hero">キーワードで探す</label>
+              <section className="sdz-map-hero">
+                <div className="sdz-map-header">
+                  <div className="sdz-map-header-copy">
+                    <p className="sdz-eyebrow">Spot Map</p>
+                    <h1>マップでスポットを探す</h1>
+                    <p className="sdz-hero-lead">
+                      spot-diggzのスポットを、地図とカードで直感的に探索できます。気になる地点をタップして、すぐに詳細へ。
+                    </p>
+                    <div className="sdz-hero-footnote">{subtitle}</div>
+                  </div>
+                  <div className="sdz-map-stats">
+                    <div>
+                      <strong>{spots.length}</strong>
+                      <span>登録スポット</span>
+                    </div>
+                    <div>
+                      <strong>{sdzMapSpots.length}</strong>
+                      <span>位置情報あり</span>
+                    </div>
+                    <div>
+                      <strong>{sdzFavoriteSpots.length}</strong>
+                      <span>お気に入り</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sdz-map-shell">
+                  <div className="sdz-map-toolbar">
+                    <div className="sdz-map-search">
+                      <label htmlFor="sdz-search-map">キーワード</label>
                       <input
-                        id="sdz-search-hero"
+                        id="sdz-search-map"
                         type="text"
                         placeholder="スポット名・タグ・説明文で検索"
                         value={sdzSearchText}
                         onChange={(e) => setSdzSearchText(e.target.value)}
                       />
                     </div>
-                    <div className="sdz-search">
-                      <label htmlFor="sdz-tag-hero">タグで絞る</label>
+                    <div className="sdz-map-search">
+                      <label htmlFor="sdz-type-map">種別</label>
                       <select
-                        id="sdz-tag-hero"
-                        value={sdzSelectedTag}
-                        onChange={(e) => setSdzSelectedTag(e.target.value)}
+                        id="sdz-type-map"
+                        value={sdzSelectedType}
+                        onChange={(e) => setSdzSelectedType(e.target.value)}
                       >
                         <option value="all">すべて</option>
-                        {sdzAvailableTags.map((tag) => (
-                          <option key={tag} value={tag}>
-                            {tag}
-                          </option>
-                        ))}
+                        <option value="park">スケートパーク</option>
+                        <option value="street">ストリート</option>
                       </select>
+                    </div>
+                    <div className="sdz-map-search">
+                      <label htmlFor="sdz-tag-map">タグ</label>
+                      <div className="sdz-tag-controls">
+                        <select
+                          id="sdz-tag-map"
+                          value={sdzTagToAdd}
+                          onChange={(e) => setSdzTagToAdd(e.target.value)}
+                        >
+                          <option value="">タグを追加</option>
+                          {sdzSelectableTags.map((tag) => (
+                            <option key={tag} value={tag}>
+                              {tag}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="button" onClick={handleAddTag} disabled={!sdzTagToAdd}>
+                          追加
+                        </button>
+                      </div>
                     </div>
                     <div className="sdz-search-meta">
                       <span>
@@ -603,36 +885,144 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <div className="sdz-hero-stats">
-                    <div>
-                      <strong>{spots.length}</strong>
-                      <span>登録スポット</span>
+
+                  {sdzSelectedTags.length > 0 && (
+                    <div className="sdz-tag-chips" aria-label="選択中のタグ">
+                      {sdzSelectedTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className="sdz-tag-chip"
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          {tag}
+                          <span aria-hidden="true">×</span>
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <strong>{sdzFavoriteSpots.length}</strong>
-                      <span>お気に入り</span>
+                  )}
+
+                  <div className="sdz-map-legend">
+                    <div className="sdz-map-legend-item">
+                      <span className="sdz-map-legend-dot is-park" />
+                      スケートパーク
                     </div>
-                    <div>
-                      <strong>{sdzAvailableTags.length}</strong>
-                      <span>タグ</span>
+                    <div className="sdz-map-legend-item">
+                      <span className="sdz-map-legend-dot is-street" />
+                      ストリート
                     </div>
                   </div>
-                  <div className="sdz-hero-footnote">{subtitle}</div>
+
+                  <div className="sdz-map-canvas-wrap">
+                    {isTestEnv ? (
+                      <div className="sdz-map-canvas sdz-map-placeholder">
+                        <div>
+                          <strong>Map Preview</strong>
+                          <p className="sdz-meta">テスト環境ではマップを簡易表示します。</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <SdzSpotMap
+                        spots={sdzMapSpots}
+                        selectedSpotId={sdzSelectedSpotId}
+                        onSelect={setSdzSelectedSpotId}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div className="sdz-hero-panel">
-                  <div className="sdz-map-card">
-                    <div className="sdz-map-preview">
-                      <div className="sdz-map-dot" />
-                      <div className="sdz-map-dot sdz-map-dot-alt" />
-                      <div className="sdz-map-dot sdz-map-dot-alt2" />
+
+                {!loading && !error && spots.length === 0 && (
+                  <div className="sdz-card sdz-empty">スポットがまだありません。</div>
+                )}
+                {!loading && !error && spots.length > 0 && sdzFilteredSpots.length === 0 && (
+                  <div className="sdz-card sdz-empty">条件に一致するスポットがありません。</div>
+                )}
+
+                <div className="sdz-map-carousel">
+                  {sdzMapSpots.length === 0 ? (
+                    <div className="sdz-card sdz-empty">位置情報付きスポットがまだありません。</div>
+                  ) : (
+                    <div
+                      className="sdz-map-cards"
+                      ref={sdzMapCardsContainerRef}
+                      onScroll={handleMapCardsScroll}
+                    >
+                      {sdzMapSpots.map((spot) => {
+                        const tone = getSpotTone(spot.tags);
+                        const isSelected = spot.spotId === sdzSelectedSpotId;
+                        return (
+                          <article
+                            key={spot.spotId}
+                            ref={(element) => setSdzMapCardRef(spot.spotId, element)}
+                            data-spot-id={spot.spotId}
+                            className={`sdz-map-card ${isSelected ? 'is-selected' : ''}`}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`${spot.name} を選択`}
+                            onClick={() => setSdzSelectedSpotId(spot.spotId)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                setSdzSelectedSpotId(spot.spotId);
+                              }
+                            }}
+                          >
+                            <div className="sdz-map-card-header">
+                              <span
+                                className="sdz-map-card-type"
+                                style={{ backgroundColor: tone.color }}
+                              >
+                                {tone.label}
+                              </span>
+                              <button
+                                type="button"
+                                className={`sdz-favorite ${
+                                  sdzFavorites.includes(spot.spotId) ? 'is-active' : ''
+                                }`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleToggleFavorite(spot.spotId);
+                                }}
+                              >
+                                {sdzFavorites.includes(spot.spotId) ? '★' : '☆'}
+                              </button>
+                            </div>
+                            <h3>{spot.name}</h3>
+                            <div className="sdz-map-card-meta">
+                              位置: {formatCoords(spot.location)}
+                            </div>
+                            {spot.description && (
+                              <p className="sdz-map-card-desc">{spot.description}</p>
+                            )}
+                            {spot.tags && spot.tags.length > 0 && (
+                              <div className="sdz-tags">
+                                {spot.tags.map((tag) => (
+                                  <span key={tag} className="sdz-tag">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <div className="sdz-map-card-actions">
+                              <button
+                                type="button"
+                                className="sdz-ghost"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  navigate(`/spots/${spot.spotId}`);
+                                }}
+                              >
+                                詳細を見る
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
-                    <div>
-                      <h3>近くのスポットを探す</h3>
-                      <p className="sdz-meta">
-                        現在地はブラウザの位置情報設定から許可してください。モバイル環境の方が取得しやすいです。
-                      </p>
-                    </div>
-                  </div>
+                  )}
+                </div>
+
+                <div className="sdz-map-footer">
                   <div className="sdz-card sdz-app-box">
                     <h3>アプリでスポット登録</h3>
                     <p className="sdz-meta">
@@ -648,59 +1038,24 @@ function App() {
                     </div>
                     <div className="sdz-meta">QR/リンクは後日追加予定</div>
                   </div>
-                </div>
-              </section>
-
-              {!loading && !error && spots.length === 0 && (
-                <p>スポットがまだありません。</p>
-              )}
-
-              {!loading &&
-                !error &&
-                spots.length > 0 &&
-                sdzFilteredSpots.length === 0 && (
-                  <p>条件に一致するスポットがありません。</p>
-                )}
-
-              <div className="sdz-spot-grid">
-                {sdzFilteredSpots.map((spot) => (
-                  <div key={spot.spotId} className="sdz-card sdz-spot-card">
-                    <div className="sdz-card-header">
-                      <div>
-                        <h3>{spot.name}</h3>
-                        <div className="sdz-meta">
-                          投稿者: {spot.userId} / 位置: {formatCoords(spot.location)} / 作成:
-                          {formatDateTime(spot.createdAt)}
-                        </div>
-                      </div>
+                  {sdzSelectedSpot && (
+                    <div className="sdz-card sdz-map-highlight">
+                      <p className="sdz-eyebrow">Selected Spot</p>
+                      <h3>{sdzSelectedSpot.name}</h3>
+                      <p className="sdz-meta">{getSpotTypeLabel(sdzSelectedSpot.tags)}</p>
+                      {sdzSelectedSpot.description && (
+                        <p className="sdz-map-card-desc">{sdzSelectedSpot.description}</p>
+                      )}
                       <button
                         type="button"
-                        className={`sdz-favorite ${
-                          sdzFavorites.includes(spot.spotId) ? 'is-active' : ''
-                        }`}
-                        onClick={() => handleToggleFavorite(spot.spotId)}
+                        onClick={() => navigate(`/spots/${sdzSelectedSpot.spotId}`)}
                       >
-                        {sdzFavorites.includes(spot.spotId) ? '★' : '☆'}
+                        詳細へ移動
                       </button>
                     </div>
-                    {spot.description && <p>{spot.description}</p>}
-                    {spot.tags && spot.tags.length > 0 && (
-                      <div className="sdz-tags">
-                        {spot.tags.map((tag) => (
-                          <span key={tag} className="sdz-tag">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="sdz-card-footer">
-                      <button type="button" onClick={() => navigate(`/spots/${spot.spotId}`)}>
-                        詳細を見る
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              </section>
             </>
           }
         />
@@ -712,6 +1067,7 @@ function App() {
               apiUrl={apiUrl}
               favorites={sdzFavorites}
               onToggleFavorite={handleToggleFavorite}
+              idToken={idToken}
             />
           }
         />
@@ -788,6 +1144,19 @@ function App() {
                         投稿 {sdzMySpots.length}件 / お気に入り {sdzFavoriteSpots.length}件
                       </div>
                     </div>
+                    <form className="sdz-profile-form" onSubmit={handleDisplayNameUpdate}>
+                      <label htmlFor="displayName">表示名</label>
+                      <input
+                        id="displayName"
+                        type="text"
+                        value={sdzDisplayName}
+                        onChange={(event) => setSdzDisplayName(event.target.value)}
+                        placeholder="表示名を入力"
+                      />
+                      <button type="submit" className="sdz-ghost">
+                        表示名を更新
+                      </button>
+                    </form>
                     {sdzHasPasswordProvider ? (
                       <button type="button" className="sdz-ghost" onClick={handlePasswordReset}>
                         パスワード再設定メールを送信
@@ -851,6 +1220,13 @@ function App() {
             </div>
           }
         />
+        <Route element={<SdzAdminGuard />}>
+          <Route element={<SdzAdminLayout />}>
+            <Route path="/admin" element={<SdzAdminSpotList />} />
+            <Route path="/admin/spots/new" element={<SdzAdminSpotForm />} />
+            <Route path="/admin/spots/:id/edit" element={<SdzAdminSpotForm />} />
+          </Route>
+        </Route>
       </Routes>
     </div>
   );

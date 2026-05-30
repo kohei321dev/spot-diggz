@@ -6,7 +6,7 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:ubuntu-22.04
 # 環境変数設定
 ENV DEBIAN_FRONTEND=noninteractive
 ENV RUST_VERSION=1.90.0
-ENV NODE_VERSION=20.10.0
+ENV NODE_VERSION=22.14.0
 ENV TERRAFORM_VERSION=1.6.6
 ENV GCLOUD_VERSION=456.0.0
 

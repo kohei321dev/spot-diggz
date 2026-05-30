@@ -37,7 +37,18 @@
 - **連携**: Cloud Runから`google-cloud-bigquery`クライアントでデータロード。定期バッチやPub/Sub→Dataflow経由のパイプラインが一般的。
 - **費用**: ストレージ0.02USD/GB、クエリ0.005USD/GBスキャン（オンデマンド）。大量データのときに活用する。
 
+## 📋 アーキテクチャ変更（2026-02-28）
+
+データアーキテクチャ再設計により、各サービスの役割が再定義された:
+
+- Firestore: Tier 1 マスターデータの【読み取り配信専用】ストア。ユーザーデータ（Tier 2）は保存しない。
+- BigQuery: マスターデータの【ETL・品質管理】パイプラインとして使用。配信DBとしては使用しない（レイテンシ不適合）。
+- Cloud Functions: BigQuery → Firestore へのデータ同期トリガー。
+- iOS SwiftData + CloudKit: ユーザー個人データ（Tier 2 スポット、マイリスト）の永続化。サービス提供者のサーバーには保存しない。
+
+詳細: `docs/designs/tier2-spot-data-architecture.md`
+
 ## 今後のアクション
-- 開発初期はFirestore（Nativeモード）を基盤とし、ユーザー/スポット/投稿メタデータを格納するスキーマを詳細設計する。
-- IaC（Terraform）で`google_firestore_database`リソースを定義し、開発・ステージング・本番環境を分離。
-- Cloud SQLやBigQueryを追加する際は、このメモを基に要件整理を再度STAR形式で行う。
+- ~~開発初期はFirestore（Nativeモード）を基盤とし、ユーザー/スポット/投稿メタデータを格納するスキーマを詳細設計する。~~ → 完了。Firestore は読み取り専用に移行。
+- IaC（Terraform）で `google_firestore_database` + `google_bigquery_dataset` リソースを定義し、開発・ステージング・本番環境を分離。
+- BigQuery データセット + Cloud Functions のデプロイを Phase 1-2 で実施（#216, #218）。

@@ -2,10 +2,35 @@
 
 ## 概要
 
-dev 環境のテストデータ（スポット＋画像）を手動で投入する手順。
+dev 環境の Tier 1 マスターデータをFirestoreに投入する手順。
 CI/CD や Cloud Build からは実行しない（自動流入を防止するため）。
 
-## 前提
+## ⚠️ アーキテクチャ変更（2026-02-28）
+
+データアーキテクチャ再設計により、マスターデータの投入経路が変更されました:
+
+- 旧方式: API経由（`POST /sdz/spots`）で Firestore に書き込み → 【廃止】
+- 新方式: BigQuery → Cloud Functions → Firestore のデータパイプライン → 【構築中】
+
+新パイプラインが完成するまでは、旧方式の seed スクリプトを暫定的に使用可能です。
+パイプライン完成後は、CSV → BigQuery ロード → Cloud Functions トリガーで投入します。
+
+詳細: `docs/designs/tier2-spot-data-architecture.md`
+
+---
+
+## 新方式（BigQuery パイプライン）※構築中
+
+1) CSV でマスターデータを準備
+2) BigQuery にロード: `bq load --source_format=CSV sdz_master.spots ./spots.csv`
+3) Cloud Functions をトリガー（手動 or スケジュール）
+4) Firestore に反映を確認
+
+---
+
+## 旧方式（API経由）※暫定利用可
+
+### 前提
 
 - GCP 認証が完了していること
 - `web/sdz_seed_spots.sh` を実行する
@@ -13,7 +38,7 @@ CI/CD や Cloud Build からは実行しない（自動流入を防止するた�
 - Firestore の `spots` コレクションは全削除される
 - `SDZ_API_URL` を実行環境に合わせて指定する
 
-## 手順
+### 手順
 
 1) GCP 認証とプロジェクト設定
 ```bash
@@ -53,8 +78,9 @@ gcloud firestore documents list spots --project sdz-dev
 gsutil ls gs://sdz-dev-img-bucket/spots
 ```
 
-## 注意点
+### 注意点
 
 - `web/sdz_seed_spots.sh` は Firestore の `spots` を全削除してから再投入する。
 - API URL は `SDZ_API_URL` で指定する。
 - CI/CD や Cloud Build から `web/sdz_seed_spots.sh` は呼び出していないことを維持する。
+- ⚠️ 新パイプライン完成後はこの方式を廃止する。

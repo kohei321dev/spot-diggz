@@ -1,4 +1,4 @@
-FROM rust:1.90-bullseye AS builder
+FROM rust:1.90-bookworm AS builder
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
@@ -9,10 +9,11 @@ ENV RUST_MIN_STACK=16777216
 ENV CARGO_BUILD_JOBS=1
 RUN cargo build --release
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates libssl1.1 \
+  && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends ca-certificates libssl3 \
   && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -r -u 10001 sdz

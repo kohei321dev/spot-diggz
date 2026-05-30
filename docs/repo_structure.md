@@ -1,12 +1,12 @@
 # リポジトリ構成方針
 
 spot-diggz は web/ 配下に Web版（API/UI/IaC/運用スクリプト）を集約し、
-モバイルは ios/android で分離するモノレポ構成を採用する。
+モバイルは iOS/android で分離するモノレポ構成を採用する。
 
 ## 現状
 
 - `web/` : Webアプリ一式（API/UI/IaC/スクリプト/seed資材）
-- `ios/` : iOSアプリ（準備中）
+- `iOS/` : iOSアプリ（準備中）
 - `android/` : Androidアプリ（準備中）
 - `docs/` : 設計/運用ドキュメント
 - `AGENTS.md` : Codex向け運用ルール
@@ -26,7 +26,7 @@ spot-diggz/
     firestore.rules
     .firebaserc
     .terraform-version
-  ios/
+  iOS/
   android/
   docs/
   AGENTS.md

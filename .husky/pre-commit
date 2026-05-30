@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# ===== 1. Prettier auto-format (lint-staged) =====
+npx lint-staged || exit 1
+
+# ===== 2. ESLint (TypeScript files in web/ui/) =====
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep '^web/ui/.*\.\(ts\|tsx\)$' || true)
+if [ -n "$STAGED_TS" ]; then
+  echo "[pre-commit] ESLint..."
+  (cd web/ui && npm run lint) || exit 1
+fi
+
+# ===== 3. Rust format & clippy (web/api/) =====
+STAGED_RS=$(git diff --cached --name-only --diff-filter=ACMR | grep '\.rs$' || true)
+if [ -n "$STAGED_RS" ]; then
+  echo "[pre-commit] cargo fmt --check..."
+  (cd web/api && cargo fmt -- --check) || exit 1
+  echo "[pre-commit] cargo clippy..."
+  (cd web/api && cargo clippy -- -D warnings) || exit 1
+fi
+
+# ===== 4. Terraform format (web/resources/) =====
+STAGED_TF=$(git diff --cached --name-only --diff-filter=ACMR | grep '\.tf$' || true)
+if [ -n "$STAGED_TF" ]; then
+  echo "[pre-commit] terraform fmt -check..."
+  (cd web/resources && terraform fmt -check -recursive) || exit 1
+fi

@@ -197,6 +197,112 @@ components:
           type: number
           format: double
           example: 139.7671
+    SpotTimeRange:
+      type: object
+      required: [startMinutes, endMinutes]
+      properties:
+        startMinutes:
+          type: integer
+          format: int32
+          example: 540
+        endMinutes:
+          type: integer
+          format: int32
+          example: 1260
+    SpotBusinessHours:
+      type: object
+      required: [is24Hours, sameAsWeekday]
+      properties:
+        scheduleType:
+          type: string
+          nullable: true
+          enum:
+            - regular
+            - weekdayOnly
+            - weekendOnly
+            - irregular
+            - schoolOnly
+            - manual
+        is24Hours:
+          type: boolean
+          example: false
+        sameAsWeekday:
+          type: boolean
+          example: true
+        weekday:
+          $ref: "#/components/schemas/SpotTimeRange"
+          nullable: true
+        weekend:
+          $ref: "#/components/schemas/SpotTimeRange"
+          nullable: true
+        note:
+          type: string
+          nullable: true
+    SpotParkAttributes:
+      type: object
+      properties:
+        officialUrl:
+          type: string
+          nullable: true
+        businessHours:
+          $ref: "#/components/schemas/SpotBusinessHours"
+          nullable: true
+        accessInfo:
+          type: string
+          nullable: true
+        phoneNumber:
+          type: string
+          nullable: true
+    SpotStreetSurfaceCondition:
+      type: object
+      properties:
+        roughness:
+          type: string
+          nullable: true
+        crack:
+          type: string
+          nullable: true
+    SpotStreetSection:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+        count:
+          type: integer
+          format: int32
+          nullable: true
+        heightCm:
+          type: integer
+          format: int32
+          nullable: true
+        widthCm:
+          type: integer
+          format: int32
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+    SpotStreetAttributes:
+      type: object
+      properties:
+        surfaceMaterial:
+          type: string
+          nullable: true
+        surfaceCondition:
+          $ref: "#/components/schemas/SpotStreetSurfaceCondition"
+          nullable: true
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpotStreetSection"
+          nullable: true
+        difficulty:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
     Spot:
       type: object
       required:
@@ -204,7 +310,6 @@ components:
         - name
         - tags
         - images
-        - trustLevel
         - userId
         - createdAt
         - updatedAt
@@ -227,17 +332,24 @@ components:
           type: array
           items:
             type: string
-        trustLevel:
+          maxItems: 3
+          description: 1スポット3枚まで。画像付きスポットは1ユーザーあたり最大10件まで。
+        approvalStatus:
           type: string
-          description: Spot trust level (verified/unverified)
+          description: Spot approval status (pending/approved/rejected). Omitted when no request yet.
           enum:
-            - verified
-            - unverified
-        trustSources:
-          type: array
-          description: External sources (YouTube/official site) for verified spots
-          items:
-            type: string
+            - pending
+            - approved
+            - rejected
+        parkAttributes:
+          $ref: "#/components/schemas/SpotParkAttributes"
+          nullable: true
+        streetAttributes:
+          $ref: "#/components/schemas/SpotStreetAttributes"
+          nullable: true
+        instagramTag:
+          type: string
+          nullable: true
         userId:
           type: string
         createdAt:
@@ -266,6 +378,17 @@ components:
           type: array
           items:
             type: string
+          maxItems: 3
+          description: 1スポット3枚まで
+        parkAttributes:
+          $ref: "#/components/schemas/SpotParkAttributes"
+          nullable: true
+        streetAttributes:
+          $ref: "#/components/schemas/SpotStreetAttributes"
+          nullable: true
+        instagramTag:
+          type: string
+          nullable: true
     UploadUrlRequest:
       type: object
       required: [contentType]

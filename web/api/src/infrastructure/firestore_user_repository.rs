@@ -8,15 +8,15 @@ use crate::{
 };
 
 /// Firestoreの`users`コレクションからユーザーを取得するリポジトリ。
-/// 認証には環境変数`SDZ_FIRESTORE_TOKEN`で指定されたBearerトークンを使用する。
+/// 認証には環境変数`SDZ_FIRESTORE_TOKEN`かCloud Runのメタデータサーバートークンを使用する。
 pub struct SdzFirestoreUserRepository {
     project_id: String,
-    bearer_token: String,
+    bearer_token: Option<String>,
     http: Client,
 }
 
 impl SdzFirestoreUserRepository {
-    pub fn new(project_id: String, bearer_token: String) -> Result<Self, SdzApiError> {
+    pub fn new(project_id: String, bearer_token: Option<String>) -> Result<Self, SdzApiError> {
         let http = Client::builder().build().map_err(|e| {
             tracing::error!("Failed to build reqwest client: {:?}", e);
             SdzApiError::Internal
@@ -30,10 +30,11 @@ impl SdzFirestoreUserRepository {
 
     async fn get_document(&self, user_id: &str) -> Result<Option<FirestoreUserDoc>, SdzApiError> {
         let url = format!("https://firestore.googleapis.com/v1/projects/{}/databases/(default)/documents/users/{}", self.project_id, user_id);
+        let token = self.resolve_token().await?;
         let resp = self
             .http
             .get(url)
-            .bearer_auth(&self.bearer_token)
+            .bearer_auth(token)
             .send()
             .await
             .map_err(|e| {
@@ -56,6 +57,49 @@ impl SdzFirestoreUserRepository {
                 Err(SdzApiError::Internal)
             }
         }
+    }
+
+    async fn resolve_token(&self) -> Result<String, SdzApiError> {
+        if let Some(token) = self
+            .bearer_token
+            .as_ref()
+            .filter(|token| !token.trim().is_empty())
+        {
+            return Ok(token.to_string());
+        }
+        if let Ok(token) = std::env::var("SDZ_FIRESTORE_TOKEN") {
+            if !token.trim().is_empty() {
+                return Ok(token);
+            }
+        }
+        self.fetch_metadata_token().await
+    }
+
+    async fn fetch_metadata_token(&self) -> Result<String, SdzApiError> {
+        let metadata_url = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
+        let resp = self
+            .http
+            .get(metadata_url)
+            .header("Metadata-Flavor", "Google")
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to fetch metadata token: {:?}", e);
+                SdzApiError::Internal
+            })?;
+
+        if !resp.status().is_success() {
+            let body = resp.text().await.unwrap_or_default();
+            tracing::error!("Metadata token error: {}", body);
+            return Err(SdzApiError::Internal);
+        }
+
+        let token = resp.json::<SdzMetadataToken>().await.map_err(|e| {
+            tracing::error!("Failed to parse metadata token: {:?}", e);
+            SdzApiError::Internal
+        })?;
+
+        Ok(token.access_token)
     }
 }
 
@@ -95,4 +139,10 @@ struct FirestoreUserFields {
 struct StringField {
     #[serde(rename = "stringValue")]
     string_value: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct SdzMetadataToken {
+    #[serde(rename = "access_token")]
+    access_token: String,
 }

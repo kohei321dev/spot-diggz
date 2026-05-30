@@ -1,0 +1,97 @@
+name: Extract Lessons from PR
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "教訓を抽出するPR番号"
+        required: true
+        type: number
+
+jobs:
+  extract-lessons:
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'lesson'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve PR number
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          PR_TITLE=$(gh pr view "$PR_NUMBER" --json title --jq '.title')
+          echo "title=${PR_TITLE}" >> "$GITHUB_OUTPUT"
+
+      - name: Gather PR context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          mkdir -p /tmp/pr-context
+
+          gh pr view "$PR_NUMBER" --json title,body,labels,files \
+            > /tmp/pr-context/pr-metadata.json
+
+          gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/comments" \
+            --paginate > /tmp/pr-context/review-comments.json
+
+          gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/reviews" \
+            --paginate > /tmp/pr-context/reviews.json
+
+          gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --paginate > /tmp/pr-context/discussion.json
+
+          gh pr diff "$PR_NUMBER" > /tmp/pr-context/diff.patch || true
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            ## タスク
+
+            PR #${{ steps.pr.outputs.number }} "${{ steps.pr.outputs.title }}" から教訓を抽出し CLAUDE.md を更新する。
+
+            ## コンテキスト
+
+            以下のファイルにPRの情報がある:
+            - /tmp/pr-context/pr-metadata.json (タイトル、本文、変更ファイル)
+            - /tmp/pr-context/review-comments.json (インラインレビューコメント)
+            - /tmp/pr-context/reviews.json (レビュー本文)
+            - /tmp/pr-context/discussion.json (PR上のディスカッション)
+            - /tmp/pr-context/diff.patch (コード差分)
+
+            ## 手順
+
+            1. 上記のコンテキストファイルを全て読む
+            2. PRの内容を分析し、以下の観点で教訓を探す:
+               - レビューで発見されたバグとその修正パターン
+               - ライブラリ/APIの非自明な挙動
+               - パフォーマンスやセキュリティ上の注意点
+               - 設計判断とその理由
+            3. 実質的な教訓がある場合のみ、CLAUDE.md の「よくある落とし穴と回避策」セクション末尾に追記する
+               - 形式: `- PR #番号 で発見: [簡潔な教訓の説明]`
+               - 既存のスタイルに合わせて日本語で記載
+            4. 教訓がない場合（機械的な変更やtrivialな修正）は CLAUDE.md を変更しない
+            5. CLAUDE.md を変更した場合は、新しいブランチを作成しPRを開く:
+               - ブランチ名: claude/lessons-pr-${{ steps.pr.outputs.number }}
+               - PRタイトル: "docs: PR #${{ steps.pr.outputs.number }} の教訓を CLAUDE.md に追記"
+
+            重要: 証拠のない教訓を捏造しないこと。レビューコメント・ディスカッション・修正パターンに実際に現れている内容のみ記録する。
+          allowed_tools: "Read,Write,Edit,Bash(git:*),Bash(gh:*)"
+          max_turns: "15"

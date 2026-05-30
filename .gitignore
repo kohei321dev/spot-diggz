@@ -1,5 +1,8 @@
 /.DS_Store
+.iterm-color
+/node_modules/
 /web/api/target/
+# 秘匿値を含む .env ファイル（.env.tpl はコミット対象）
 /web/api/.env
 /web/ui/.env
 /web/ui/.env.local
@@ -12,3 +15,10 @@
 /web/resources/.terraform/
 /web/resources/environments/**/terraform.tfvars
 /web/resources/terraform.tfstate*
+/trivy-results.sarif
+/iOS/spot-diggz.xcodeproj/project.xcworkspace/xcuserdata/
+/iOS/spot-diggz.xcodeproj/xcuserdata/
+**/xcschememanagement.plist
+**/*.xcuserstate
+**/GoogleService-Info.plist
+/.claude/mcp/sdz-vuln-scanner/.venv/

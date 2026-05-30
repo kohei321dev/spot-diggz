@@ -74,26 +74,26 @@ resource "google_storage_bucket_iam_member" "sdz_ui_public_read" {
 
 resource "google_artifact_registry_repository" "sdz_api_repo" {
   location      = var.sdz_region
-  repository_id = "sdz-${var.sdz_stage}-api"
+  repository_id = "sdz-${var.sdz_stage}-arapi"
   format        = "DOCKER"
 
   depends_on = [google_project_service.sdz_services]
 }
 
 resource "google_service_account" "sdz_dev_api_sa" {
-  account_id   = "sdz-dev-api-sa"
+  account_id   = "sdz-dev-saapi"
   display_name = "spot-diggz API用サービスアカウント"
   project      = var.sdz_project_id
 }
 
 resource "google_service_account" "sdz_dev_deploy_sa" {
-  account_id   = "sdz-dev-deploy-sa"
+  account_id   = "sdz-dev-sadeploy"
   display_name = "spot-diggz デプロイ用サービスアカウント"
   project      = var.sdz_project_id
 }
 
 resource "google_service_account" "sdz_dev_terraform_sa" {
-  account_id   = "sdz-dev-terraform-sa"
+  account_id   = "sdz-dev-satf"
   display_name = "spot-diggz terraform用サービスアカウント"
   project      = var.sdz_project_id
 }

@@ -20,7 +20,7 @@ describe('App', () => {
     window.localStorage.clear();
   });
 
-  it('renders list heading', () => {
+  it('renders map heading', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
@@ -31,9 +31,7 @@ describe('App', () => {
       </MemoryRouter>,
     );
     return waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /Spotを掘る。滑りに行く。旅を作る。/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /マップでスポットを探す/i })).toBeInTheDocument();
     });
   });
 
@@ -64,7 +62,7 @@ describe('App', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Favorite Spot')).toBeInTheDocument();
+      expect(screen.getAllByText('Favorite Spot').length).toBeGreaterThan(0);
     });
 
     const addButton = screen.getByRole('button', { name: '☆' });
@@ -101,7 +99,7 @@ describe('App', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Favorite Spot')).toBeInTheDocument();
+      expect(screen.getAllByText('Favorite Spot').length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Favorites' }));

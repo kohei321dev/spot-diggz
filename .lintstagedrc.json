@@ -1,0 +1,5 @@
+{
+  "web/ui/src/**/*.{ts,tsx}": ["prettier --write"],
+  "web/ui/src/**/*.{js,jsx,css}": ["prettier --write"],
+  "*.{json,md}": ["prettier --write"]
+}
