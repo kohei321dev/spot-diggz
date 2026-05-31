@@ -63,10 +63,11 @@ export interface SdzPlaceResult {
 export interface SdzSpot {
   spotId: string;
   name: string;
-  description?: string;
-  location?: SdzSpotLocation;
+  description?: string | null;
+  location: SdzSpotLocation;
   tags: string[];
-  images: string[];
+  visibility: 'public' | 'private' | 'unlisted';
+  images?: string[];
   approvalStatus?: 'pending' | 'approved' | 'rejected';
   parkAttributes?: SdzSpotParkAttributes;
   streetAttributes?: SdzStreetAttributes;
@@ -80,7 +81,7 @@ export interface SdzSpot {
   googleRating?: number;
   googleRatingCount?: number;
   googleTypes?: string[];
-  userId: string;
+  userId?: string;
   createdAt: string;
   updatedAt: string;
 }

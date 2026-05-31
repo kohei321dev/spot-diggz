@@ -96,6 +96,19 @@ npm test -- --watch=false
 npm run build
 ```
 
+## 使うコマンド一覧
+
+- `go fmt ./cmd/... ./internal/...`: Go APIのformat確認と整形。
+- `go vet ./cmd/... ./internal/...`: Go APIの静的検査。
+- `go test ./cmd/... ./internal/...`: Go APIの単体テスト。
+- `go build -o bin/spotdiggz-api ./cmd/api`: APIバイナリ生成。
+- `npm ci`: Browser UIの依存関係をlockfileどおりに再作成。
+- `npm run lint`: Browser UIのESLint検査。
+- `npm run type-check`: Browser UIのTypeScript型検査。
+- `npm test -- --watch=false`: Browser UIの単体テストをwatchなしで実行。
+- `npm audit --audit-level=high`: Browser UI依存関係のhigh以上の脆弱性検査。
+- `npm run build`: Browser UIのproduction build。
+
 ## Documentation
 
 - ADR-001: [docs/adr/001-go-skate-spot-metadata-api.md](docs/adr/001-go-skate-spot-metadata-api.md)
