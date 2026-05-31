@@ -108,6 +108,9 @@ npm run build
 - `npm test -- --watch=false`: Browser UIの単体テストをwatchなしで実行。
 - `npm audit --audit-level=high`: Browser UI依存関係のhigh以上の脆弱性検査。
 - `npm run build`: Browser UIのproduction build。
+- `git fetch --all --prune`: remote branch参照を最新化し、削除済みremote参照を整理。
+- `git switch -c <branch> --track origin/<branch>`: remote branchをlocal tracking branchとして作成して切り替え。
+- `git merge origin/master`: 作業branchへmasterの最新変更を取り込む。
 
 ## Documentation
 
