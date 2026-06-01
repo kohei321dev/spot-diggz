@@ -8,7 +8,7 @@
 
 [事実] Rust API、GCP deploy / Terraform、iOS、Android の active source はこの repository から外している。
 
-[事実] legacy code は `archive/rust-gcp-legacy-20260530` と `backup/rails-original` で参照する。
+[事実] legacy code は `archive/rust-gcp-legacy-20260530` と `archive/rails-original` で参照する。
 
 ## Working Rules
 

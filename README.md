@@ -21,7 +21,7 @@ SpotDiggz is a Go-based Skate Spot Metadata API with a browser UI.
 
 [事実] Legacy code is kept on archive branches instead of the active tree.
 
-- Rails archive: `backup/rails-original`
+- Rails archive: `archive/rails-original`
 - Rust / GCP / mobile archive: `archive/rust-gcp-legacy-20260530`
 
 ## Tech Stack
