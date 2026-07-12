@@ -15,6 +15,11 @@
 - [開発ワークフロー](docs/development_workflow.md)
 - [ADR一覧](docs/adr/)
 - [エージェント運用規約](AGENTS.md)
+- [技術書から採用した原則](docs/engineering/principles-and-sources.md)
+- [品質特性・アーキテクチャ指針](docs/architecture/quality-attributes.md)
+- [ログ・メトリクス・トレース・SLO設計](docs/operations/observability.md)
+- [継続的デリバリー設計](docs/operations/continuous-delivery.md)
+- [セキュリティ・プライバシー基準](docs/security/security-baseline.md)
 
 ## 使うコマンド一覧
 
