@@ -1,7 +1,8 @@
 # ADR-0001 リポジトリと旧実装の扱い
 
-- Status: Accepted
+- Status: Superseded
 - Date: 2026-07-12
+- Superseded by: [ADR-0006](0006-remove-legacy-implementation.md)
 
 ## Context
 
