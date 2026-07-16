@@ -92,17 +92,17 @@ docs/*                         要求・設計・調査ドキュメント
 
 ### Discovery Sprint 0
 
-- Product Baselineのレビュー
-- 初期都市圏の決定
-- 20〜30施設のデータ項目確認
-- 比較対象サービスの決定
-- 利用者テストの質問と成功条件の決定
+- 大阪市・堺市を利用者の起点とする大阪都市圏の確定
+- 一次ペルソナ、Job、対象外利用者の確定
+- 20〜30施設の候補と検証方法の確認
+- 比較対象サービス、質問票、成功条件、停止条件の決定
 
-### Sprint 1: Facility Catalog
+### Sprint 1: Foundation and Facility Catalog
 
+- Web、データ保存、CI/CD、観測性の最小構成をADRで決定
 - 施設データモデル
 - 公式情報の収集
-- 20〜30施設の初期登録
+- 候補20〜30施設の検証と初期登録
 - 施設詳細表示
 
 ### Sprint 2: Recommendation
@@ -112,17 +112,20 @@ docs/*                         要求・設計・調査ドキュメント
 - ルールベースのスコアリング
 - 最大3件の推薦と理由表示
 
-### Sprint 3: Validation
+### Sprint 3: Action, Localization and Feedback
 
 - 外部ナビ連携
+- 日本語・英語対応
 - 訂正報告
+- 主要導線のE2E
+
+### Sprint 4: Validation
+
 - 利用者テスト
 - 実際の訪問・再利用の計測
+- SLI/SLO、アラート、セキュリティ、運用時間の確認
+- Go、仮説修正、No-Goの判断
 
-### Sprint 4: AI and Localization
-
-- 自然文の条件変換
-- 推薦理由の説明
-- 日本語・英語対応
+AIによる自然文入力や説明の最適化はMilestone 1の対象外とし、決定論的推薦の需要検証後に再評価する。
 
 この計画は初期案であり、各Sprint Reviewの証拠により変更する。

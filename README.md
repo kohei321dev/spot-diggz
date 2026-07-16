@@ -13,6 +13,8 @@
 - [プロダクト要求基準](docs/product_baseline.md)
 - [市場・需要調査](docs/market_demand_research_2026-07.md)
 - [開発ワークフロー](docs/development_workflow.md)
+- [Discovery Sprint 0検証計画](docs/discovery/sprint-0-validation-plan.md)
+- [大阪都市圏の施設候補](docs/discovery/osaka-facility-candidates.md)
 - [ADR一覧](docs/adr/)
 - [エージェント運用規約](AGENTS.md)
 - [技術書から採用した原則](docs/engineering/principles-and-sources.md)
@@ -36,4 +38,4 @@
 
 ## 次の作業
 
-Discovery Sprint 0で対象地域を1つ決め、20〜30施設の検証済みカタログと、利用者が入力する条件を定義する。その後、最小の推薦体験をWebで検証する。
+Discovery Sprint 0で確定した大阪市・堺市の初心者向け仮説に基づき、Issue #279でWeb MVPの技術構成と開発・運用基盤を決定する。施設候補23件の検証済みカタログ化はIssue #280で行う。
