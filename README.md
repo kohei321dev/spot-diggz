@@ -6,7 +6,7 @@
 
 このリポジトリは作り直しの初期段階にある。旧iOS、Android、Rust API、React UI、GCP／Firebase構成は現行ツリーから削除し、必要な場合はGitのコミット履歴から参照する。
 
-現在は、実装より先に市場・利用者課題・要求・MVP境界を検証する。
+現在は、検証済み施設カタログを起点にGo製MVPを実装している。現行カタログは未検証施設を混入させないため空であり、公式情報の確認後に登録する。
 
 ## ドキュメント
 
@@ -16,6 +16,7 @@
 - [Discovery Sprint 0検証計画](docs/discovery/sprint-0-validation-plan.md)
 - [大阪都市圏の施設候補](docs/discovery/osaka-facility-candidates.md)
 - [ADR一覧](docs/adr/)
+- [Facility Catalog API契約](docs/api/facility-catalog.openapi.yaml)
 - [エージェント運用規約](AGENTS.md)
 - [技術書から採用した原則](docs/engineering/principles-and-sources.md)
 - [品質特性・アーキテクチャ指針](docs/architecture/quality-attributes.md)
@@ -32,10 +33,20 @@
 - `git log --oneline --decorate -5`: 直近のコミットとブランチ位置を確認する。
 - `git diff --check`: 空白エラーなど、コミット前の差分問題を確認する。
 
+### Go API
+
+- `make fmt`: Goコードを整形する。
+- `make test`: 全Goテストを実行する。
+- `make vet`: Go静的検査を実行する。
+- `make build`: APIバイナリをビルドする。
+- `make run`: ローカルAPIを起動する。
+
+初期APIは `GET /healthz`、`GET /api/facilities`、`GET /api/facilities/{facilityId}`。施設一覧は `activity` クエリで競技を絞り込める。カタログファイルは `FACILITY_CATALOG_PATH` で変更できる。
+
 ### ドキュメント検証
 
 - `git grep -n "検索語" -- ':!docs/market_demand_research_2026-07.md'`: 現行ツリーの参照や古いパスを検索する。
 
 ## 次の作業
 
-Discovery Sprint 0で確定した大阪市・堺市の初心者向け仮説に基づき、Issue #279でWeb MVPの技術構成と開発・運用基盤を決定する。施設候補23件の検証済みカタログ化はIssue #280で行う。
+施設カタログAPIの基盤は実装済み。次はIssue #280で大阪都市圏の候補23件を一次情報により検証し、`data/facilities.json`へ掲載可能な施設を登録する。その後、条件入力と決定論的推薦を実装する。

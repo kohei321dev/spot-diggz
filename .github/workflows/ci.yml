@@ -1,0 +1,108 @@
+name: spot-diggz CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "fix/**"
+      - "chore/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GO_VERSION: "1.25.12"
+  GOVULNCHECK_VERSION: "v1.1.4"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  go-ci:
+    name: Go verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l cmd internal)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build API binary
+        run: go build -trimpath -o bin/spotdiggz-api ./cmd/api
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
+
+      - name: Scan Go source
+        run: govulncheck ./...
+
+      - name: Scan Go binary
+        run: govulncheck -mode=binary ./bin/spotdiggz-api
+
+  docker-ci:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: go-ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build --tag spotdiggz-api:${GITHUB_SHA} .
+
+  filesystem-scan:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    steps:
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate

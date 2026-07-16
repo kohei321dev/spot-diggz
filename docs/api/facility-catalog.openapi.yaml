@@ -1,0 +1,183 @@
+openapi: 3.1.0
+info:
+  title: spot-diggz Facility Catalog API
+  version: 0.1.0
+  description: Verified facility catalog read API for the MVP foundation.
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is ready to accept requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+  /api/facilities:
+    get:
+      operationId: listFacilities
+      parameters:
+        - name: activity
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 50
+      responses:
+        '200':
+          description: Verified facilities sorted by facility ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [facilities]
+                properties:
+                  facilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Facility'
+        '400':
+          $ref: '#/components/responses/InvalidQuery'
+  /api/facilities/{facilityId}:
+    get:
+      operationId: getFacility
+      parameters:
+        - name: facilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Verified facility detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Facility'
+        '404':
+          $ref: '#/components/responses/FacilityNotFound'
+components:
+  responses:
+    InvalidQuery:
+      description: Query parameter validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    FacilityNotFound:
+      description: Facility does not exist in the verified catalog.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    Facility:
+      type: object
+      required:
+        - facilityId
+        - name
+        - address
+        - location
+        - activities
+        - sourceUrl
+        - sourceType
+        - status
+        - verifiedAt
+      properties:
+        facilityId:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        location:
+          type: object
+          required: [latitude, longitude]
+          properties:
+            latitude:
+              type: number
+              minimum: -90
+              maximum: 90
+            longitude:
+              type: number
+              minimum: -180
+              maximum: 180
+        activities:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        hours:
+          type: array
+          items:
+            type: object
+            required: [day]
+            properties:
+              day:
+                type: string
+              opens:
+                type: string
+              closes:
+                type: string
+              closed:
+                type: boolean
+        price:
+          type: string
+        reservation:
+          type: string
+        beginnerFriendly:
+          type: boolean
+        features:
+          type: array
+          items:
+            type: string
+        rules:
+          type: array
+          items:
+            type: string
+        access:
+          type: object
+          properties:
+            stations:
+              type: array
+              items:
+                type: string
+            parking:
+              type: string
+            notes:
+              type: string
+        sourceUrl:
+          type: string
+          format: uri
+        sourceType:
+          type: string
+        status:
+          type: string
+          const: verified
+        confidence:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        verifiedAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
