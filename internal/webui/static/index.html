@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#111714">
+    <title>spot-diggz | 今日のスケート先</title>
+    <link rel="stylesheet" href="/assets/app.css">
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <div class="brand-row">
+          <h1>spot-diggz</h1>
+          <span class="environment-label">OSAKA MVP</span>
+        </div>
+        <p>今日の自分に合うスケート先を決める</p>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="search-panel" aria-labelledby="search-title">
+        <div class="section-heading">
+          <p class="section-number">01</p>
+          <div>
+            <h2 id="search-title">セッション条件</h2>
+            <p>今から使える時間に合わせて検索</p>
+          </div>
+        </div>
+
+        <form id="recommendation-form" novalidate>
+          <fieldset class="form-group origin-group">
+            <legend>検索位置</legend>
+            <div class="segmented-control">
+              <label>
+                <input type="radio" name="originMode" value="specified_location" checked>
+                <span>地点を選ぶ</span>
+              </label>
+              <label>
+                <input type="radio" name="originMode" value="current_location">
+                <span>現在地</span>
+              </label>
+            </div>
+
+            <div id="specified-location-fields" class="origin-fields">
+              <label for="specified-location">出発地点</label>
+              <select id="specified-location" name="specifiedLocation">
+                <option value="osaka-station">大阪駅</option>
+                <option value="namba-station">なんば駅</option>
+                <option value="sakai-station">堺駅</option>
+                <option value="nakamozu-station">なかもず駅</option>
+              </select>
+            </div>
+
+            <div id="current-location-fields" class="origin-fields" hidden>
+              <button id="locate-button" class="secondary-button" type="button">現在地を取得</button>
+              <p id="location-status" class="field-status" aria-live="polite">未取得</p>
+            </div>
+          </fieldset>
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="purpose">今日の目的</label>
+              <select id="purpose" name="purpose">
+                <option value="basics">基礎を練習</option>
+                <option value="street">ストリートを練習</option>
+                <option value="transition">ランプ・ボウルを練習</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="mood">今の気分</label>
+              <select id="mood" name="mood">
+                <option value="focused">じっくり練習</option>
+                <option value="easygoing">気軽に滑る</option>
+                <option value="challenge">新しいことに挑戦</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="level">レベル</label>
+              <select id="level" name="level">
+                <option value="beginner">初心者</option>
+                <option value="returning">久しぶり</option>
+                <option value="intermediate">中級</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="available-minutes">使える時間</label>
+              <select id="available-minutes" name="availableMinutes">
+                <option value="60">1時間</option>
+                <option value="120" selected>2時間</option>
+                <option value="180">3時間</option>
+                <option value="240">4時間</option>
+              </select>
+            </div>
+
+            <div class="form-field full-width">
+              <label for="transport">交通手段</label>
+              <select id="transport" name="transport">
+                <option value="public_transit">公共交通</option>
+                <option value="car">車</option>
+                <option value="bicycle">自転車</option>
+                <option value="walk">徒歩</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="privacy-note">現在地は検索中だけ使用し、保存しません。</p>
+          <button id="search-button" class="primary-button" type="submit">候補を探す</button>
+          <p id="form-status" class="form-status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="results-panel" aria-labelledby="results-title">
+        <div class="results-header">
+          <div class="section-heading">
+            <p class="section-number">02</p>
+            <div>
+              <h2 id="results-title">おすすめ</h2>
+              <p id="results-summary" aria-live="polite">まだ検索していません</p>
+            </div>
+          </div>
+          <span id="result-count" class="result-count" aria-hidden="true">0 / 3</span>
+        </div>
+
+        <div id="results" class="results-list">
+          <div id="empty-state" class="empty-state">
+            <p>未検索</p>
+          </div>
+        </div>
+        <p id="travel-notice" class="travel-notice" hidden></p>
+      </section>
+    </main>
+  </body>
+</html>
