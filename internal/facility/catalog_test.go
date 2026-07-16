@@ -2,6 +2,8 @@ package facility
 
 import (
 	"errors"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -54,6 +56,28 @@ func TestLoadCatalogRejectsTrailingJSON(t *testing.T) {
 	_, err := LoadCatalog(strings.NewReader(`{"facilities": []}{"facilities": []}`))
 	if err == nil {
 		t.Fatal("LoadCatalog() error = nil, want trailing JSON error")
+	}
+}
+
+func TestDevelopmentFixtureLoads(t *testing.T) {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller() could not resolve the test file")
+	}
+	fixturePath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "facilities.dev.json")
+
+	catalog, err := LoadCatalogFile(fixturePath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFile() error = %v", err)
+	}
+	items := catalog.List("")
+	if len(items) != 3 {
+		t.Fatalf("List() returned %d facilities, want 3", len(items))
+	}
+	for _, item := range items {
+		if item.SourceType != "test_fixture" || item.Confidence != "test" {
+			t.Fatalf("fixture %s is not marked as test data", item.ID)
+		}
 	}
 }
 

@@ -40,8 +40,11 @@
 - `make vet`: Go静的検査を実行する。
 - `make build`: APIバイナリをビルドする。
 - `make run`: ローカルAPIを起動する。
+- `make run-dev`: 3件の開発用ダミー施設を読み込んでAPIを起動する。
 
 初期APIは `GET /healthz`、`GET /api/facilities`、`GET /api/facilities/{facilityId}`。施設一覧は `activity` クエリで競技を絞り込める。カタログファイルは `FACILITY_CATALOG_PATH` で変更できる。
+
+開発用データは `testdata/facilities.dev.json` に置き、施設名、住所、出典を含めてすべてダミーである。通常起動と本番Docker imageではこのファイルを使用しない。
 
 ### ドキュメント検証
 

@@ -1,4 +1,4 @@
-.PHONY: fmt test vet build run
+.PHONY: fmt test vet build run run-dev
 
 fmt:
 	gofmt -w cmd internal
@@ -14,3 +14,6 @@ build:
 
 run:
 	go run ./cmd/api
+
+run-dev:
+	FACILITY_CATALOG_PATH=testdata/facilities.dev.json go run ./cmd/api
