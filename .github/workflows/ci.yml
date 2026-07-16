@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - main
+      - "feature/**"
   workflow_dispatch:
 
 env:
@@ -42,6 +43,9 @@ jobs:
 
       - name: Test
         run: go test ./cmd/... ./internal/...
+
+      - name: Verify runnable MVP flow
+        run: make verify-mvp
 
       - name: Build API binary
         run: go build -trimpath -o bin/spotdiggz-api ./cmd/api

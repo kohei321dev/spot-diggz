@@ -41,6 +41,7 @@
 - `make build`: APIバイナリをビルドする。
 - `make run`: ローカルAPIを起動する。
 - `make run-dev`: 3件の開発用ダミー施設を読み込んでAPIとWeb UIを起動する。
+- `make verify-mvp`: ダミーデータでUI配信から推薦responseまでの主要flowを実HTTP検証する。
 
 `make run-dev`の起動後、`http://localhost:8080/`で条件入力から推薦結果まで確認できる。APIは `GET /healthz`、`GET /api/facilities`、`GET /api/facilities/{facilityId}`、`POST /api/recommendations`。施設一覧は `activity` クエリで競技を絞り込める。カタログファイルは `FACILITY_CATALOG_PATH` で変更できる。
 
