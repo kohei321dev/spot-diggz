@@ -11,9 +11,29 @@ import { SdzAdminSpotForm } from './admin/SdzAdminSpotForm';
 
 const apiUrl = import.meta.env.VITE_SDZ_API_URL || 'http://localhost:8080';
 const SDZ_FAVORITES_PAGE_SIZE = 8;
-const SDZ_TYPE_TAGS = new Set(['パーク', 'ストリート', 'スケートパーク', 'スケートボードパーク']);
-const SDZ_PARK_TAGS = new Set(['パーク', 'スケートパーク', 'スケートボードパーク']);
-const SDZ_STREET_TAGS = new Set(['ストリート']);
+const SDZ_TYPE_TAGS = new Set([
+  'park',
+  'skatepark',
+  'skate_park',
+  'street',
+  'パーク',
+  'ストリート',
+  'スケートパーク',
+  'スケートボードパーク',
+]);
+const SDZ_PARK_TAGS = new Set([
+  'park',
+  'skatepark',
+  'skate_park',
+  'パーク',
+  'スケートパーク',
+  'スケートボードパーク',
+]);
+const SDZ_STREET_TAGS = new Set(['street', 'ストリート']);
+
+function normalizeFilterText(value?: string | null) {
+  return (value ?? '').trim().toLocaleLowerCase();
+}
 
 function formatCoords(location?: SdzSpot['location']) {
   if (!location) return 'N/A';
@@ -58,8 +78,12 @@ function getInitialFavorites(): string[] {
 
 function getSpotTypeLabel(tags?: string[]) {
   const tagList = tags ?? [];
-  if (tagList.some((tag) => SDZ_PARK_TAGS.has(tag))) return 'スケートパーク';
-  if (tagList.some((tag) => SDZ_STREET_TAGS.has(tag))) return 'ストリート';
+  if (tagList.some((tag) => SDZ_PARK_TAGS.has(normalizeFilterText(tag)))) {
+    return 'スケートパーク';
+  }
+  if (tagList.some((tag) => SDZ_STREET_TAGS.has(normalizeFilterText(tag)))) {
+    return 'ストリート';
+  }
   return 'スポット';
 }
 
@@ -72,6 +96,30 @@ function getSpotTone(tags?: string[]) {
     return { label: typeLabel, color: '#ff7a45' };
   }
   return { label: typeLabel, color: '#7b8a94' };
+}
+
+function hasAllSelectedTags(spot: SdzSpot, selectedTags: string[]) {
+  if (selectedTags.length === 0) return true;
+  const spotTags = new Set((spot.tags ?? []).map((tag) => normalizeFilterText(tag)));
+  return selectedTags.every((tag) => spotTags.has(normalizeFilterText(tag)));
+}
+
+function matchesSelectedType(spot: SdzSpot, selectedType: string) {
+  if (selectedType === 'all') return true;
+  const tags = spot.tags ?? [];
+  if (selectedType === 'park') {
+    return tags.some((tag) => SDZ_PARK_TAGS.has(normalizeFilterText(tag)));
+  }
+  if (selectedType === 'street') {
+    return tags.some((tag) => SDZ_STREET_TAGS.has(normalizeFilterText(tag)));
+  }
+  return true;
+}
+
+function matchesSearchText(spot: SdzSpot, query: string) {
+  if (!query) return true;
+  const searchableValues = [spot.name, spot.description, spot.visibility, ...(spot.tags ?? [])];
+  return searchableValues.some((value) => normalizeFilterText(value).includes(query));
 }
 
 type SdzMapCameraControllerProps = {
@@ -278,8 +326,8 @@ function SdzSpotDetailPage({
             <p className="sdz-eyebrow">Spot Detail</p>
             <h2>{sdzDetail.name}</h2>
             <div className="sdz-meta">
-              投稿者: {sdzDetail.userId} / 位置: {formatCoords(sdzDetail.location)} / 作成:
-              {formatDateTime(sdzDetail.createdAt)}
+              公開範囲: {sdzDetail.visibility ?? 'public'} / 位置: {formatCoords(sdzDetail.location)}{' '}
+              / 作成: {formatDateTime(sdzDetail.createdAt)}
             </div>
           </div>
           <div className="sdz-detail-actions">
@@ -385,20 +433,29 @@ function App() {
   const sdzMapCardsScrollRafRef = useRef<number | null>(null);
 
   const isTestEnv = import.meta.env.MODE === 'test';
-  const subtitle = `API base: ${apiUrl}（GET /sdz/spots を表示中）`;
+  const subtitle = `API base: ${apiUrl}（GET /sdz/spots?visibility=public を表示中）`;
   const isEmailPending = user && !user.emailVerified;
   const sdzAvailableTags = useMemo(() => {
     const tagSet = new Set<string>();
     spots.forEach((spot) => {
       spot.tags?.forEach((tag) => {
-        if (!SDZ_TYPE_TAGS.has(tag)) {
+        if (!SDZ_TYPE_TAGS.has(normalizeFilterText(tag))) {
           tagSet.add(tag);
         }
       });
     });
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   }, [spots]);
-  const sdzFilteredSpots = useMemo(() => spots, [spots]);
+  const sdzFilteredSpots = useMemo(() => {
+    const query = normalizeFilterText(sdzSearchText);
+    return spots.filter((spot) => {
+      return (
+        matchesSelectedType(spot, sdzSelectedType) &&
+        hasAllSelectedTags(spot, sdzSelectedTags) &&
+        matchesSearchText(spot, query)
+      );
+    });
+  }, [sdzSearchText, sdzSelectedTags, sdzSelectedType, spots]);
   const sdzMapSpots = useMemo(
     () => sdzFilteredSpots.filter((spot) => spot.location),
     [sdzFilteredSpots],
@@ -409,23 +466,18 @@ function App() {
   );
   const sdzSearchRequest = useMemo(() => {
     return {
-      query: sdzSearchText,
-      type: sdzSelectedType,
       tags: sdzSelectedTags,
     };
-  }, [sdzSearchText, sdzSelectedTags, sdzSelectedType]);
+  }, [sdzSelectedTags]);
 
   const fetchSpots = useCallback(
-    async (signal?: AbortSignal, options?: { query?: string; type?: string; tags?: string[] }) => {
+    async (signal?: AbortSignal, options?: { tags?: string[] }) => {
       try {
         setLoading(true);
         setError(null);
         const headers = idToken ? { Authorization: `Bearer ${idToken}` } : undefined;
         const params = new URLSearchParams();
-        const query = options?.query?.trim();
-        if (query) params.set('q', query);
-        const type = options?.type && options.type !== 'all' ? options.type : '';
-        if (type) params.set('type', type);
+        params.set('visibility', 'public');
         if (options?.tags && options.tags.length > 0) {
           params.set('tags', options.tags.join(','));
         }
@@ -788,8 +840,8 @@ function App() {
         <div className="sdz-card sdz-mode-card">
           <div className="sdz-mode-content">
             <div>
-              <strong>閲覧専用モード</strong>
-              <div className="sdz-meta">新規登録・画像登録はモバイルアプリからのみ行えます。</div>
+              <strong>API接続モード</strong>
+              <div className="sdz-meta">スポット登録・更新はGo API契約に合わせて段階的に有効化します。</div>
             </div>
             <button type="button" onClick={handleRefresh}>
               再読み込み
@@ -1024,19 +1076,15 @@ function App() {
 
                 <div className="sdz-map-footer">
                   <div className="sdz-card sdz-app-box">
-                    <h3>アプリでスポット登録</h3>
+                    <h3>API連携を整備中</h3>
                     <p className="sdz-meta">
-                      Webは閲覧と整理専用です。スポット登録や画像投稿はモバイルアプリから行います。
+                      Browser UIはGo APIと同じrepositoryで育て、OpenAPI契約に合わせて更新します。
                     </p>
                     <div className="sdz-app-links">
-                      <button type="button" className="sdz-ghost" disabled>
-                        iOSアプリ（準備中）
-                      </button>
-                      <button type="button" className="sdz-ghost" disabled>
-                        Androidアプリ（準備中）
+                      <button type="button" className="sdz-ghost" onClick={handleRefresh}>
+                        再読み込み
                       </button>
                     </div>
-                    <div className="sdz-meta">QR/リンクは後日追加予定</div>
                   </div>
                   {sdzSelectedSpot && (
                     <div className="sdz-card sdz-map-highlight">
