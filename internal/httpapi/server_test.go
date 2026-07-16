@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -77,7 +78,7 @@ func TestServerRejectsLongActivityQuery(t *testing.T) {
 		t.Fatalf("NewCatalog() error = %v", err)
 	}
 	handler := NewServer(catalog, nil)
-	requestURL := "/api/facilities?activity=" + "a" + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	requestURL := "/api/facilities?activity=" + strings.Repeat("a", 51)
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, httptest.NewRequest(http.MethodGet, requestURL, nil))
 

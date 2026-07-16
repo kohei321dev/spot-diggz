@@ -9,8 +9,8 @@ type Location struct {
 }
 
 type OperatingHours struct {
-	Day   string `json:"day"`
-	Opens string `json:"opens,omitempty"`
+	Day    string `json:"day"`
+	Opens  string `json:"opens,omitempty"`
 	Closes string `json:"closes,omitempty"`
 	Closed bool   `json:"closed,omitempty"`
 }

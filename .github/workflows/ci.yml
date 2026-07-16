@@ -38,10 +38,10 @@ jobs:
         run: test -z "$(gofmt -l cmd internal)"
 
       - name: Vet
-        run: go vet ./...
+        run: go vet ./cmd/... ./internal/...
 
       - name: Test
-        run: go test ./...
+        run: go test ./cmd/... ./internal/...
 
       - name: Build API binary
         run: go build -trimpath -o bin/spotdiggz-api ./cmd/api
@@ -50,7 +50,7 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
 
       - name: Scan Go source
-        run: govulncheck ./...
+        run: govulncheck ./cmd/... ./internal/...
 
       - name: Scan Go binary
         run: govulncheck -mode=binary ./bin/spotdiggz-api
