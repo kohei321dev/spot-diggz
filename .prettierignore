@@ -1,9 +1,0 @@
-node_modules/
-dist/
-build/
-coverage/
-target/
-.terraform/
-*.tfstate*
-.vite/
-package-lock.json
