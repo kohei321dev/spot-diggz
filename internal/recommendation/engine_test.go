@@ -30,14 +30,25 @@ func TestEngineReturnsAtMostThreeRankedRecommendations(t *testing.T) {
 	if response.TravelEstimateNote == "" {
 		t.Fatal("TravelEstimateNote is empty")
 	}
+	if response.AvailabilityNote == "" {
+		t.Fatal("AvailabilityNote is empty")
+	}
 	if len(response.Recommendations[0].Reasons) == 0 {
 		t.Fatal("Reasons is empty")
+	}
+	first := response.Recommendations[0]
+	wantSkateMinutes := validInput().AvailableMinutes - 2*first.EstimatedTravelMinutes
+	if first.EstimatedSkateMinutes != wantSkateMinutes {
+		t.Fatalf("EstimatedSkateMinutes = %d, want %d", first.EstimatedSkateMinutes, wantSkateMinutes)
+	}
+	if first.ArrivalAt.IsZero() || first.FacilityClosesAt.IsZero() || first.SessionEndsAt.IsZero() {
+		t.Fatal("session timing fields must not be zero")
 	}
 }
 
 func TestEngineExcludesFacilitiesOutsideHardConditions(t *testing.T) {
 	closed := recommendationFacility("closed", 34.7020, 135.4970, true, []string{"flat-area"})
-	closed.Hours = []facility.OperatingHours{{Day: "daily", Closed: true}}
+	closed.Hours = []facility.OperatingHours{{Day: "Wednesday", Opens: "09:00", Closes: "21:00"}}
 	catalog := newTestCatalog(t, []facility.Facility{
 		recommendationFacility("eligible", 34.7020, 135.4970, true, []string{"flat-area"}),
 		recommendationFacility("advanced", 34.7020, 135.4970, false, []string{"flat-area"}),
@@ -91,6 +102,47 @@ func TestIsOpenAtSupportsDailyAndOvernightHours(t *testing.T) {
 	}
 }
 
+func TestEngineLimitsSkateTimeToFacilityClosing(t *testing.T) {
+	closingSoon := recommendationFacility("closing-soon", 34.7020, 135.4970, true, []string{"flat-area"})
+	closingSoon.Hours = []facility.OperatingHours{{Day: "Thursday", Opens: "09:00", Closes: "20:30"}}
+	engine := NewEngine(newTestCatalog(t, []facility.Facility{closingSoon}), fixedTestTime)
+
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 1 {
+		t.Fatalf("recommendation count = %d, want 1", len(response.Recommendations))
+	}
+
+	item := response.Recommendations[0]
+	wantClose := time.Date(2026, time.July, 16, 20, 30, 0, 0, japanStandardTime)
+	if !item.FacilityClosesAt.Equal(wantClose) {
+		t.Fatalf("FacilityClosesAt = %s, want %s", item.FacilityClosesAt, wantClose)
+	}
+	if !item.SessionEndsAt.Equal(wantClose) {
+		t.Fatalf("SessionEndsAt = %s, want %s", item.SessionEndsAt, wantClose)
+	}
+	wantSkateMinutes := int(wantClose.Sub(item.ArrivalAt) / time.Minute)
+	if item.EstimatedSkateMinutes != wantSkateMinutes {
+		t.Fatalf("EstimatedSkateMinutes = %d, want %d", item.EstimatedSkateMinutes, wantSkateMinutes)
+	}
+}
+
+func TestOpenUntilAtReturnsNextDayForOvernightHours(t *testing.T) {
+	hours := []facility.OperatingHours{{Day: "Thursday", Opens: "22:00", Closes: "02:00"}}
+	at := time.Date(2026, time.July, 17, 1, 0, 0, 0, japanStandardTime)
+
+	got, isOpen := openUntilAt(hours, at)
+	if !isOpen {
+		t.Fatal("openUntilAt() isOpen = false, want true")
+	}
+	want := time.Date(2026, time.July, 17, 2, 0, 0, 0, japanStandardTime)
+	if !got.Equal(want) {
+		t.Fatalf("openUntilAt() = %s, want %s", got, want)
+	}
+}
+
 func validInput() session.Input {
 	latitude := 34.7025
 	longitude := 135.4960
@@ -125,11 +177,15 @@ func recommendationFacility(id string, latitude float64, longitude float64, begi
 		Location:         facility.Location{Latitude: latitude, Longitude: longitude},
 		Activities:       []string{"skateboard"},
 		Hours:            []facility.OperatingHours{{Day: "daily", Opens: "00:00", Closes: "24:00"}},
+		Price:            "500円",
+		Reservation:      "当日受付",
 		BeginnerFriendly: beginnerFriendly,
 		Features:         features,
+		Rules:            []string{"ヘルメット必須"},
 		SourceURL:        "https://example.com/facilities/" + id,
 		SourceType:       "official",
 		Status:           "verified",
+		Confidence:       "high",
 		VerifiedAt:       time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
 	}
 }

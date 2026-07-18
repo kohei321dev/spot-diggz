@@ -38,6 +38,47 @@ func TestRunnableMVPFlow(t *testing.T) {
 	assertRecommendationFlow(t, client, server.URL)
 }
 
+func TestProductionCatalogReturnsOsakaRecommendation(t *testing.T) {
+	t.Parallel()
+
+	catalogPath := filepath.Join("..", "..", "data", "facilities.json")
+	catalog, err := facility.LoadCatalogFile(catalogPath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFile() error = %v", err)
+	}
+	latitude := 34.7025
+	longitude := 135.4960
+	now := func() time.Time {
+		return time.Date(2026, time.July, 17, 13, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+	}
+	result, err := recommendation.NewEngine(catalog, now).Recommend(session.Input{
+		Purpose:          session.PurposeBasics,
+		Mood:             session.MoodFocused,
+		Level:            session.LevelBeginner,
+		AvailableMinutes: 120,
+		Transport:        session.TransportPublicTransit,
+		Origin: session.Origin{
+			Mode:      session.OriginSpecifiedLocation,
+			Latitude:  &latitude,
+			Longitude: &longitude,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(result.Recommendations) == 0 {
+		t.Fatal("Recommend() returned no production facilities")
+	}
+	for _, item := range result.Recommendations {
+		if item.Facility.SourceType == "test_fixture" || strings.Contains(strings.ToUpper(item.Facility.Name), "DUMMY") {
+			t.Fatalf("Recommend() returned test facility %s", item.Facility.ID)
+		}
+		if len(item.Facility.ScheduleNotes) == 0 {
+			t.Fatalf("Recommend() returned facility %s without schedule notes", item.Facility.ID)
+		}
+	}
+}
+
 func assertWebUI(t *testing.T, client *http.Client, baseURL string) {
 	t.Helper()
 
@@ -55,6 +96,9 @@ func assertWebUI(t *testing.T, client *http.Client, baseURL string) {
 		t.Fatalf("read UI response: %v", err)
 	}
 	for _, marker := range []string{
+		`id="quick-search-button"`,
+		`class="mood-action"`,
+		`id="condition-details"`,
 		`id="recommendation-form"`,
 		`name="originMode"`,
 		`id="purpose"`,
@@ -62,6 +106,7 @@ func assertWebUI(t *testing.T, client *http.Client, baseURL string) {
 		`id="level"`,
 		`id="available-minutes"`,
 		`id="transport"`,
+		`id="availability-notice"`,
 	} {
 		if !bytes.Contains(page, []byte(marker)) {
 			t.Fatalf("UI does not contain %s", marker)
@@ -80,7 +125,12 @@ func assertWebUI(t *testing.T, client *http.Client, baseURL string) {
 	if assetResponse.StatusCode != http.StatusOK {
 		t.Fatalf("GET /assets/app.js status = %d, want %d", assetResponse.StatusCode, http.StatusOK)
 	}
-	for _, marker := range []string{"/api/recommendations", "https://www.google.com/maps/dir/"} {
+	for _, marker := range []string{
+		"/api/recommendations",
+		"https://www.google.com/maps/dir/",
+		"window.localStorage",
+		"createPrimaryRecommendation",
+	} {
 		if !bytes.Contains(asset, []byte(marker)) {
 			t.Fatalf("JavaScript asset does not contain %q", marker)
 		}
@@ -146,7 +196,13 @@ func assertRecommendationFlow(t *testing.T, client *http.Client, baseURL string)
 	if len(first.Reasons) == 0 || first.Facility.SourceURL == "" || first.Facility.VerifiedAt.IsZero() {
 		t.Fatal("recommendation is missing reasons, source URL, or verification date")
 	}
+	if first.EstimatedSkateMinutes <= 0 || first.ArrivalAt.IsZero() || first.FacilityClosesAt.IsZero() || first.SessionEndsAt.IsZero() {
+		t.Fatal("recommendation is missing session timing")
+	}
 	if result.TravelEstimateNote == "" {
 		t.Fatal("travel estimate notice is empty")
+	}
+	if result.AvailabilityNote == "" {
+		t.Fatal("availability notice is empty")
 	}
 }

@@ -14,9 +14,9 @@ func TestHandlerServesApplicationAndAssets(t *testing.T) {
 		contentType string
 		contains    string
 	}{
-		{path: "/", contentType: "text/html", contains: "spot-diggz"},
-		{path: "/assets/app.css", contentType: "text/css", contains: ".workspace"},
-		{path: "/assets/app.js", contentType: "text/javascript", contains: "/api/recommendations"},
+		{path: "/", contentType: "text/html", contains: `id="quick-search-button"`},
+		{path: "/assets/app.css", contentType: "text/css", contains: ".mood-action-grid"},
+		{path: "/assets/app.js", contentType: "text/javascript", contains: "scheduleNotes"},
 	}
 
 	for _, test := range tests {

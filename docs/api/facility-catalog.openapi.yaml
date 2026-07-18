@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: spot-diggz MVP API
-  version: 0.2.0
+  version: 0.3.0
   description: Verified facility catalog and deterministic recommendation API.
 paths:
   /healthz:
@@ -144,6 +144,7 @@ components:
         availableMinutes:
           type: integer
           enum: [60, 120, 180, 240]
+          description: Total time available for the round trip and skating session.
         transport:
           type: string
           enum: [public_transit, car, bicycle, walk]
@@ -167,7 +168,7 @@ components:
           maximum: 180
     RecommendationResponse:
       type: object
-      required: [recommendations, travelEstimateNote]
+      required: [recommendations, travelEstimateNote, availabilityNote]
       properties:
         recommendations:
           type: array
@@ -176,6 +177,8 @@ components:
             $ref: '#/components/schemas/Recommendation'
         travelEstimateNote:
           type: string
+        availabilityNote:
+          type: string
     Recommendation:
       type: object
       required:
@@ -183,6 +186,10 @@ components:
         - reasons
         - distanceKm
         - estimatedTravelMinutes
+        - estimatedSkateMinutes
+        - arrivalAt
+        - facilityClosesAt
+        - sessionEndsAt
         - travelEstimateKind
       properties:
         facility:
@@ -198,6 +205,22 @@ components:
         estimatedTravelMinutes:
           type: integer
           minimum: 0
+        estimatedSkateMinutes:
+          type: integer
+          minimum: 1
+          description: Estimated skating time after outbound and return travel, limited by facility closing time.
+        arrivalAt:
+          type: string
+          format: date-time
+          description: Estimated arrival time in Japan Standard Time.
+        facilityClosesAt:
+          type: string
+          format: date-time
+          description: Closing time of the matching operating-hours window.
+        sessionEndsAt:
+          type: string
+          format: date-time
+          description: Estimated time to leave the facility before closing or the end of the available window.
         travelEstimateKind:
           type: string
           const: straight_line
@@ -217,9 +240,16 @@ components:
         - address
         - location
         - activities
+        - hours
+        - price
+        - reservation
+        - beginnerFriendly
+        - features
+        - rules
         - sourceUrl
         - sourceType
         - status
+        - confidence
         - verifiedAt
       properties:
         facilityId:
@@ -259,6 +289,11 @@ components:
                 type: string
               closed:
                 type: boolean
+        scheduleNotes:
+          type: array
+          description: Recurring closures and conditions that can override normal operating hours.
+          items:
+            type: string
         price:
           type: string
         reservation:

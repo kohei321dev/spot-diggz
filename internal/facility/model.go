@@ -28,6 +28,7 @@ type Facility struct {
 	Location         Location         `json:"location"`
 	Activities       []string         `json:"activities"`
 	Hours            []OperatingHours `json:"hours,omitempty"`
+	ScheduleNotes    []string         `json:"scheduleNotes,omitempty"`
 	Price            string           `json:"price,omitempty"`
 	Reservation      string           `json:"reservation,omitempty"`
 	BeginnerFriendly bool             `json:"beginnerFriendly"`

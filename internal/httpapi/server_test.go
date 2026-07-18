@@ -230,11 +230,15 @@ func testFacility() facility.Facility {
 		Location:         facility.Location{Latitude: 34.6937, Longitude: 135.5023},
 		Activities:       []string{"skateboard"},
 		Hours:            []facility.OperatingHours{{Day: "daily", Opens: "00:00", Closes: "24:00"}},
+		Price:            "500円",
+		Reservation:      "当日受付",
 		BeginnerFriendly: true,
 		Features:         []string{"flat-area"},
+		Rules:            []string{"ヘルメット必須"},
 		SourceURL:        "https://example.com/facilities/a",
 		SourceType:       "official",
 		Status:           "verified",
+		Confidence:       "high",
 		VerifiedAt:       time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
 	}
 }

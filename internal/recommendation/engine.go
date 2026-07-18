@@ -26,6 +26,7 @@ const (
 	focusedMoodScore               = 10
 	easygoingFeatureScore          = 8
 	challengeFeatureScore          = 10
+	skateTimeScoreDivisor          = 10
 	publicTransitSpeedKmPerHour    = 22.0
 	publicTransitOverheadMinutes   = 12
 	carSpeedKmPerHour              = 30.0
@@ -35,6 +36,7 @@ const (
 	walkSpeedKmPerHour             = 4.5
 	TravelEstimateKind             = "straight_line"
 	TravelEstimateNotice           = "移動時間は直線距離による概算です。実際の経路と所要時間は外部ナビで確認してください。"
+	AvailabilityNotice             = "表示は公式情報の通常営業時間に基づきます。臨時休場、貸切、天候による変更は情報源で確認してください。"
 )
 
 var japanStandardTime = time.FixedZone("JST", japanStandardTimeOffsetSeconds)
@@ -49,12 +51,17 @@ type Item struct {
 	Reasons                []Reason          `json:"reasons"`
 	DistanceKm             float64           `json:"distanceKm"`
 	EstimatedTravelMinutes int               `json:"estimatedTravelMinutes"`
+	EstimatedSkateMinutes  int               `json:"estimatedSkateMinutes"`
+	ArrivalAt              time.Time         `json:"arrivalAt"`
+	FacilityClosesAt       time.Time         `json:"facilityClosesAt"`
+	SessionEndsAt          time.Time         `json:"sessionEndsAt"`
 	TravelEstimateKind     string            `json:"travelEstimateKind"`
 }
 
 type Response struct {
 	Recommendations    []Item `json:"recommendations"`
 	TravelEstimateNote string `json:"travelEstimateNote"`
+	AvailabilityNote   string `json:"availabilityNote"`
 }
 
 type Engine struct {
@@ -77,7 +84,7 @@ func (engine *Engine) Recommend(input session.Input) (Response, error) {
 	originLatitude := *input.Origin.Latitude
 	originLongitude := *input.Origin.Longitude
 	maxTravelMinutes := input.AvailableMinutes / maxTravelShareDivisor
-	now := engine.now().In(japanStandardTime)
+	now := engine.now().In(japanStandardTime).Truncate(time.Minute)
 	candidates := make([]scoredItem, 0)
 
 	for _, item := range engine.catalog.List("skateboard") {
@@ -92,11 +99,19 @@ func (engine *Engine) Recommend(input session.Input) (Response, error) {
 		}
 
 		arrivalAt := now.Add(time.Duration(travelMinutes) * time.Minute)
-		if !isOpenAt(item.Hours, arrivalAt) {
+		facilityClosesAt, isOpen := openUntilAt(item.Hours, arrivalAt)
+		if !isOpen {
 			continue
 		}
 
-		score, reasons := scoreFacility(item, input, travelMinutes, maxTravelMinutes)
+		returnDepartureAt := now.Add(time.Duration(input.AvailableMinutes-travelMinutes) * time.Minute)
+		sessionEndsAt := minTime(facilityClosesAt, returnDepartureAt)
+		estimatedSkateMinutes := int(sessionEndsAt.Sub(arrivalAt) / time.Minute)
+		if estimatedSkateMinutes <= 0 {
+			continue
+		}
+
+		score, reasons := scoreFacility(item, input, travelMinutes, maxTravelMinutes, estimatedSkateMinutes)
 		candidates = append(candidates, scoredItem{
 			score: score,
 			item: Item{
@@ -104,6 +119,10 @@ func (engine *Engine) Recommend(input session.Input) (Response, error) {
 				Reasons:                reasons,
 				DistanceKm:             math.Round(distanceKm*distanceRoundingFactor) / distanceRoundingFactor,
 				EstimatedTravelMinutes: travelMinutes,
+				EstimatedSkateMinutes:  estimatedSkateMinutes,
+				ArrivalAt:              arrivalAt,
+				FacilityClosesAt:       facilityClosesAt,
+				SessionEndsAt:          sessionEndsAt,
 				TravelEstimateKind:     TravelEstimateKind,
 			},
 		})
@@ -128,6 +147,7 @@ func (engine *Engine) Recommend(input session.Input) (Response, error) {
 	return Response{
 		Recommendations:    recommendations,
 		TravelEstimateNote: TravelEstimateNotice,
+		AvailabilityNote:   AvailabilityNotice,
 	}, nil
 }
 
@@ -161,10 +181,12 @@ func travelProfileFor(transport session.Transport) travelProfile {
 	}
 }
 
-func scoreFacility(item facility.Facility, input session.Input, travelMinutes int, maxTravelMinutes int) (int, []Reason) {
+func scoreFacility(item facility.Facility, input session.Input, travelMinutes int, maxTravelMinutes int, estimatedSkateMinutes int) (int, []Reason) {
 	matchedPurposeFeatures := matchingFeatures(item.Features, purposeFeatures(input.Purpose))
-	score := (maxTravelMinutes - travelMinutes) + len(matchedPurposeFeatures)*purposeFeatureScore
-	reasons := make([]Reason, 0, 4)
+	score := (maxTravelMinutes - travelMinutes) +
+		len(matchedPurposeFeatures)*purposeFeatureScore +
+		estimatedSkateMinutes/skateTimeScoreDivisor
+	reasons := make([]Reason, 0, 5)
 
 	if len(matchedPurposeFeatures) > 0 {
 		reasons = append(reasons, Reason{Code: "purpose_match", Message: purposeReason(input.Purpose)})
@@ -180,6 +202,10 @@ func scoreFacility(item facility.Facility, input session.Input, travelMinutes in
 	}
 
 	score, reasons = applyMoodScore(score, reasons, item, input.Mood, matchedPurposeFeatures)
+	reasons = append(reasons, Reason{
+		Code:    "session_time_estimate",
+		Message: "往復の概算移動と通常営業時間を考慮すると約" + strconv.Itoa(estimatedSkateMinutes) + "分滑れる見込みです。",
+	})
 	reasons = append(reasons, Reason{
 		Code:    "travel_estimate",
 		Message: "選択した交通手段で片道約" + strconv.Itoa(travelMinutes) + "分の概算です。",
@@ -202,7 +228,7 @@ func applyMoodScore(score int, reasons []Reason, item facility.Facility, mood se
 			reasons = append(reasons, Reason{Code: "mood_match", Message: "気軽に滑りやすい設備条件があります。"})
 		}
 	case session.MoodChallenge:
-		matched := matchingFeatures(item.Features, []string{"stairs", "handrail", "mini-ramp", "bowl"})
+		matched := matchingFeatures(item.Features, []string{"stairs", "handrail", "rail", "ledge", "bank", "mini-ramp", "quarter-ramp", "bowl"})
 		if len(matched) > 0 {
 			score += len(matched) * challengeFeatureScore
 			reasons = append(reasons, Reason{Code: "mood_match", Message: "挑戦向けのセクションがあります。"})
@@ -217,9 +243,9 @@ func purposeFeatures(purpose session.Purpose) []string {
 	case session.PurposeBasics:
 		return []string{"flat-area"}
 	case session.PurposeStreet:
-		return []string{"stairs", "handrail"}
+		return []string{"stairs", "handrail", "rail", "ledge", "bank"}
 	case session.PurposeTransition:
-		return []string{"mini-ramp", "bowl"}
+		return []string{"mini-ramp", "quarter-ramp", "bowl"}
 	default:
 		return nil
 	}
@@ -252,7 +278,14 @@ func matchingFeatures(features []string, targets []string) []string {
 }
 
 func isOpenAt(hours []facility.OperatingHours, at time.Time) bool {
+	_, isOpen := openUntilAt(hours, at)
+	return isOpen
+}
+
+func openUntilAt(hours []facility.OperatingHours, at time.Time) (time.Time, bool) {
 	minutes := at.Hour()*60 + at.Minute()
+	startOfDay := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, at.Location())
+	var latestClose time.Time
 	for _, period := range hours {
 		opens, openErr := parseClockMinutes(period.Opens)
 		closes, closeErr := parseClockMinutes(period.Closes)
@@ -260,19 +293,32 @@ func isOpenAt(hours []facility.OperatingHours, at time.Time) bool {
 			continue
 		}
 
+		var closesAt time.Time
 		if opens < closes && dayMatches(period.Day, at) && minutes >= opens && minutes < closes {
-			return true
+			closesAt = startOfDay.Add(time.Duration(closes) * time.Minute)
 		}
 		if opens > closes {
 			if dayMatches(period.Day, at) && minutes >= opens {
-				return true
+				closesAt = startOfDay.Add(time.Duration(minutesPerDay+closes) * time.Minute)
 			}
 			if dayMatches(period.Day, at.Add(-24*time.Hour)) && minutes < closes {
-				return true
+				closesAt = startOfDay.Add(time.Duration(closes) * time.Minute)
 			}
 		}
+
+		if closesAt.After(latestClose) {
+			latestClose = closesAt
+		}
 	}
-	return false
+
+	return latestClose, !latestClose.IsZero()
+}
+
+func minTime(first time.Time, second time.Time) time.Time {
+	if first.Before(second) {
+		return first
+	}
+	return second
 }
 
 func parseClockMinutes(value string) (int, error) {
