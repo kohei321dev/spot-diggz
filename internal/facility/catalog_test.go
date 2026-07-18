@@ -59,6 +59,26 @@ func TestLoadCatalogRejectsTrailingJSON(t *testing.T) {
 	}
 }
 
+func TestNewCatalogRejectsInvalidOperatingHours(t *testing.T) {
+	item := validFacility()
+	item.Hours = []OperatingHours{{Day: "holiday", Opens: "09:00", Closes: "21:00"}}
+
+	_, err := NewCatalog([]Facility{item})
+	if !errors.Is(err, ErrInvalidData) {
+		t.Fatalf("NewCatalog() error = %v, want ErrInvalidData", err)
+	}
+}
+
+func TestNewCatalogRejectsFacilityWithoutOpenHours(t *testing.T) {
+	item := validFacility()
+	item.Hours = []OperatingHours{{Day: "daily", Closed: true}}
+
+	_, err := NewCatalog([]Facility{item})
+	if !errors.Is(err, ErrInvalidData) {
+		t.Fatalf("NewCatalog() error = %v, want ErrInvalidData", err)
+	}
+}
+
 func TestDevelopmentFixtureLoads(t *testing.T) {
 	_, currentFile, _, ok := runtime.Caller(0)
 	if !ok {
@@ -81,6 +101,31 @@ func TestDevelopmentFixtureLoads(t *testing.T) {
 	}
 }
 
+func TestProductionCatalogContainsOnlyVerifiedRealFacilities(t *testing.T) {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller() could not resolve the test file")
+	}
+	catalogPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "data", "facilities.json")
+
+	catalog, err := LoadCatalogFile(catalogPath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFile() error = %v", err)
+	}
+	items := catalog.List("")
+	if len(items) < 3 {
+		t.Fatalf("List() returned %d facilities, want at least 3", len(items))
+	}
+	for _, item := range items {
+		if item.SourceType == "test_fixture" || item.Confidence == "test" || strings.Contains(strings.ToUpper(item.Name), "DUMMY") || strings.Contains(item.SourceURL, "example.com") {
+			t.Fatalf("production facility %s is marked as test data", item.ID)
+		}
+		if len(item.ScheduleNotes) == 0 {
+			t.Fatalf("production facility %s has no schedule notes", item.ID)
+		}
+	}
+}
+
 func validFacility() Facility {
 	return Facility{
 		ID:               "facility-a",
@@ -88,10 +133,16 @@ func validFacility() Facility {
 		Address:          "大阪府大阪市",
 		Location:         Location{Latitude: 34.6937, Longitude: 135.5023},
 		Activities:       []string{"skateboard"},
+		Hours:            []OperatingHours{{Day: "daily", Opens: "09:00", Closes: "21:00"}},
+		Price:            "500円",
+		Reservation:      "当日受付",
 		BeginnerFriendly: true,
+		Features:         []string{"flat-area"},
+		Rules:            []string{"ヘルメット必須"},
 		SourceURL:        "https://example.com/facilities/a",
 		SourceType:       "official",
 		Status:           "verified",
+		Confidence:       "high",
 		VerifiedAt:       time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
 	}
 }

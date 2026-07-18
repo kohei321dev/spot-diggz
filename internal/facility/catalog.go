@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 var (
@@ -100,8 +101,23 @@ func validateFacility(item Facility) error {
 	if len(item.Activities) == 0 {
 		return fmt.Errorf("%w: activities are required for %s", ErrInvalidData, item.ID)
 	}
+	if len(item.Hours) == 0 {
+		return fmt.Errorf("%w: operating hours are required for %s", ErrInvalidData, item.ID)
+	}
+	if err := validateOperatingHours(item.ID, item.Hours); err != nil {
+		return err
+	}
+	if strings.TrimSpace(item.Price) == "" || strings.TrimSpace(item.Reservation) == "" {
+		return fmt.Errorf("%w: price and reservation guidance are required for %s", ErrInvalidData, item.ID)
+	}
+	if len(item.Features) == 0 || len(item.Rules) == 0 {
+		return fmt.Errorf("%w: features and rules are required for %s", ErrInvalidData, item.ID)
+	}
 	if item.Status != "verified" {
 		return fmt.Errorf("%w: only verified facilities can be published: %s", ErrInvalidData, item.ID)
+	}
+	if strings.TrimSpace(item.SourceType) == "" || strings.TrimSpace(item.Confidence) == "" {
+		return fmt.Errorf("%w: sourceType and confidence are required for %s", ErrInvalidData, item.ID)
 	}
 	parsedURL, err := url.ParseRequestURI(item.SourceURL)
 	if err != nil || (parsedURL.Scheme != "https" && parsedURL.Scheme != "http") || parsedURL.Host == "" {
@@ -111,6 +127,39 @@ func validateFacility(item Facility) error {
 		return fmt.Errorf("%w: verifiedAt is required for %s", ErrInvalidData, item.ID)
 	}
 	return nil
+}
+
+func validateOperatingHours(facilityID string, hours []OperatingHours) error {
+	validDays := map[string]bool{
+		"daily": true, "weekday": true, "weekend": true,
+		"monday": true, "tuesday": true, "wednesday": true, "thursday": true,
+		"friday": true, "saturday": true, "sunday": true,
+	}
+	hasOpenWindow := false
+	for _, period := range hours {
+		if !validDays[strings.ToLower(strings.TrimSpace(period.Day))] {
+			return fmt.Errorf("%w: invalid operating-hours day %q for %s", ErrInvalidData, period.Day, facilityID)
+		}
+		if period.Closed {
+			continue
+		}
+		if !isClock(period.Opens, false) || !isClock(period.Closes, true) || period.Opens == period.Closes {
+			return fmt.Errorf("%w: invalid operating-hours window for %s", ErrInvalidData, facilityID)
+		}
+		hasOpenWindow = true
+	}
+	if !hasOpenWindow {
+		return fmt.Errorf("%w: at least one open operating-hours window is required for %s", ErrInvalidData, facilityID)
+	}
+	return nil
+}
+
+func isClock(value string, allowEndOfDay bool) bool {
+	if value == "24:00" {
+		return allowEndOfDay
+	}
+	_, err := time.Parse("15:04", value)
+	return err == nil
 }
 
 func containsIgnoreCase(values []string, target string) bool {

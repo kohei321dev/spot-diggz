@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: spot-diggz Facility Catalog API
-  version: 0.1.0
-  description: Verified facility catalog read API for the MVP foundation.
+  title: spot-diggz MVP API
+  version: 0.3.0
+  description: Verified facility catalog and deterministic recommendation API.
 paths:
   /healthz:
     get:
@@ -63,6 +63,31 @@ paths:
                 $ref: '#/components/schemas/Facility'
         '404':
           $ref: '#/components/responses/FacilityNotFound'
+  /api/recommendations:
+    post:
+      operationId: createRecommendations
+      description: >-
+        Returns at most three deterministic recommendations. Origin coordinates are
+        processed for this request only and are not returned or persisted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '200':
+          description: Ranked recommendations from the verified facility catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
 components:
   responses:
     InvalidQuery:
@@ -77,7 +102,136 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    InvalidRequest:
+      description: JSON or session selection validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RequestTooLarge:
+      description: Request body exceeds 16 KiB.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnsupportedMediaType:
+      description: Content-Type is not application/json.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    SessionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - purpose
+        - mood
+        - level
+        - availableMinutes
+        - transport
+        - origin
+      properties:
+        purpose:
+          type: string
+          enum: [basics, street, transition]
+        mood:
+          type: string
+          enum: [focused, easygoing, challenge]
+        level:
+          type: string
+          enum: [beginner, returning, intermediate]
+        availableMinutes:
+          type: integer
+          enum: [60, 120, 180, 240]
+          description: Total time available for the round trip and skating session.
+        transport:
+          type: string
+          enum: [public_transit, car, bicycle, walk]
+        origin:
+          $ref: '#/components/schemas/SessionOrigin'
+    SessionOrigin:
+      type: object
+      additionalProperties: false
+      required: [mode, latitude, longitude]
+      properties:
+        mode:
+          type: string
+          enum: [current_location, specified_location]
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+    RecommendationResponse:
+      type: object
+      required: [recommendations, travelEstimateNote, availabilityNote]
+      properties:
+        recommendations:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        travelEstimateNote:
+          type: string
+        availabilityNote:
+          type: string
+    Recommendation:
+      type: object
+      required:
+        - facility
+        - reasons
+        - distanceKm
+        - estimatedTravelMinutes
+        - estimatedSkateMinutes
+        - arrivalAt
+        - facilityClosesAt
+        - sessionEndsAt
+        - travelEstimateKind
+      properties:
+        facility:
+          $ref: '#/components/schemas/Facility'
+        reasons:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/RecommendationReason'
+        distanceKm:
+          type: number
+          minimum: 0
+        estimatedTravelMinutes:
+          type: integer
+          minimum: 0
+        estimatedSkateMinutes:
+          type: integer
+          minimum: 1
+          description: Estimated skating time after outbound and return travel, limited by facility closing time.
+        arrivalAt:
+          type: string
+          format: date-time
+          description: Estimated arrival time in Japan Standard Time.
+        facilityClosesAt:
+          type: string
+          format: date-time
+          description: Closing time of the matching operating-hours window.
+        sessionEndsAt:
+          type: string
+          format: date-time
+          description: Estimated time to leave the facility before closing or the end of the available window.
+        travelEstimateKind:
+          type: string
+          const: straight_line
+    RecommendationReason:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
     Facility:
       type: object
       required:
@@ -86,9 +240,16 @@ components:
         - address
         - location
         - activities
+        - hours
+        - price
+        - reservation
+        - beginnerFriendly
+        - features
+        - rules
         - sourceUrl
         - sourceType
         - status
+        - confidence
         - verifiedAt
       properties:
         facilityId:
@@ -128,6 +289,11 @@ components:
                 type: string
               closed:
                 type: boolean
+        scheduleNotes:
+          type: array
+          description: Recurring closures and conditions that can override normal operating hours.
+          items:
+            type: string
         price:
           type: string
         reservation:

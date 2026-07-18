@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#111714">
+    <title>spot-diggz | 今日のスケート先</title>
+    <link rel="stylesheet" href="/assets/app.css">
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <div class="brand-row">
+          <h1>spot-diggz</h1>
+          <span class="environment-label">OSAKA MVP</span>
+        </div>
+        <p>今日の自分に合うスケート先を決める</p>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="search-panel" aria-labelledby="search-title">
+        <div class="decision-intro">
+          <p class="section-kicker">RIGHT NOW</p>
+          <h2 id="search-title">今から滑る場所を決める</h2>
+          <p>いつもの条件を使って、公式情報の通常営業時間内にある候補を選びます。</p>
+        </div>
+
+        <div class="quick-actions" aria-label="すぐにおすすめを見る">
+          <button id="quick-search-button" class="primary-button quick-search-button" type="button">
+            おまかせで今から滑る
+          </button>
+
+          <fieldset class="mood-actions">
+            <legend>今の気分から選ぶ</legend>
+            <div class="mood-action-grid">
+              <button class="mood-action" type="button" data-mood="easygoing">
+                <strong>気軽に</strong>
+                <span>近さと使いやすさ</span>
+              </button>
+              <button class="mood-action" type="button" data-mood="focused">
+                <strong>じっくり</strong>
+                <span>練習目的との相性</span>
+              </button>
+              <button class="mood-action" type="button" data-mood="challenge">
+                <strong>挑戦する</strong>
+                <span>セクションを重視</span>
+              </button>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="preference-summary">
+          <div>
+            <p class="preference-label">いつもの条件</p>
+            <p id="condition-summary">大阪駅・初心者・公共交通・2時間</p>
+          </div>
+        </div>
+
+        <details id="condition-details" class="condition-details">
+          <summary>条件を変更</summary>
+          <form id="recommendation-form" novalidate>
+            <fieldset class="form-group origin-group">
+              <legend>検索位置</legend>
+              <div class="segmented-control">
+                <label>
+                  <input type="radio" name="originMode" value="specified_location" checked>
+                  <span>地点を選ぶ</span>
+                </label>
+                <label>
+                  <input type="radio" name="originMode" value="current_location">
+                  <span>現在地</span>
+                </label>
+              </div>
+
+              <div id="specified-location-fields" class="origin-fields">
+                <label for="specified-location">出発地点</label>
+                <select id="specified-location" name="specifiedLocation">
+                  <option value="osaka-station">大阪駅</option>
+                  <option value="namba-station">なんば駅</option>
+                  <option value="sakai-station">堺駅</option>
+                  <option value="nakamozu-station">なかもず駅</option>
+                </select>
+              </div>
+
+              <div id="current-location-fields" class="origin-fields" hidden>
+                <button id="locate-button" class="secondary-button" type="button">現在地を確認</button>
+                <p id="location-status" class="field-status" aria-live="polite">検索時に取得します</p>
+              </div>
+            </fieldset>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="purpose">練習したいこと</label>
+                <select id="purpose" name="purpose">
+                  <option value="basics">基礎を練習</option>
+                  <option value="street">ストリートを練習</option>
+                  <option value="transition">ランプ・ボウルを練習</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="mood">いつもの気分</label>
+                <select id="mood" name="mood">
+                  <option value="focused">じっくり練習</option>
+                  <option value="easygoing">気軽に滑る</option>
+                  <option value="challenge">新しいことに挑戦</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="level">レベル</label>
+                <select id="level" name="level">
+                  <option value="beginner">初心者</option>
+                  <option value="returning">久しぶり</option>
+                  <option value="intermediate">中級</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="available-minutes">使える時間</label>
+                <select id="available-minutes" name="availableMinutes">
+                  <option value="60">1時間</option>
+                  <option value="120" selected>2時間</option>
+                  <option value="180">3時間</option>
+                  <option value="240">4時間</option>
+                </select>
+              </div>
+
+              <div class="form-field full-width">
+                <label for="transport">交通手段</label>
+                <select id="transport" name="transport">
+                  <option value="public_transit">公共交通</option>
+                  <option value="car">車</option>
+                  <option value="bicycle">自転車</option>
+                  <option value="walk">徒歩</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="privacy-note">設定はこの端末だけに保存します。正確な現在地は保存しません。</p>
+            <button id="search-button" class="secondary-submit-button" type="submit">保存しておすすめを更新</button>
+          </form>
+        </details>
+        <p id="form-status" class="form-status" aria-live="polite"></p>
+      </section>
+
+      <section class="results-panel" aria-labelledby="results-title">
+        <div class="results-header">
+          <div class="section-heading">
+            <p class="section-number">02</p>
+            <div>
+              <h2 id="results-title">今日のおすすめ</h2>
+              <p id="results-summary" aria-live="polite">「今から滑る」で今日の一択を表示します</p>
+            </div>
+          </div>
+          <span id="result-count" class="result-count" aria-hidden="true">READY</span>
+        </div>
+
+        <div id="results" class="results-list">
+          <div id="empty-state" class="empty-state">
+            <p>条件入力は不要です。いつもの設定ですぐに探せます。</p>
+          </div>
+        </div>
+        <p id="availability-notice" class="travel-notice" hidden></p>
+        <p id="travel-notice" class="travel-notice" hidden></p>
+      </section>
+    </main>
+  </body>
+</html>

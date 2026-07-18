@@ -1,3 +1,170 @@
 {
-  "facilities": []
+  "facilities": [
+    {
+      "facilityId": "OSK-F001",
+      "name": "SPOTAKA Skateboard Park（スポパー）",
+      "address": "大阪府大阪市中央区西心斎橋1-6-14 BIGSTEP B2F",
+      "location": {
+        "latitude": 34.6724243,
+        "longitude": 135.4966028
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "weekday",
+          "opens": "12:00",
+          "closes": "20:00"
+        },
+        {
+          "day": "weekend",
+          "opens": "11:00",
+          "closes": "20:00"
+        }
+      ],
+      "scheduleNotes": [
+        "祝日は11:00から営業します。平日祝日は安全側の12:00から候補として表示します。",
+        "不定休です。貸切時は一般利用できないため、来場前に公式情報を確認してください。"
+      ],
+      "price": "1時間500円、3時間1,000円、1日2,000円",
+      "reservation": "無料会員登録が必要です。事前仮登録ができます。",
+      "beginnerFriendly": true,
+      "features": [
+        "indoor",
+        "roof",
+        "rental",
+        "flat-area",
+        "mini-ramp",
+        "rail",
+        "bank"
+      ],
+      "rules": [
+        "18歳以下は保護者の同意が必要です。",
+        "小学生以下は保護者同伴で来場してください。",
+        "パーク内での食事はできません（水分補給は可能です）。"
+      ],
+      "access": {
+        "stations": [
+          "大阪メトロ心斎橋駅 7番出口から徒歩3分",
+          "大阪メトロ四ツ橋駅 5番出口から徒歩3分"
+        ],
+        "parking": "BIGSTEP地下B3F・B4Fに有料駐車場107台",
+        "notes": "BIGSTEP B2F"
+      },
+      "sourceUrl": "https://spotaka-skateboardpark.com/",
+      "sourceType": "facility_operator_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-17T00:00:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F002",
+      "name": "スポーツパークまつばら",
+      "address": "大阪府松原市三宅西7丁目1040番1",
+      "location": {
+        "latitude": 34.5928294,
+        "longitude": 135.5487834
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "22:00"
+        }
+      ],
+      "scheduleNotes": [
+        "公式情報で終了時刻が22:00と23:00に分かれるため、この画面では安全側の22:00までとして案内します。",
+        "12月29日から1月3日は休場です。雨天・メンテナンス・大会等で利用を制限する場合があります。"
+      ],
+      "price": "1日550円",
+      "reservation": "個人利用の詳細は施設受付へ確認してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "roof",
+        "lighting",
+        "rental",
+        "flat-area",
+        "mini-ramp",
+        "handrail",
+        "stairs",
+        "concrete"
+      ],
+      "rules": [
+        "ヘルメットを着用していない場合は利用できません。",
+        "利用できるのはスケートボードとインラインスケートです。BMXは利用できません。",
+        "混雑、大会、講習会等により一般利用を制限する場合があります。"
+      ],
+      "access": {
+        "parking": "有料駐車場50台、駐輪場70台",
+        "notes": "阪神高速道路大和川線の高架下"
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/sportspark-matsubara",
+      "sourceType": "official_operator_and_municipality",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-17T00:00:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F003",
+      "name": "おくさま印スケボーパーク",
+      "address": "大阪府松原市立部4丁目270番1",
+      "location": {
+        "latitude": 34.5791945,
+        "longitude": 135.5087872
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "23:00"
+        }
+      ],
+      "scheduleNotes": [
+        "12月29日から1月3日は休館です。",
+        "イベントや最新のお知らせを来場前に公式情報で確認してください。"
+      ],
+      "price": "屋外550円、屋内・屋外1,100円（1日）",
+      "reservation": "初回は利用登録と身分証明書の提示が必要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "indoor",
+        "outdoor",
+        "roof",
+        "rental",
+        "quarter-ramp",
+        "handrail",
+        "rail",
+        "ledge",
+        "bank"
+      ],
+      "rules": [
+        "ヘルメット着用が必須です。未着用では入場できません。",
+        "満5歳以下は利用できず、小学生以下は終日保護者同伴が必要です。",
+        "中学生以下が19:00以降に利用する場合は保護者同伴が必要です。"
+      ],
+      "access": {
+        "stations": [
+          "近鉄南大阪線 恵我ノ荘駅から徒歩30分",
+          "ぐるりん号 立部5丁目停留所から徒歩5分"
+        ],
+        "parking": "無料駐車場10台（9:00-23:00）",
+        "notes": "河内松原駅付近からシェアサイクルで約10分"
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/m-7288/guide",
+      "sourceType": "official_operator_and_municipality",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-17T00:00:00+09:00"
+    }
+  ]
 }
