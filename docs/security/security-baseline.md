@@ -1,165 +1,145 @@
 # Security and Privacy Baseline
 
-- Status: Draft
-- Date: 2026-07-12
-- Scope: Web、API、施設データ、位置条件、AI、CI/CD
+- Status: Active MVP baseline
+- Date: 2026-07-20
+- Scope: Web UI、HTTP API、verified facility catalog、検索位置、訂正報告、optional Google連携、CI/CD
+- Related: [Product Baseline](../product_baseline.md)
+- Related: [ADR-0010](../adr/0010-google-maps-provider-and-fallback.md)
 
-## 1. 原則
+## 1. MVP security posture
 
-- Secure by Design: 実装後の検査ではなく、要求・データフロー・信頼境界から対策を決める。
-- Zero Trust: ネットワーク内外を信頼根拠にせず、主体と要求ごとに認証・認可する。
-- Least Privilege: 人、サービス、AIツール、CI/CDへ必要最小限の権限だけを与える。
-- Assume Breach: 侵害を完全に防げない前提で、検知、隔離、失効、復旧を設計する。
-- Defense in Depth: 入力検証、権限、暗号化、隔離、監視、監査を組み合わせる。
-- Data Minimization: 収集しない、保存しない、短く保持することを最初の防御にする。
+- MVPにはaccount、login、管理画面を設けない。公開APIであることを前提に、入力検証、request size上限、process内rate limit、network境界を組み合わせる。
+- 施設選定は検証済みcatalogと決定論的ruleだけで行い、AI providerへdataを送信しない。
+- 正確な検索位置はapplicationで保存・access log出力・response再掲をしない。Google連携を有効にした場合の外部送信は別のprivacy boundaryとして明示する。
+- 訂正報告は目的をcatalog品質改善に限定し、任意contactは明示同意時だけ受理し、90日後の削除期限を持たせる。
+- secret、個人情報、正確な位置、request bodyをsource、image、log、metrics、traceへ含めない。
 
-## 2. データ分類
+## 2. Data classification and retention
 
-| Class | Examples | Handling |
-|---|---|---|
-| Public | 公開施設名、公開住所、公式URL、公開料金 | 出典・ライセンス・鮮度を管理 |
-| Internal | 推薦ルール、運用設定、集計メトリクス | 認可された開発・運用主体のみ |
-| Personal | アカウント情報、フィードバック、仮名セッション | 目的、同意、保持期間、削除方法を定義 |
-| Sensitive location | 正確な現在地、移動条件 | 原則保存しない。処理後破棄 |
-| Secret | APIキー、トークン、署名鍵、Cookie | Secret Manager等で管理し、ログ・Git禁止 |
+| Class | Data | Purpose | Storage / retention |
+| --- | --- | --- | --- |
+| Public | 施設名、住所、公開座標、料金、ルール、source URL | catalog表示と推薦 | Git管理。sourceと検証時刻を追跡 |
+| Internal | 推薦rule、設定名、集計metrics、release metadata | application運用 | 認可された開発・運用主体だけが参照 |
+| Sensitive location | 推薦起点の緯度経度、地点検索文字列 | 移動時間計算、geocoding | applicationでは非保存。request処理後に破棄 |
+| Personal | 訂正details、evidence URL、任意contact email、consent | catalog訂正の確認 | Neon/PostgreSQL in production、correction file in local/CI。receiptから90日後に削除 |
+| Secret | `DATABASE_URL`、`GOOGLE_MAPS_API_KEY`、platform credential | correction store、server-side Google API、deploy | secret storeのみ。Git、image、browser、logは禁止 |
 
-新しいデータ項目には、分類、所有者、利用目的、保存場所、保持期間、削除方法を定義する。
+訂正reportには `receivedAt` と `deleteAfter=receivedAt+90日` を保存する。storeは起動時と1時間ごとに `deleteAfter` を過ぎたreportをpurgeするため、正常時も期限到達から削除まで最大1時間の差がある。purge失敗時は `correction_retention_purge_failed` を監視し、retention incidentとして扱う。backupや複製も元reportの `deleteAfter` を超えて保持しない。
 
-## 3. 初期資産
+## 3. Trust boundaries and data flows
 
-- 施設カタログと出典
-- 推薦ルールとスコア
-- 利用者の入力条件
-- 正確な現在地または入力地域
-- AIプロンプト、ツール定義、評価セット
-- API・モデル・地図サービスの認証情報
-- CI/CD権限と成果物
-- ログ、トレース、セキュリティ監査記録
+```text
+Browser
+  -> Go HTTP application
+       -> read-only facility catalog JSON
+       -> correction store (Neon/PostgreSQL in production, JSON Lines file locally)
+       -> Prometheus metrics endpoint
+       -> Google Routes API       (key設定時のみ)
+       -> Google Geocoding API    (key設定時のみ)
+CI/CD
+  -> source / binary / image verification
+  -> Vercel Container / Neon    (Production configured)
+```
 
-## 4. 信頼境界
+### Browser to application
 
-実装時に次の境界をデータフロー図へ記載する。
+- TLS terminationはproduction ingressで行う。production URLとcertificateはdeploy時に確認する。
+- JSON write endpointは `Content-Type: application/json`、strict JSON、型・長さ・enum・座標範囲を検証する。
+- request body上限はrecommendation 16 KiB、location search 1 KiB、correction 8 KiB、event 1 KiBとする。
+- process内token bucketはrecommendation 60/min burst 10、location search 30/min burst 5、correction 30/min burst 10、event 300/min burst 60とする。
+- `X-Content-Type-Options` 等のsecurity headerをapplicationで設定し、HTMLは埋め込み静的assetだけを配信する。
+- client提供のrequest ID、IP、自由入力をmetrics labelに使わない。
 
-- Browser <-> Application
-- Application <-> Database
-- Application <-> Map / Route provider
-- Application <-> AI provider
-- AI model <-> Tools
-- CI/CD <-> Cloud / Hosting
-- Operator <-> Production data
+process内rate limitはinstance間で共有されず、source単位でもない。production公開時はingressのrequest/body制限、DDoS対策、必要なIP policyを追加し、application limiterだけを濫用対策の根拠にしない。
 
-境界ごとに、認証、認可、暗号化、入力検証、レート制限、ログ、失敗時動作を定義する。
+### Application to Google
 
-## 5. 脅威モデリング
+`GOOGLE_MAPS_API_KEY` が未設定ならGoogleへrequestしない。設定時はserverからHTTPSで次を送信する。
 
-次の場合に脅威モデルを作成・更新する。
+| Provider | Sent data | Not sent by design |
+| --- | --- | --- |
+| Routes Compute Route Matrix | 正確な起点座標、公開施設座標、交通手段 | 訂正report、contact、任意event |
+| Geocoding | 利用者の地点検索文字列、country/language/region制約 | 訂正report、推薦条件一式 |
 
-- 新しいデータ種別を保存する
-- 認証、投稿、管理画面を追加する
-- 外部APIまたはAIツールを追加する
-- 現在地、画像、自由入力を扱う
-- 新しい環境・クラウド・データストアを追加する
-- 権限モデルを変更する
+applicationで非保存であっても、Googleがrequestを受信する。利用者向けprivacy表示では「保存しない」と「外部送信しない」を区別する。provider側の利用規約、retention、telemetryはproduction有効化前にownerが確認する。
 
-最低限、なりすまし、改ざん、否認、情報漏えい、サービス妨害、権限昇格を検討する。
-AI境界では、プロンプトインジェクション、間接インジェクション、データ汚染、ツール悪用、機密漏えいも追加する。
+即時検索ではGoogle Routesの `departureTime` を省略し、providerのrequest時刻を使う。Google requestは4秒timeout、hostごとの同時HTTP connectionは4本とし、Routes失敗時はrequest全体をstraight-line計算へ縮退する。GeocodingはJSON bodyのPOSTで受け、失敗またはkey未設定時に `503 location_search_unavailable` を返し、代表地点またはbrowser Geolocationへ戻れるようにする。
 
-## 6. 認証・認可
+### Application to correction store
 
-- MVPでアカウントが不要なら認証機能を作らない。
-- 認証導入時は独自パスワード実装を避け、検証済みIdPを候補とする。
-- 認証と認可を分け、対象リソースと操作ごとに認可する。
-- 管理操作は一般利用者の経路と分離し、強い認証を要求する。
-- サービス間権限は環境・用途ごとに分離する。
-- 長期APIキーより短命トークンまたはワークロードIDを優先する。
-- 権限付与・変更・拒否を監査可能にする。
+- Productionの`DATABASE_URL`はVercel/Neonのsecret storeからruntime注入し、Neon側の暗号化、権限、backup、90日retention設定を運用で確認する。`CORRECTION_STORE_PATH`はlocal/CIのfile fallback用である。
+- file fallbackを使う場合、既定directoryはUID `65532` が書き込める。新規directoryは `0700`、fileは `0600` で作る。既存volumeのownerとmodeはdeploy時に検査する。
+- file fallbackは起動時にstore fileを作成またはopenして書込とsyncを確認する。store総量は32 MiBを上限とし、超過時はappendせず `503 correction_store_unavailable` を返す。Neonでは同じ期限条件をSQL deleteで適用する。
+- `details` は10〜1000文字、`evidenceUrl` はoptional HTTPS URL、contact emailはoptionalで `contactConsent=true` の場合だけ受理する。
+- logにはreport ID、facility ID、category等の最小metadataだけを残し、details、evidence URL、contactを含めない。
+- fileの手編集、別の一時fileへの迂回保存、retentionを超えるbackupを禁止する。
 
-## 7. アプリケーションセキュリティ
+### Metrics and logs
 
-- 入力を型、長さ、範囲、文字種、許可値で検証する。
-- 出力先に応じてエスケープし、XSS、SQL/NoSQL injection、SSRFを防ぐ。
-- CSRF、CORS、Cookie、CSP等は採用構成に応じて安全な既定値を使う。
-- レート制限、リクエストサイズ上限、タイムアウトを設定する。
-- ファイル・画像受付を追加する場合は、形式、サイズ、保存先、マルウェア、メタデータを検査する。
-- エラー応答で内部構造、スタックトレース、秘密情報を公開しない。
+- `/metrics` はapplication認証を持たない。productionではprivate network、service-to-service policy、またはingress allowlistで制限する。
+- access logはpath template、status、duration、request ID等を記録し、query string、request body、正確な位置、contact、API keyを記録しない。
+- traceを追加する場合もrequest/response bodyをattributeへ保存しない。
+- `APP_VERSION` とdeploy時刻をrelease記録に残し、incidentとartifactを関連付ける。
 
-## 8. AIセキュリティ
+## 4. Secrets and Google credential
 
-- ユーザー入力、Web検索結果、施設ページ、RAG文書を命令ではなくデータとして扱う。
-- システム指示と外部データを明確に分離する。
-- AIが呼べるツールをallowlistで定義する。
-- 読み取りツールと書き込みツールを分離する。
-- ツール引数をスキーマで検証し、認可をAIの判断へ委ねない。
-- 書き込み、削除、公開、課金、個人情報アクセスには人間の確認を要求する。
-- AI出力をDBクエリ、HTML、コマンドとして直接実行しない。
-- 根拠がない施設事実は拒否し、モデル知識で補完しない。
-- 敵対的入力と間接プロンプトインジェクションを評価セットへ含める。
-- モデル・プロンプト変更後に安全性評価を再実行する。
+- `GOOGLE_MAPS_API_KEY` はserver-side secret storeからruntime注入する。`.env`、command履歴、CI artifact、test fixture、container layerへ保存しない。
+- production keyはRoutes APIとGeocoding APIだけに制限し、利用可能なら固定egress IP等のapplication restrictionを設定する。
+- quotaとbilling alert、利用量監視、owner、rotation、失効手順を有効化前に定義する。
+- compromiseの疑いがある場合はkeyをprovider側で失効し、environmentから削除してapplicationを再起動する。推薦はstraight-lineへ縮退し、地点検索は停止する。
+- scratch imageにはGoogle HTTPSのcertificate検証に必要なCA bundleだけを追加し、shellやpackage managerは含めない。
 
-## 9. 位置情報とプライバシー
+## 5. Catalog integrity and application boundary
 
-- ブラウザの位置情報は明示同意後にだけ取得する。
-- 拒否しても駅名・地域入力で利用できるようにする。
-- 正確な現在地は推薦処理後に破棄し、既定でDB・ログ・分析基盤へ保存しない。
-- 距離計算や分析に必要な場合は、地域メッシュ等へ粗粒度化する。
-- 外部地図・AIサービスへ送信するデータを明示し、必要最小限にする。
-- 削除要求と同意撤回へ対応できるデータ構造にする。
+- 公開catalogは `status=verified`、source、日英必須属性、検証時刻を持つrecordだけに限定する。
+- applicationは起動時にschema、重複ID、座標、URL、未来時刻、translation、休場形式を検証し、構造的に不正なcatalogでは起動しない。
+- dynamic 30日 / stable 180日の期限超過recordはload可能だが推薦しない。fresh recordが0件なら `/readyz` は503を返す。
+- correctionをcatalogへ自動反映しない。運用者が公式sourceを確認し、data変更を通常のreviewとCIへ通す。
+- `one_time` / `annual` 休場、通常営業時間、provider結果は当日の公式情報を保証しない。UIはsourceと検証時刻を提示する。
 
-## 10. 秘密情報
+## 6. Build and supply chain
 
-- `.env`はローカル専用とし、`.env.example`には値を入れない。
-- production秘密情報は管理サービスに保存する。
-- CI/CDはOIDC等の短命認証を優先する。
-- 秘密情報をログ、例外、トレース、テストスナップショットへ出さない。
-- 漏えい時に個別失効・ローテーションできる単位へ分ける。
-- コミット前とCIで秘密情報スキャンを行う。
+- `CGO_ENABLED=0` で静的な単一binaryをbuildし、digest固定したbuilder、scratch / non-root UID `65532` で実行する。
+- Go test、race、vet、format、JSON/OpenAPI contract、MVP smoke、Playwright E2E、source/binary vulnerability scan、filesystem/image scan、secret scanをCI gateにする。
+- `package-lock.json` とGo module metadataをversion管理し、third-party GitHub Actionsをcommit SHAへ固定する。
+- imageはSBOMを生成し、同一digestを環境間で昇格する。Vercel Container build・Production deployは確認済みだが、署名、provenance、digest昇格運用は未設定である。
+- image内catalogはread-only、local fallback時のcorrection directoryだけをwrite可能にする。Productionのcorrection reportはNeonへ保存する。
+- `.dockerignore` はallowlist方式とし、`.git`、`.env`、`var`、log、test artifactをbuild contextへ送らない。
 
-## 11. サプライチェーン
+## 7. Threats and controls
 
-- lockfileをコミットする。
-- 依存関係とCI actionを検証済みバージョンへ固定する。
-- 新規依存の保守状況、所有者、ライセンス、既知脆弱性を確認する。
-- 自動更新はテストとレビューを通して統合する。
-- 本番成果物にSBOMと来歴を持たせる。
-- buildとdeployの権限を分離する。
-- 署名済みまたは検証済み成果物だけを本番へ昇格する。
+| Threat | Current control | Residual risk / next control |
+| --- | --- | --- |
+| malformed / oversized input | strict JSON、schema validation、body limit | fuzzとproduction trafficで境界を継続検証 |
+| public endpoint abuse | route別token bucket、Google接続数上限、429 | source別ingress / edge limit、Google quota、DDoS対策が未設定 |
+| location disclosure | non-persistence、query/body非logging | Google有効時の外部送信とprovider retention |
+| correction PII leakage / disk exhaustion | consent、最小log、90日deadline、purge、32 MiB上限 | Neon backup / retention policyとlocal file fallbackのvolume運用が未検証 |
+| API key leakage or abuse | server-side injection、secret scan、fallback | production key restriction / rotationは未検証 |
+| stale or tampered catalog | source metadata、startup validation、readiness、CI review | official source自体の当日変更は検知できない |
+| metrics disclosure | data minimization | production network restrictionは未実装 |
+| container compromise | static binary、scratch、non-root、read-only catalog | platform sandbox / filesystem policyは未選定 |
 
-## 12. セキュリティログと検知
+## 8. Incident and rollback
 
-記録候補:
+1. accessを制限し、影響するdata class、request、release versionを特定する。
+2. key漏えいなら失効、位置/contactのlog混入なら収集停止とaccess制限、correction漏えいならvolume accessを停止する。
+3. 直前の検証済みimageへrollbackする。correction volumeをtruncate、上書き、旧imageへcopyしない。
+4. Googleだけを無効化する場合はkeyを削除して再起動し、straight-line recommendationとlocation search 503を確認する。
+5. retention failureは期限超過reportとbackupを特定してpurgeし、原因と削除結果を記録する。
+6. 回帰test、検知rule、Runbook、脅威modelを更新する。
 
-- 認証成功・失敗と多要素認証状態
-- 認可拒否
-- 管理操作と権限変更
-- 秘密情報アクセス
-- レート制限と入力検証拒否
-- AIガードレール拒否とツール認可拒否
-- デプロイ、設定変更、スキーマ変更
+具体的なsmoke、例外判定、rollbackは [MVP Runbook](../operations/mvp-runbook.md) を正とする。
 
-記録には主体、操作、対象、結果、時刻、相関IDを含める。秘密情報と個人情報本文は含めない。
-監査ログへのアクセスを制限し、改ざん検知と保持期間を定義する。
+## 9. Release gate
 
-## 13. インシデント対応
+- [ ] catalog validationとfreshness readinessがPASSした
+- [ ] request validation、body limit、rate limitのtestがPASSした
+- [ ] log / metricsに位置、query、contact、key、request bodyがないことを確認した
+- [ ] ProductionのNeon secret、権限、backup、90日retentionを確認した。file fallbackを使う環境ではvolumeのowner、mode、暗号化、backupも確認した
+- [ ] `/metrics` をpublic Internetから遮断した
+- [ ] secret、dependency、source/binary、filesystem/image scanがPASSした
+- [ ] Google有効時はAPI / application restriction、quota、billing alert、privacy表示を確認した
+- [ ] Google無効時または障害時のfallbackを確認した
+- [x] production HTTPS、post-deploy smokeを確認した。[ ] rollback exerciseは未実施
 
-最低限の手順:
-
-1. 検知と事象分類
-2. 影響範囲とデータ種別の特定
-3. トークン失効、機能停止、アクセス遮断による封じ込め
-4. 安全な状態への復旧
-5. 利用者・関係者への通知要否判断
-6. 非難のないポストモーテム
-7. 回帰テスト、検知ルール、設計の更新
-
-連絡先、権限、停止手順、バックアップ復元手順は本番公開前に確認する。
-
-## 14. リリース前チェック
-
-- データ分類と保持期間が定義されている
-- 信頼境界と脅威モデルが更新されている
-- 認証・認可テストがある
-- 入力検証とレート制限がある
-- 秘密情報スキャンと依存関係監査がPASSしている
-- ログ・トレースに禁止情報が含まれない
-- AI敵対的評価がPASSしている
-- インシデント時の無効化・失効・復旧方法がある
+[事実] ProductionのVercel secret injection、Neon migration、訂正APIのwrite path、health/readiness、UI/API smokeを確認した。[未検証] 実Google credential、provider側retention、metrics network policy、alert、custom domain、incident exerciseである。

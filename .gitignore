@@ -3,6 +3,7 @@
 node_modules/
 dist/
 build/
+/bin/
 coverage/
 .vite/
 .next/
@@ -11,8 +12,12 @@ coverage/
 *.tfstate
 *.tfstate.*
 trivy-results.sarif
+var/
 
 # 秘密情報
 .env
 .env.*
 !.env.example
+.vercel
+.env*.local
+.env*

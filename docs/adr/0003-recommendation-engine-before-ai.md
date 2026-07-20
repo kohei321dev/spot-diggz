@@ -1,6 +1,6 @@
 # ADR-0003 AI導入前にルールベース推薦を作る
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-07-12
 
 ## Context

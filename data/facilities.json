@@ -1,0 +1,2353 @@
+{
+  "facilities": [
+    {
+      "facilityId": "OSK-F001",
+      "name": "SPOTAKA Skateboard Park（スポパー）",
+      "address": "大阪府大阪市中央区西心斎橋1-6-14 BIGSTEP B2F",
+      "prefecture": "大阪府",
+      "municipality": "大阪市中央区",
+      "location": {
+        "latitude": 34.6724243,
+        "longitude": 135.4966028
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "weekday",
+          "opens": "12:00",
+          "closes": "20:00"
+        },
+        {
+          "day": "weekend",
+          "opens": "11:00",
+          "closes": "20:00"
+        }
+      ],
+      "scheduleNotes": [
+        "祝日は11:00から営業します。平日祝日は安全側の12:00から候補として表示します。",
+        "不定休です。貸切時は一般利用できないため、来場前に公式情報を確認してください。"
+      ],
+      "price": "1時間500円、3時間1,000円、1日2,000円",
+      "reservation": "無料会員登録が必要です。事前仮登録ができます。",
+      "beginnerFriendly": true,
+      "features": [
+        "indoor",
+        "roof",
+        "rental",
+        "flat-area",
+        "mini-ramp",
+        "rail",
+        "bank"
+      ],
+      "rules": [
+        "18歳以下は保護者の同意が必要です。",
+        "小学生以下は保護者同伴で来場してください。",
+        "パーク内での食事はできません（水分補給は可能です）。"
+      ],
+      "access": {
+        "stations": [
+          "大阪メトロ心斎橋駅 7番出口から徒歩3分",
+          "大阪メトロ四ツ橋駅 5番出口から徒歩3分"
+        ],
+        "parking": "BIGSTEP地下B3F・B4Fに有料駐車場107台",
+        "notes": "BIGSTEP B2F"
+      },
+      "englishTranslation": {
+        "name": "SPOTAKA Skateboard Park (SPOPA)",
+        "address": "BIGSTEP B2F, 1-6-14 Nishishinsaibashi, Chuo-ku, Osaka",
+        "scheduleNotes": [
+          "Public holidays open at 11:00. Weekday holidays are conservatively treated as opening at 12:00 in recommendations.",
+          "Closures are irregular, and private bookings may suspend general use. Check the official source before visiting."
+        ],
+        "price": "JPY 500 for 1 hour, JPY 1,000 for 3 hours, or JPY 2,000 for a full day",
+        "reservation": "Free membership registration is required; advance provisional registration is available.",
+        "rules": [
+          "Users aged 18 or under need guardian consent.",
+          "Elementary-school children and younger must visit with a guardian.",
+          "Food is not allowed inside the park; hydration is allowed."
+        ],
+        "accessNotes": "Located on BIGSTEP B2F, about three minutes from Shinsaibashi or Yotsubashi Station.",
+        "availabilityNote": "Classes, trial sessions, and private bookings change the time available for general skating by date. Check the official monthly schedule and booking slots before visiting."
+      },
+      "sourceUrl": "https://spotaka-skateboardpark.com/",
+      "sourceType": "facility_operator_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "official",
+      "availabilityNote": "スクール、体験会、貸切で一般滑走できる時間が日付ごとに変わります。来場前に公式の月間予定と予約枠を確認してください。"
+    },
+    {
+      "facilityId": "OSK-F002",
+      "name": "スポーツパークまつばら",
+      "address": "大阪府松原市三宅西7丁目1040番1",
+      "prefecture": "大阪府",
+      "municipality": "松原市",
+      "location": {
+        "latitude": 34.5928294,
+        "longitude": 135.5487834
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "22:00"
+        }
+      ],
+      "scheduleNotes": [
+        "公式情報で終了時刻が22:00と23:00に分かれるため、この画面では安全側の22:00までとして案内します。",
+        "雨天・メンテナンス・大会等で利用を制限する場合があります。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "1日550円",
+      "reservation": "個人利用の詳細は施設受付へ確認してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "roof",
+        "lighting",
+        "rental",
+        "flat-area",
+        "mini-ramp",
+        "handrail",
+        "stairs",
+        "concrete"
+      ],
+      "rules": [
+        "ヘルメットを着用していない場合は利用できません。",
+        "スケートボードとインラインスケートを利用でき、BMXは利用できません。",
+        "混雑、大会、講習会等により一般利用を制限する場合があります。"
+      ],
+      "access": {
+        "parking": "有料駐車場50台、駐輪場70台",
+        "notes": "阪神高速道路大和川線の高架下"
+      },
+      "englishTranslation": {
+        "name": "Sports Park Matsubara",
+        "address": "7-1040-1 Miyakenishi, Matsubara, Osaka",
+        "scheduleNotes": [
+          "Official sources differ between 22:00 and 23:00 closing times, so recommendations conservatively use 22:00.",
+          "Rain, maintenance, competitions, or other events may restrict use."
+        ],
+        "price": "JPY 550 per day",
+        "reservation": "Ask the facility desk for current individual-use procedures.",
+        "rules": [
+          "A helmet is required for entry.",
+          "Skateboards and inline skates are allowed; BMX is not allowed.",
+          "Crowding, competitions, or lessons may restrict general use."
+        ],
+        "accessNotes": "Under the Hanshin Expressway Yamatogawa Route, with paid parking and bicycle parking."
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/sportspark-matsubara",
+      "sourceType": "official_operator_and_municipality",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "OSK-F003",
+      "name": "おくさま印スケボーパーク",
+      "address": "大阪府松原市立部4丁目270番1",
+      "prefecture": "大阪府",
+      "municipality": "松原市",
+      "location": {
+        "latitude": 34.5791945,
+        "longitude": 135.5087872
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "23:00"
+        }
+      ],
+      "scheduleNotes": [
+        "イベントや最新のお知らせを来場前に公式情報で確認してください。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休館"
+        }
+      ],
+      "price": "屋外550円、屋内・屋外1,100円（1日）",
+      "reservation": "初回は利用登録と身分証明書の提示が必要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "indoor",
+        "outdoor",
+        "roof",
+        "rental",
+        "quarter-ramp",
+        "handrail",
+        "rail",
+        "ledge",
+        "bank"
+      ],
+      "rules": [
+        "ヘルメット着用が必須です。未着用では入場できません。",
+        "満5歳以下は利用できず、小学生以下は終日保護者同伴が必要です。",
+        "中学生以下が19:00以降に利用する場合は保護者同伴が必要です。"
+      ],
+      "access": {
+        "stations": [
+          "近鉄南大阪線 恵我ノ荘駅から徒歩30分",
+          "ぐるりん号 立部5丁目停留所から徒歩5分"
+        ],
+        "parking": "無料駐車場10台（9:00-23:00）",
+        "notes": "河内松原駅付近からシェアサイクルで約10分"
+      },
+      "englishTranslation": {
+        "name": "Okusamajirushi Skateboard Park",
+        "address": "4-270-1 Tatsube, Matsubara, Osaka",
+        "scheduleNotes": [
+          "Check the official source for events and current notices before visiting."
+        ],
+        "price": "JPY 550 for outdoor use or JPY 1,100 for indoor and outdoor use per day",
+        "reservation": "First-time users must register and present identification.",
+        "rules": [
+          "A helmet is mandatory; users without one cannot enter.",
+          "Children aged five or under cannot use the park, and elementary-school children require a guardian at all times.",
+          "Junior-high-school students and younger require a guardian after 19:00."
+        ],
+        "accessNotes": "Five minutes from Tatsube 5-chome bus stop; ten free parking spaces are available."
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/m-7288/guide",
+      "sourceType": "official_operator_and_municipality",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "OSK-F004",
+      "name": "箕面スケートボードパーク",
+      "address": "大阪府箕面市新稲2丁目14-45",
+      "prefecture": "大阪府",
+      "municipality": "箕面市",
+      "location": {
+        "latitude": 34.8343971,
+        "longitude": 135.4585617
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate",
+        "kick-scooter"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        }
+      ],
+      "scheduleNotes": [
+        "毎月第4木曜は休場です。祝日や臨時変更は公式情報を確認してください。",
+        "雨天、補修、混雑、大会等で利用を制限する場合があります。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "one_time",
+          "start": "2026-07-23",
+          "end": "2026-07-23",
+          "reason": "2026年7月の第4木曜休場"
+        },
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "高校生以上600円、中学生以下無料。初回登録料500円",
+      "reservation": "初回登録と顔写真が必要です。一般利用は当日窓口でチェックインします。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "lighting",
+        "rental",
+        "concrete",
+        "flat-area",
+        "quarter-ramp",
+        "rail",
+        "ledge",
+        "bank"
+      ],
+      "rules": [
+        "5歳未満は利用できず、小学生は成年保護者の同伴が必要です。",
+        "中学生は18:00以降、成年保護者の同伴が必要です。",
+        "ヘルメットは必須で、その他のプロテクターも推奨されています。"
+      ],
+      "access": {
+        "stations": [
+          "阪急バス 新稲停留所から徒歩圏"
+        ],
+        "parking": "34台",
+        "notes": "新稲の森内"
+      },
+      "englishTranslation": {
+        "name": "Minoh Skateboard Park",
+        "address": "2-14-45 Niina, Minoh, Osaka",
+        "scheduleNotes": [
+          "The park closes on the fourth Thursday of each month. Check the official source for holiday substitutions and temporary changes.",
+          "Rain, repairs, crowding, or events may restrict use."
+        ],
+        "price": "JPY 600 for high-school students and adults; free for junior-high students and younger; JPY 500 first registration",
+        "reservation": "First-time registration and a portrait photo are required; general users check in at the desk on arrival.",
+        "rules": [
+          "Children under five cannot use the park, and elementary-school children need an adult guardian.",
+          "Junior-high-school students need an adult guardian after 18:00.",
+          "Helmets are mandatory and other protective gear is recommended."
+        ],
+        "accessNotes": "Within walking distance of the Niina bus stop; 34 parking spaces are available."
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/minoh",
+      "sourceType": "official_operator_and_municipality",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "HYG-F001",
+      "name": "三木スケートボードパーク",
+      "address": "兵庫県三木市上の丸町1128-2",
+      "prefecture": "兵庫県",
+      "municipality": "三木市",
+      "location": {
+        "latitude": 34.7959595,
+        "longitude": 134.9905952
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate",
+        "kick-scooter"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "08:30",
+          "closes": "18:30"
+        },
+        {
+          "day": "thursday",
+          "closed": true
+        }
+      ],
+      "scheduleNotes": [
+        "利用終了は日没まで、最長19:00です。鮮度期間内の日没に合わせ、推薦判定は安全側の18:30までとします。",
+        "木曜が祝日の場合は翌平日が休場です。警報や危険な天候時は休止します。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-28",
+          "end": "01-04",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "市内在住・在勤2,000円/年、市外3,000円/年、お試し300円/日、未就学児無料",
+      "reservation": "プール棟受付で本人確認と登録が必要です。レンタルは電話予約できます。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "rental",
+        "flat-area",
+        "bowl",
+        "bank",
+        "rail"
+      ],
+      "rules": [
+        "ヘルメットは必須で、その他の防具も推奨されています。",
+        "中学生以下は親権者の同意と初回同行が必要です。",
+        "小学3年生以下は成人の同伴が必要で、BMXは利用できません。"
+      ],
+      "access": {
+        "parking": "三木山総合公園の駐車場を利用",
+        "notes": "三木山総合公園内"
+      },
+      "englishTranslation": {
+        "name": "Miki Skateboard Park",
+        "address": "1128-2 Uenomaru-cho, Miki, Hyogo",
+        "scheduleNotes": [
+          "Use ends at sunset and no later than 19:00. Recommendations conservatively use 18:30 during the current freshness window.",
+          "When Thursday is a public holiday, the next weekday closes instead. Warnings or dangerous weather may suspend use."
+        ],
+        "price": "JPY 2,000/year for Miki residents or workers, JPY 3,000/year otherwise, JPY 300 day trial; preschool children free",
+        "reservation": "Identity verification and registration are required at the pool reception; rental gear can be reserved by phone.",
+        "rules": [
+          "Helmets are mandatory and other protective gear is recommended.",
+          "Junior-high-school students and younger need guardian consent and accompaniment on the first visit.",
+          "Third-grade elementary students and younger need an adult; BMX is not allowed."
+        ],
+        "accessNotes": "Located in Miki-yama General Park; use the park parking areas."
+      },
+      "sourceUrl": "https://www.city.miki.lg.jp/site/skate-park/index.html",
+      "sourceType": "municipality_and_official_operator",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "HYG-F002",
+      "name": "でんすぽ スケートパーク",
+      "address": "兵庫県神戸市北区有野町二郎",
+      "prefecture": "兵庫県",
+      "municipality": "神戸市北区",
+      "location": {
+        "latitude": 34.8478788,
+        "longitude": 135.2215929
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate",
+        "bmx",
+        "kick-scooter"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        }
+      ],
+      "scheduleNotes": [
+        "毎月第4火曜は休場です。祝日の場合は翌日が休場です。",
+        "雨、補修、メンテナンス、大会、講習会で利用を制限する場合があります。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "one_time",
+          "start": "2026-07-28",
+          "end": "2026-07-28",
+          "reason": "2026年7月の第4火曜休場"
+        },
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "1日300円",
+      "reservation": "利用ごとに受付表へ氏名・連絡先を記入します。用具は持参してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "lighting",
+        "concrete",
+        "quarter-ramp",
+        "bank",
+        "ledge",
+        "rail",
+        "mini-ramp"
+      ],
+      "rules": [
+        "中学生以下は保護者承諾書が必要です。",
+        "公式案内では各セクションを経験者向けとしています。",
+        "ヘルメット必須の記載は確認できないため、最新ルールを受付で確認してください。"
+      ],
+      "access": {
+        "parking": "北神戸田園スポーツ公園の駐車場を利用",
+        "notes": "北神戸田園スポーツ公園 スポーツ広場内"
+      },
+      "englishTranslation": {
+        "name": "Denspo Skate Park",
+        "address": "Niro, Arino-cho, Kita-ku, Kobe, Hyogo",
+        "scheduleNotes": [
+          "The park closes on the fourth Tuesday each month, or the following day when that Tuesday is a public holiday.",
+          "Rain, repairs, maintenance, competitions, or lessons may restrict use."
+        ],
+        "price": "JPY 300 per day",
+        "reservation": "Write your name and contact details at reception for each visit and bring your own equipment.",
+        "rules": [
+          "Junior-high-school students and younger need a guardian consent form.",
+          "The official guide describes each section as intended for experienced users.",
+          "A mandatory helmet rule was not confirmed; ask reception for current safety rules."
+        ],
+        "accessNotes": "Inside the sports plaza at Kita-Kobe Rural Sports Park; use the park parking areas."
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/denspo",
+      "sourceType": "official_operator",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "WAK-F001",
+      "name": "GOBOスケートパーク",
+      "address": "和歌山県御坊市塩屋町南塩屋713番地1",
+      "prefecture": "和歌山県",
+      "municipality": "御坊市",
+      "location": {
+        "latitude": 33.861569,
+        "longitude": 135.169299
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        }
+      ],
+      "scheduleNotes": [
+        "臨時休場や教室開催は来場前に御坊市の公式情報を確認してください。"
+      ],
+      "price": "無料",
+      "reservation": "年度ごとの利用登録が必要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "lighting",
+        "flat-area",
+        "bank",
+        "rail"
+      ],
+      "rules": [
+        "小学生以下は保護者の同伴が必要です。",
+        "安全のためヘルメットを着用してください。",
+        "利用前に現地掲示のルールを確認してください。"
+      ],
+      "access": {
+        "parking": "御坊総合運動公園の駐車場を利用",
+        "notes": "御坊総合運動公園内"
+      },
+      "englishTranslation": {
+        "name": "GOBO Skate Park",
+        "address": "713-1 Minamishioya, Shioya-cho, Gobo, Wakayama",
+        "scheduleNotes": [
+          "Check Gobo City's official information for temporary closures or lessons before visiting."
+        ],
+        "price": "Free",
+        "reservation": "Annual user registration is required.",
+        "rules": [
+          "Elementary-school children and younger need a guardian.",
+          "Wear a helmet for safety.",
+          "Check the posted on-site rules before use."
+        ],
+        "accessNotes": "Inside Gobo General Sports Park; use the park parking areas."
+      },
+      "sourceUrl": "https://www.city.gobo.lg.jp/sosiki/kyoikuiin/kyoiku/tanto/sports_recreation/8679.html",
+      "sourceType": "municipality_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "WAK-F002",
+      "name": "和歌山市つつじが丘総合公園 スケートボード場",
+      "address": "和歌山県和歌山市つつじが丘4丁目4番",
+      "prefecture": "和歌山県",
+      "municipality": "和歌山市",
+      "location": {
+        "latitude": 34.268989,
+        "longitude": 135.101694
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "17:00"
+        }
+      ],
+      "scheduleNotes": [
+        "5月から8月は19:00まで延長されますが、推薦判定は通年利用できる17:00までとします。",
+        "臨時の利用制限は公式情報を確認してください。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "年度利用料1,100円",
+      "reservation": "年度ごとの利用登録が必要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "rental",
+        "flat-area",
+        "bank",
+        "rail"
+      ],
+      "rules": [
+        "利用対象は5歳以上です。",
+        "年齢に応じた保護者同伴など、受付の利用条件に従ってください。",
+        "防具とレンタルの最新状況は受付で確認してください。"
+      ],
+      "access": {
+        "parking": "つつじが丘総合公園の駐車場を利用",
+        "notes": "つつじが丘総合公園内"
+      },
+      "englishTranslation": {
+        "name": "Wakayama Tsutsujigaoka General Park Skateboard Area",
+        "address": "4-4 Tsutsujigaoka, Wakayama, Wakayama",
+        "scheduleNotes": [
+          "Hours extend to 19:00 from May through August, but recommendations conservatively use the year-round 17:00 closing time.",
+          "Check the official source for temporary restrictions."
+        ],
+        "price": "JPY 1,100 per fiscal year",
+        "reservation": "Annual user registration is required.",
+        "rules": [
+          "Users must be at least five years old.",
+          "Follow reception requirements for guardian accompaniment based on age.",
+          "Ask reception about current protective-gear and rental availability."
+        ],
+        "accessNotes": "Inside Tsutsujigaoka General Park; use the park parking areas."
+      },
+      "sourceUrl": "https://www.city.wakayama.wakayama.jp/shisetsu/kouen_sp_shisetsu/1006086/1060589.html",
+      "sourceType": "municipality_and_official_operator",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "WAK-F003",
+      "name": "大宮緑地総合運動公園 スケートボード場",
+      "address": "和歌山県岩出市西野417",
+      "prefecture": "和歌山県",
+      "municipality": "岩出市",
+      "location": {
+        "latitude": 34.255775,
+        "longitude": 135.303025
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "08:00",
+          "closes": "18:00"
+        }
+      ],
+      "scheduleNotes": [
+        "設備点検や天候による利用制限は岩出市の公式情報を確認してください。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-28",
+          "end": "01-04",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "無料",
+      "reservation": "事前に利用申請が必要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "ヘルメットを着用してください。",
+        "利用申請後、施設の利用ルールに従ってください。",
+        "初心者練習エリアと他の利用者の動線に注意してください。"
+      ],
+      "access": {
+        "parking": "大宮緑地総合運動公園の駐車場を利用",
+        "notes": "大宮緑地総合運動公園内"
+      },
+      "englishTranslation": {
+        "name": "Omiya Ryokuchi General Sports Park Skateboard Area",
+        "address": "417 Nishino, Iwade, Wakayama",
+        "scheduleNotes": [
+          "Check Iwade City's official information for maintenance or weather restrictions."
+        ],
+        "price": "Free",
+        "reservation": "An advance use application is required.",
+        "rules": [
+          "Wear a helmet.",
+          "After applying, follow the facility's use rules.",
+          "Be mindful of the beginner practice area and other users' paths."
+        ],
+        "accessNotes": "Inside Omiya Ryokuchi General Sports Park; use the park parking areas."
+      },
+      "sourceUrl": "https://www.city.iwade.lg.jp/soshiki/20/2493.html",
+      "sourceType": "municipality_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "NAR-F001",
+      "name": "ロートスケートボードパーク奈良",
+      "address": "奈良県奈良市法蓮佐保山四丁目8番10号",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "location": {
+        "latitude": 34.6990242,
+        "longitude": 135.8274049
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        },
+        {
+          "day": "wednesday",
+          "closed": true
+        }
+      ],
+      "scheduleNotes": [
+        "大会、教室、点検等による利用変更は奈良市の公式情報を確認してください。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "one_time",
+          "start": "2026-07-21",
+          "end": "2026-07-21",
+          "reason": "海の日の翌日休場"
+        },
+        {
+          "type": "one_time",
+          "start": "2026-08-12",
+          "end": "2026-08-12",
+          "reason": "山の日の翌日休場（通常の水曜休場にも該当）"
+        },
+        {
+          "type": "annual",
+          "start": "12-26",
+          "end": "01-05",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "一般500円、高校生以下250円。土日祝は各20%増",
+      "reservation": "利用登録と本人確認書類が必要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "lighting",
+        "rental",
+        "flat-area",
+        "bowl",
+        "stairs",
+        "handrail"
+      ],
+      "rules": [
+        "未就学児は利用できません。",
+        "ヘルメットを着用してください。",
+        "登録時と利用時は施設の年齢別ルールに従ってください。"
+      ],
+      "access": {
+        "parking": "ロートフィールド奈良周辺の案内に従ってください",
+        "notes": "ロートフィールド奈良隣接"
+      },
+      "englishTranslation": {
+        "name": "ROHTO Skateboard Park Nara",
+        "address": "4-8-10 Horen-Sahoyama, Nara, Nara",
+        "scheduleNotes": [
+          "Check Nara City's official information for changes caused by events, lessons, or inspections."
+        ],
+        "price": "JPY 500 for adults or JPY 250 for high-school students and younger; 20% surcharge on weekends and public holidays",
+        "reservation": "User registration and identification are required.",
+        "rules": [
+          "Preschool children cannot use the park.",
+          "Wear a helmet.",
+          "Follow the facility's age-specific rules when registering and using the park."
+        ],
+        "accessNotes": "Adjacent to ROHTO Field Nara; follow the venue's current parking guidance."
+      },
+      "sourceUrl": "https://www.city.nara.lg.jp/soshiki/22/182822.html",
+      "sourceType": "municipality_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "TKS-F001",
+      "name": "東部防災館 おきのすインドアパーク スケートボードパーク",
+      "address": "徳島県徳島市東沖洲1丁目8",
+      "prefecture": "徳島県",
+      "municipality": "徳島市",
+      "location": {
+        "latitude": 34.0654804,
+        "longitude": 134.5979522
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "22:00"
+        }
+      ],
+      "scheduleNotes": [
+        "毎月第4水曜は休館です。臨時変更は施設公式情報を確認してください。",
+        "利用料金は昼間区分と夜間区分ごとに必要です。",
+        "スケートボード場は屋上の屋外施設です。天候不良などで危険と判断された場合は利用を中断・中止することがあります。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "one_time",
+          "start": "2026-07-22",
+          "end": "2026-07-22",
+          "reason": "2026年7月の第4水曜休館"
+        },
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休館"
+        }
+      ],
+      "price": "一般300円、学生150円（昼間・夜間の各区分）",
+      "reservation": "一般利用は予約不要です。現地で誓約書を提出します。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "rooftop",
+        "lighting",
+        "flat-area",
+        "bank",
+        "rail",
+        "quarter-ramp"
+      ],
+      "rules": [
+        "利用前に現地で誓約書を提出してください。",
+        "子どもの利用は施設の年齢別同伴ルールに従ってください。",
+        "防具を着用し、初心者用基礎セクションから安全に利用してください。"
+      ],
+      "access": {
+        "parking": "おきのすインドアパークの駐車場案内に従ってください",
+        "notes": "東部防災館 おきのすインドアパーク内"
+      },
+      "englishTranslation": {
+        "name": "Okinosu Indoor Park Skateboard Park",
+        "address": "1-8 Higashi-Okinosu, Tokushima, Tokushima",
+        "scheduleNotes": [
+          "The facility closes on the fourth Wednesday of each month. Check the official source for temporary changes.",
+          "A separate fee applies to each daytime and evening session.",
+          "The skateboard park is an outdoor rooftop facility. Use may be suspended or stopped when weather or other conditions make it unsafe."
+        ],
+        "price": "JPY 300 for adults or JPY 150 for students per daytime or evening session",
+        "reservation": "General use does not require a reservation; submit a pledge on site.",
+        "rules": [
+          "Submit the on-site pledge before use.",
+          "Follow the facility's age-specific guardian rules for children.",
+          "Wear protective gear and use the beginner basic sections safely."
+        ],
+        "accessNotes": "Inside the Eastern Disaster Prevention Center Okinosu Indoor Park; follow current parking guidance."
+      },
+      "sourceUrl": "https://oipark.jp/indoor/skateboard-park/",
+      "sourceType": "official_operator",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "generalUseStatus": "regular",
+      "hoursBasis": "official"
+    },
+    {
+      "facilityId": "OSK-F005",
+      "name": "服部緑地スケートボードパーク",
+      "address": "大阪府豊中市服部緑地1-1",
+      "prefecture": "大阪府",
+      "municipality": "豊中市",
+      "location": {
+        "latitude": 34.7759635,
+        "longitude": 135.4866078
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "00:00",
+          "closes": "24:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "24時間利用できますが、夜間は騒音に配慮してください。",
+        "補修、イベント、悪天候等で利用を制限する場合があります。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。利用前に現地掲示のルールを確認してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "rail",
+        "box",
+        "beginner-area"
+      ],
+      "rules": [
+        "スケートボード専用です。ヘルメットとプロテクターを着用してください。",
+        "小学生以下は保護者同伴が必要です。",
+        "パーク外での滑走、落書き、ゴミの放置、夜間の騒音は禁止です。"
+      ],
+      "access": {
+        "stations": [
+          "北大阪急行 緑地公園駅から徒歩圏"
+        ],
+        "parking": "服部緑地の駐車場を利用",
+        "notes": "服部緑地内"
+      },
+      "englishTranslation": {
+        "name": "Hattori Ryokuchi Skateboard Park",
+        "address": "1-1 Hattori-Ryokuchi, Toyonaka, Osaka",
+        "scheduleNotes": [
+          "The park is open 24 hours, but be considerate of noise at night.",
+          "Repairs, events, or bad weather may restrict use."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; check the posted rules before use.",
+        "rules": [
+          "This area is for skateboards; wear a helmet and protective gear.",
+          "Children in elementary school or younger must be accompanied by a guardian.",
+          "Riding outside the park, graffiti, littering, and nighttime noise are prohibited."
+        ],
+        "accessNotes": "Within Hattori Ryokuchi; use the park parking areas and access from Ryokuchi-Koen Station."
+      },
+      "sourceUrl": "https://hattori-ryokuchi.com/%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%88%E3%83%9C%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%82%AF/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F006",
+      "name": "深北緑地 波の広場",
+      "address": "大阪府大東市深野北4-284",
+      "prefecture": "大阪府",
+      "municipality": "大東市",
+      "location": {
+        "latitude": 34.7289881,
+        "longitude": 135.6283794
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate",
+        "bmx",
+        "kick-scooter"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "00:00",
+          "closes": "24:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "24時間利用できる公共施設ですが、雨天や増水時は閉鎖する場合があります。",
+        "フラットエリアから始められる設備があります。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。混雑時は譲り合って利用してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "rail",
+        "box",
+        "beginner-area"
+      ],
+      "rules": [
+        "スケートボード、インラインスケート、BMX、キックボードを利用できます。",
+        "ヘルメットとプロテクターを着用してください。",
+        "悪天候や増水時は管理者の案内に従ってください。"
+      ],
+      "access": {
+        "parking": "深北緑地の駐車場を利用",
+        "notes": "深北緑地内の波の広場"
+      },
+      "englishTranslation": {
+        "name": "Fukakita Ryokuchi Nami Plaza",
+        "address": "4-284 Fukano-kita, Daito, Osaka",
+        "scheduleNotes": [
+          "This public facility is open 24 hours, but rain or flooding may cause closure.",
+          "The layout includes a flat area suitable for starting out."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; share the space when busy.",
+        "rules": [
+          "Skateboards, inline skates, BMX, and kick scooters are allowed.",
+          "Wear a helmet and protective gear.",
+          "Follow the operator's instructions during bad weather or flooding."
+        ],
+        "accessNotes": "In Fukakita Ryokuchi; use the park parking areas."
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/fukakita-ryokuchi",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F007",
+      "name": "久宝寺緑地 スケートボードエリア",
+      "address": "大阪府八尾市西久宝寺323",
+      "prefecture": "大阪府",
+      "municipality": "八尾市",
+      "location": {
+        "latitude": 34.6323461,
+        "longitude": 135.5781372
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "19:00"
+        }
+      ],
+      "generalUseStatus": "limited",
+      "hoursBasis": "conservative",
+      "availabilityNote": "施設固有の滑走時間が公式ページで明示されていないため、7月の公園スポーツ施設時間を安全側の目安として表示します。来場前に管理者へ確認してください。",
+      "scheduleNotes": [
+        "公園のスポーツ施設は5月から8月中旬まで19:00までの案内です。",
+        "年末年始は休場します。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。施設固有の利用条件は現地掲示を確認してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "スケートボードエリア内で利用してください。",
+        "ヘルメットとプロテクターを着用してください。"
+      ],
+      "access": {
+        "parking": "久宝寺緑地の駐車場を利用",
+        "notes": "久宝寺緑地内"
+      },
+      "englishTranslation": {
+        "name": "Kyuhoji Ryokuchi Skateboard Area",
+        "address": "323 Nishikyuhoji, Yao, Osaka",
+        "availabilityNote": "The official page does not state a skate-specific schedule, so July park sports-facility hours are shown as a conservative guide. Confirm before visiting.",
+        "scheduleNotes": [
+          "The park's sports facilities are listed as open until 19:00 from May through mid-August.",
+          "The park closes over the year-end and New Year period."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; check the posted facility-specific rules.",
+        "rules": [
+          "Use the designated skateboard area.",
+          "Wear a helmet and protective gear."
+        ],
+        "accessNotes": "In Kyuhoji Ryokuchi; use the park parking areas."
+      },
+      "sourceUrl": "https://kyuhoji-ryokuchi.jp/guide.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F008",
+      "name": "大泉緑地 スケート広場",
+      "address": "大阪府堺市北区金岡町128",
+      "prefecture": "大阪府",
+      "municipality": "堺市北区",
+      "location": {
+        "latitude": 34.5657325,
+        "longitude": 135.5280988
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "17:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "公式ページでスケート広場の施設固有営業時間が確認できないため、表示時間は推薦判定に使用しません。来場前に公園管理者へ確認してください。",
+      "scheduleNotes": [
+        "スケートボードとインラインスケートを利用できます。",
+        "土曜日は東側でインラインスケートを優先する案内があります。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。施設固有の利用条件は現地掲示を確認してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "ヘルメットとプロテクターの着用を推奨します。",
+        "指定されたスケート広場以外では滑走しないでください。"
+      ],
+      "access": {
+        "parking": "大泉緑地の駐車場を利用",
+        "notes": "大泉緑地内"
+      },
+      "englishTranslation": {
+        "name": "Oizumi Ryokuchi Skate Plaza",
+        "address": "128 Kanaoka-cho, Kita-ku, Sakai, Osaka",
+        "availabilityNote": "The official page does not state skate-plaza-specific hours, so the displayed hours are not used for recommendations. Confirm with the park operator before visiting.",
+        "scheduleNotes": [
+          "Skateboards and inline skates are allowed.",
+          "Inline skaters have priority on the east side on Saturdays."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; check the posted facility-specific rules.",
+        "rules": [
+          "A helmet and protective gear are recommended.",
+          "Do not ride outside the designated skate plaza."
+        ],
+        "accessNotes": "In Oizumi Ryokuchi; use the park parking areas."
+      },
+      "sourceUrl": "https://oizumi.osaka-park.or.jp/facility/581/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F009",
+      "name": "りんくう公園 RinX-SQUARE",
+      "address": "大阪府泉佐野市りんくう往来北1-271",
+      "prefecture": "大阪府",
+      "municipality": "泉佐野市",
+      "location": {
+        "latitude": 34.4124741,
+        "longitude": 135.2954867
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "RinX-SQUAREの個別営業時間は公式案内で明確に確認できず、夜間利用を避ける安全側の表示です。イベント・貸切・現地掲示を来場前に確認してください。",
+      "scheduleNotes": [
+        "初心者でも利用しやすいフラット中心の多目的広場です。",
+        "夜間の利用は避け、公式のイベント・公園情報を確認してください。"
+      ],
+      "price": "無料",
+      "reservation": "通常は予約不要ですが、イベントや占用時は利用できません。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "roof",
+        "flat-area",
+        "beginner-area"
+      ],
+      "rules": [
+        "スケートボードはRinX-SQUARE内で利用してください。",
+        "ヘルメットとプロテクターを着用し、他の利用者と譲り合ってください。"
+      ],
+      "access": {
+        "stations": [
+          "りんくうタウン駅から徒歩約5分"
+        ],
+        "parking": "りんくう公園の有料駐車場",
+        "notes": "りんくう公園シンボル緑地内"
+      },
+      "englishTranslation": {
+        "name": "Rinku Park RinX-SQUARE",
+        "address": "1-271 Rinku Ourai-kita, Izumisano, Osaka",
+        "availabilityNote": "RinX-SQUARE's facility-specific hours are not clearly stated in the official guidance; the display conservatively avoids nighttime use. Check events, private use, and posted notices before visiting.",
+        "scheduleNotes": [
+          "This multi-purpose plaza is mainly flat and intended to be approachable for beginners.",
+          "Avoid nighttime use and check the official event and park information."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is normally required, but events or exclusive use can close the area.",
+        "rules": [
+          "Use skateboards only within RinX-SQUARE.",
+          "Wear a helmet and protective gear and share the space with other users."
+        ],
+        "accessNotes": "About five minutes on foot from Rinku-Town Station; paid park parking is available."
+      },
+      "sourceUrl": "https://rinku.osaka-park.or.jp/20872",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F010",
+      "name": "二色の浜公園 スケートパーク",
+      "address": "大阪府貝塚市脇浜4-34",
+      "prefecture": "大阪府",
+      "municipality": "貝塚市",
+      "location": {
+        "latitude": 34.44316469698631,
+        "longitude": 135.34014687655574
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "17:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "利用時間は9:00から17:00です。",
+        "年末年始は休場します。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。混雑時は譲り合って利用してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "concrete"
+      ],
+      "rules": [
+        "スケートボード専用です。",
+        "公園の利用案内と現地掲示のルールに従ってください。"
+      ],
+      "access": {
+        "parking": "第三駐車場を利用",
+        "notes": "府営二色の浜公園内"
+      },
+      "englishTranslation": {
+        "name": "Nishikinohama Park Skate Park",
+        "address": "4-34 Wakihama, Kaizuka, Osaka",
+        "scheduleNotes": [
+          "The skate park is open from 09:00 to 17:00.",
+          "The park closes over the year-end and New Year period."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; share the space when busy.",
+        "rules": [
+          "This facility is for skateboards.",
+          "Follow the park guidance and posted rules."
+        ],
+        "accessNotes": "In Nishikinohama Park; use the third parking area."
+      },
+      "sourceUrl": "https://nishikinohama-park.com/facility/sports/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F011",
+      "name": "タイガーラックスケートボードパーク長居",
+      "address": "大阪府大阪市東住吉区長居公園1-1",
+      "prefecture": "大阪府",
+      "municipality": "大阪市東住吉区",
+      "location": {
+        "latitude": 34.6104546,
+        "longitude": 135.5172262
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "00:00",
+          "closes": "24:00"
+        },
+        {
+          "day": "monday",
+          "closed": true
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "24時間営業ですが、月曜は定休です。",
+        "会員登録と年会費が必要です。"
+      ],
+      "price": "無料（登録料・年会費1,000円）",
+      "reservation": "会員登録が必要です。登録とレンタル受付はGOOD TIMESで行います。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "stairs",
+        "quarter-ramp",
+        "rental",
+        "beginner-area"
+      ],
+      "rules": [
+        "長居公園内では指定パーク外でスケートボードを利用できません。",
+        "利用登録時に施設の利用ルールを確認してください。"
+      ],
+      "access": {
+        "stations": [
+          "Osaka Metro 長居駅から徒歩圏",
+          "JR長居駅から徒歩圏"
+        ],
+        "parking": "長居公園の駐車場を利用",
+        "notes": "長居公園内"
+      },
+      "englishTranslation": {
+        "name": "TIGER RACK Skateboard Park Nagai",
+        "address": "1-1 Nagai Park, Higashisumiyoshi-ku, Osaka",
+        "scheduleNotes": [
+          "Open 24 hours, closed on Mondays.",
+          "Membership registration and an annual fee are required."
+        ],
+        "price": "Free after registration; registration and annual fee JPY 1,000",
+        "reservation": "Membership is required; registration and rentals are handled at GOOD TIMES.",
+        "rules": [
+          "Skateboarding is not allowed outside the designated park within Nagai Park.",
+          "Review the facility rules when registering."
+        ],
+        "accessNotes": "Within walking distance of Nagai Station; use the park parking areas."
+      },
+      "sourceUrl": "https://nagaipark.com/guide/skateboard/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F012",
+      "name": "原池公園スケートボードパーク",
+      "address": "大阪府堺市中区八田寺町320-20",
+      "prefecture": "大阪府",
+      "municipality": "堺市中区",
+      "location": {
+        "latitude": 34.519098,
+        "longitude": 135.4920346
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "受付は8:45からです。第4火曜（祝日の場合は第3火曜）を基本に休場します。",
+        "年末年始、イベント、保守、天候等で利用制限があります。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "one_time",
+          "start": "2026-07-28",
+          "end": "2026-07-28",
+          "reason": "2026年7月の第4火曜休場"
+        },
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-04",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "高校生以上510円、中学生以下310円、見学者200円。レンタルあり。",
+      "reservation": "初回登録と利用説明が必要です。個人の事前予約は不要です。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bowl",
+        "bank",
+        "rail",
+        "box",
+        "rental",
+        "beginner-area"
+      ],
+      "rules": [
+        "ヘルメットは必須です。プロテクターを着用してください。",
+        "中学生以下は保護者の同意、小学生以下は保護者同伴が必要です。",
+        "16歳未満は19:00までの利用です。"
+      ],
+      "access": {
+        "parking": "原池公園の駐車場を利用",
+        "notes": "原池公園内。初回は受付で利用説明を受けてください。"
+      },
+      "englishTranslation": {
+        "name": "Baraike Park Skateboard Park",
+        "address": "320-20 Hattadera-cho, Naka-ku, Sakai, Osaka",
+        "scheduleNotes": [
+          "Reception starts at 08:45. The park generally closes on the fourth Tuesday, or the third Tuesday when that Tuesday is a public holiday.",
+          "Year-end closures, events, maintenance, or weather may restrict use."
+        ],
+        "price": "JPY 510 for high-school students and adults, JPY 310 for junior-high students and younger, JPY 200 for spectators; rentals available.",
+        "reservation": "First-time registration and an orientation are required; individual advance reservations are not required.",
+        "rules": [
+          "A helmet is mandatory; wear protective gear.",
+          "Junior-high students and younger need guardian consent, and elementary-school children need a guardian present.",
+          "Users under 16 may use the park until 19:00."
+        ],
+        "accessNotes": "In Baraike Park; first-time users must attend the orientation at reception."
+      },
+      "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/baraike",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F013",
+      "name": "まなび中央公園 スケートボード広場",
+      "address": "大阪府岸和田市西之内町45-1",
+      "prefecture": "大阪府",
+      "municipality": "岸和田市",
+      "location": {
+        "latitude": 34.457871,
+        "longitude": 135.386961
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "limited",
+      "hoursBasis": "conservative",
+      "availabilityNote": "夜間滑走は禁止されていますが、スケート広場単体の閉場時刻は公式情報から明確に切り出せないため、安全側の18:00までを表示します。",
+      "scheduleNotes": [
+        "約1,000平方メートルのコンクリート広場で、初心者向けの低いセクションがあります。",
+        "夜間の滑走は禁止です。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。占用やイベント時は利用できない場合があります。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "box",
+        "quarter-ramp",
+        "beginner-area"
+      ],
+      "rules": [
+        "スケートボード、インラインスケート、BMXを利用できます。",
+        "夜間は利用できません。現地掲示のルールに従ってください。"
+      ],
+      "access": {
+        "parking": "まなび中央公園の駐車場を利用",
+        "notes": "まなび中央公園内"
+      },
+      "englishTranslation": {
+        "name": "Manabi Chuo Park Skateboard Plaza",
+        "address": "45-1 Nishino-uchi, Kishiwada, Osaka",
+        "availabilityNote": "Night skating is prohibited, but a skate-plaza-specific closing time cannot be separated clearly from the official information; 18:00 is shown conservatively.",
+        "scheduleNotes": [
+          "This approximately 1,000-square-metre concrete plaza has low sections for beginners.",
+          "Night skating is prohibited."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; exclusive use or events may restrict access.",
+        "rules": [
+          "Skateboards, inline skates, and BMX are allowed.",
+          "The facility is not available at night; follow the posted rules."
+        ],
+        "accessNotes": "In Manabi Chuo Park; use the park parking areas."
+      },
+      "sourceUrl": "https://kishiwada-hotparks.jp/manabichuopark/exercise/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F014",
+      "name": "今池公園 スケートボード広場",
+      "address": "大阪府岸和田市土生町2丁目828-1",
+      "prefecture": "大阪府",
+      "municipality": "岸和田市",
+      "location": {
+        "latitude": 34.4525458,
+        "longitude": 135.3797398
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "17:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "自治体の施設一覧で存在と無料利用は確認できましたが、スケート広場固有の営業時間・ルールが不足しています。推薦には使用せず、来場前に現地掲示を確認してください。",
+      "scheduleNotes": [
+        "自治体の公園一覧に掲載されている公共スケートボード広場です。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。営業時間と現地ルールを確認してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "現地掲示の利用ルールと周辺住民への配慮を守ってください。"
+      ],
+      "access": {
+        "notes": "今池公園内"
+      },
+      "englishTranslation": {
+        "name": "Imaike Park Skateboard Plaza",
+        "address": "2-828-1 Habucho, Kishiwada, Osaka",
+        "availabilityNote": "The municipal list confirms the facility and free use, but skate-plaza-specific hours and rules are incomplete. It is excluded from recommendations; check posted notices before visiting.",
+        "scheduleNotes": [
+          "This public skateboard plaza is listed in the municipal park directory."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; confirm the hours and posted rules.",
+        "rules": [
+          "Follow the posted rules and be considerate of nearby residents."
+        ],
+        "accessNotes": "In Imaike Park."
+      },
+      "sourceUrl": "https://www.city.kishiwada.osaka.jp/soshiki/132/kouen-ichiran.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F015",
+      "name": "永楽ゆめの森公園スケートパーク",
+      "address": "大阪府泉南郡熊取町大字野田65-10",
+      "prefecture": "大阪府",
+      "municipality": "熊取町",
+      "location": {
+        "latitude": 34.3737684,
+        "longitude": 135.3725884
+      },
+      "activities": [
+        "skateboard",
+        "inline-skate",
+        "kick-scooter"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "5月から8月は18:00まで、通常期は17:00までです。8月13日から16日は8:00から18:00です。",
+        "スケートボード、インラインスケート、ローラースケート、Jボードを利用できます。BMXは利用できません。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。公園の利用案内と現地掲示を確認してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "quarter-ramp",
+        "beginner-area"
+      ],
+      "rules": [
+        "ヘルメット、プロテクター、グローブを着用してください。",
+        "BMXは利用できません。",
+        "天候や公園の管理上の都合で利用を制限する場合があります。"
+      ],
+      "access": {
+        "parking": "永楽ゆめの森公園の駐車場を利用",
+        "notes": "永楽ゆめの森公園内"
+      },
+      "englishTranslation": {
+        "name": "Eiraku Yumenomori Park Skate Park",
+        "address": "65-10 Noda, Kumatori, Osaka",
+        "scheduleNotes": [
+          "Hours are until 18:00 from May through August and until 17:00 in the regular season; August 13-16 hours are 08:00-18:00.",
+          "Skateboards, inline skates, roller skates, and J-boards are allowed; BMX is not allowed."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; check the park guidance and posted notices.",
+        "rules": [
+          "Wear a helmet, protective gear, and gloves.",
+          "BMX is not allowed.",
+          "Weather or park-management conditions may restrict use."
+        ],
+        "accessNotes": "In Eiraku Yumenomori Park; use the park parking area."
+      },
+      "sourceUrl": "https://kumatori-eirakupark.net/yugu/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F016",
+      "name": "泉南りんくう公園 スケートパーク",
+      "address": "大阪府泉南市りんくう南浜2-201",
+      "prefecture": "大阪府",
+      "municipality": "泉南市",
+      "location": {
+        "latitude": 34.382526,
+        "longitude": 135.2665966
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "公式案内は日の出から日没までの利用としており、固定の営業時間はありません。季節の日没・イベント・臨時閉鎖を確認するまで推薦対象にしません。",
+      "scheduleNotes": [
+        "日の出から日没まで利用できます。",
+        "イベント、工事、天候等で一時閉鎖する場合があります。"
+      ],
+      "price": "無料",
+      "reservation": "通常は予約不要です。イベント時は利用できない場合があります。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "スケートボードは指定されたスケートパーク内で利用してください。",
+        "ヘルメットとプロテクターを着用してください。"
+      ],
+      "access": {
+        "parking": "SENNAN LONG PARKの駐車場を利用",
+        "notes": "SENNAN LONG PARK内"
+      },
+      "englishTranslation": {
+        "name": "Sennan Rinku Park Skate Park",
+        "address": "2-201 Rinku-minamihama, Sennan, Osaka",
+        "availabilityNote": "The official guidance describes use from sunrise to sunset rather than fixed hours. The park is excluded from recommendations until seasonal sunset, events, and temporary closures are checked.",
+        "scheduleNotes": [
+          "The skate park is available from sunrise to sunset.",
+          "Events, construction, or weather may cause temporary closure."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is normally required, but events may close the area.",
+        "rules": [
+          "Use skateboards within the designated skate park.",
+          "Wear a helmet and protective gear."
+        ],
+        "accessNotes": "In SENNAN LONG PARK; use the park parking areas."
+      },
+      "sourceUrl": "https://sennanlongpark.com/?page_id=357",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F017",
+      "name": "総建スケボーパークはびきの",
+      "address": "大阪府羽曳野市西浦1221-3",
+      "prefecture": "大阪府",
+      "municipality": "羽曳野市",
+      "location": {
+        "latitude": 34.5364,
+        "longitude": 135.6091
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "4月から10月は9:00から18:00、11月から3月は9:00から17:00です。",
+        "12月29日から1月3日、警報、雨天、保守時は閉場します。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。混雑時は譲り合って利用してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "rail",
+        "box",
+        "beginner-area"
+      ],
+      "rules": [
+        "スケートボード専用で、ヘルメット着用が必須です。",
+        "見学者、ペット、自転車等は入場できません。",
+        "警報、雨天、保守時は利用できません。"
+      ],
+      "access": {
+        "parking": "施設駐車場あり",
+        "notes": "南阪奈道路高架下"
+      },
+      "englishTranslation": {
+        "name": "Soken Skate Park Habikino",
+        "address": "1221-3 Nishiura, Habikino, Osaka",
+        "scheduleNotes": [
+          "Hours are 09:00-18:00 from April through October and 09:00-17:00 from November through March.",
+          "The park closes from December 29 to January 3 and during warnings, rain, or maintenance."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; share the space when busy.",
+        "rules": [
+          "This is a skateboard-only facility and helmets are mandatory.",
+          "Spectators, pets, and bicycles are not allowed inside.",
+          "The park is unavailable during warnings, rain, or maintenance."
+        ],
+        "accessNotes": "Under the Minami-Hanna Expressway; facility parking is available."
+      },
+      "sourceUrl": "https://www.city.habikino.lg.jp/soshiki/doboku/dourokouen/kouennkankei/tokusyokunoarukouen/15143.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F018",
+      "name": "泉大津円形スケートパーク",
+      "address": "大阪府泉大津市新港町（小松緑道広場）",
+      "prefecture": "大阪府",
+      "municipality": "泉大津市",
+      "location": {
+        "latitude": 34.5090278,
+        "longitude": 135.4041181
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "公式案内は日の出から日没までとしており、季節で変動します。表示時間は推薦判定に使用せず、来場前に現地掲示と日没時刻を確認してください。",
+      "scheduleNotes": [
+        "小さな子どもも利用できるセクションがあります。",
+        "駐車場はありません。日の出から日没までの利用です。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。入口の注意事項を確認してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "quarter-ramp",
+        "rail",
+        "beginner-area"
+      ],
+      "rules": [
+        "ヘルメットを着用してください。",
+        "入口の注意事項と周辺への配慮を守ってください。"
+      ],
+      "access": {
+        "stations": [
+          "南海本線 泉大津駅から徒歩約15分"
+        ],
+        "parking": "専用駐車場なし",
+        "notes": "小松緑道広場内"
+      },
+      "englishTranslation": {
+        "name": "Izumiotsu Circular Skateboard Park",
+        "address": "Shinko-cho, Izumiotsu, Osaka (Komatsu Greenway Plaza)",
+        "availabilityNote": "The official guidance says sunrise to sunset, which varies by season. The displayed hours are not used for recommendations; check posted notices and sunset time before visiting.",
+        "scheduleNotes": [
+          "The layout includes sections that young children can use.",
+          "There is no parking; use is from sunrise to sunset."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; read the precautions at the entrance.",
+        "rules": [
+          "Wear a helmet.",
+          "Follow the entrance precautions and be considerate of the surrounding area."
+        ],
+        "accessNotes": "About 15 minutes on foot from Izumiotsu Station; no dedicated parking."
+      },
+      "sourceUrl": "https://www.city.izumiotsu.lg.jp/kosodate/odekake/park/11132.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F019",
+      "name": "マンデー末広公園山側スケートボードパーク",
+      "address": "大阪府泉佐野市末広公園山側",
+      "prefecture": "大阪府",
+      "municipality": "泉佐野市",
+      "location": {
+        "latitude": 34.39866,
+        "longitude": 135.31071
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "12月29日から1月3日を除き、9:00から21:00まで利用できます。",
+        "コンクリート舗装で4基のセクションがあります。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。利用時間外は施錠されます。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "quarter-ramp",
+        "beginner-area"
+      ],
+      "rules": [
+        "利用時間外は入場しないでください。",
+        "現地掲示の利用ルールと周辺への配慮を守ってください。"
+      ],
+      "access": {
+        "parking": "末広公園周辺の駐車場を利用",
+        "notes": "国道26号線を挟んだ山側"
+      },
+      "englishTranslation": {
+        "name": "Monday Suehiro Park Mountain-side Skateboard Park",
+        "address": "Mountain side of Monday Suehiro Park, Izumisano, Osaka",
+        "scheduleNotes": [
+          "Open 09:00-21:00 except December 29 through January 3.",
+          "The park has a concrete surface and four sections."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; the park is locked outside opening hours.",
+        "rules": [
+          "Do not enter outside opening hours.",
+          "Follow the posted rules and be considerate of the surrounding area."
+        ],
+        "accessNotes": "On the mountain side across National Route 26; use nearby park parking."
+      },
+      "sourceUrl": "https://www.city.izumisano.lg.jp/kakuka/toshi/doro/menu/kouen/10036.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "high",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F020",
+      "name": "王仁公園スケートボード広場",
+      "address": "大阪府枚方市王仁公園1-1",
+      "prefecture": "大阪府",
+      "municipality": "枚方市",
+      "location": {
+        "latitude": 34.8181426,
+        "longitude": 135.706527
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "06:00",
+          "closes": "19:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "2026年7月から8月は6:00から19:00です。季節により利用時間が変わります。",
+        "平日・土日祝に利用でき、年末年始を除きます。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。利用時間と現地掲示のルールを確認してください。",
+      "beginnerFriendly": true,
+      "features": [
+        "outdoor",
+        "concrete",
+        "flat-area",
+        "bank",
+        "rail",
+        "box",
+        "stairs",
+        "beginner-area"
+      ],
+      "rules": [
+        "スケートボード、インラインスケート、BMXを利用できます。",
+        "利用者同士で譲り合い、マナー違反時は利用時間が縮小または閉鎖される場合があります。"
+      ],
+      "access": {
+        "stations": [
+          "JR 藤阪駅から徒歩圏"
+        ],
+        "parking": "王仁公園の有料駐車場",
+        "notes": "王仁公園内"
+      },
+      "englishTranslation": {
+        "name": "Wani Park Skateboard Plaza",
+        "address": "1-1 Wani Park, Hirakata, Osaka",
+        "scheduleNotes": [
+          "Hours are 06:00-19:00 in July and August 2026; hours vary by season.",
+          "The plaza is available on weekdays and weekends except over the year-end and New Year period."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; check the seasonal hours and posted rules.",
+        "rules": [
+          "Skateboards, inline skates, and BMX are allowed.",
+          "Share the space; rule violations may lead to reduced hours or closure."
+        ],
+        "accessNotes": "In Wani Park; within walking distance of Fujisaka Station with paid park parking."
+      },
+      "sourceUrl": "https://www.city.hirakata.osaka.jp/0000053913.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F021",
+      "name": "福万寺町市民運動広場南面 スケートボード場",
+      "address": "大阪府八尾市福万寺町六丁目、七丁目及び八丁目地内",
+      "prefecture": "大阪府",
+      "municipality": "八尾市",
+      "location": {
+        "latitude": 34.6449434,
+        "longitude": 135.6223901
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "19:00"
+        }
+      ],
+      "generalUseStatus": "limited",
+      "hoursBasis": "official",
+      "availabilityNote": "5月20日から8月31日は19:00まで、それ以外は17:00までです。治水緑地のため、雨天・増水・施設管理で閉鎖する場合があります。",
+      "scheduleNotes": [
+        "令和6年4月からスケートボード場として利用できます。",
+        "年末年始は休場します。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。治水緑地の閉鎖情報を確認してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "スケートボード場の利用範囲を守ってください。",
+        "雨天・増水時は利用しないでください。"
+      ],
+      "access": {
+        "parking": "福万寺町市民運動広場の案内を確認",
+        "notes": "恩智川治水緑地（福万寺二期地区）内"
+      },
+      "englishTranslation": {
+        "name": "Fukumanji-cho Civic Sports Ground South Skateboard Area",
+        "address": "Fukumanji-cho 6-8, Yao, Osaka",
+        "availabilityNote": "Hours are until 19:00 from May 20 through August 31 and until 17:00 otherwise. As a flood-control green space, rain, flooding, or management may cause closure.",
+        "scheduleNotes": [
+          "The area has been available as a skateboard facility since April 2024.",
+          "The area closes over the year-end and New Year period."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required; check flood-control green-space closure notices.",
+        "rules": [
+          "Stay within the designated skateboard area.",
+          "Do not use the area during rain or flooding."
+        ],
+        "accessNotes": "In the Onchigawa flood-control green space; check the civic sports ground access guidance."
+      },
+      "sourceUrl": "https://www.city.yao.osaka.jp/bunka_sports_event/sports/1011000/1011006/1011013.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F022",
+      "name": "高師浜総合運動施設 スケートボード場",
+      "address": "大阪府高石市高師浜丁8",
+      "prefecture": "大阪府",
+      "municipality": "高石市",
+      "location": {
+        "latitude": 34.5253654,
+        "longitude": 135.4253705
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "21:00"
+        }
+      ],
+      "generalUseStatus": "regular",
+      "hoursBasis": "official",
+      "scheduleNotes": [
+        "1月4日から12月28日まで、9:00から21:00です。",
+        "施設窓口または市のスポーツ施設情報システムで申し込みます。"
+      ],
+      "closurePeriods": [
+        {
+          "type": "annual",
+          "start": "12-29",
+          "end": "01-03",
+          "reason": "年末年始休場"
+        }
+      ],
+      "price": "大人400円、子ども200円。市外利用者は加算あり。",
+      "reservation": "利用登録と事前申し込みが必要です。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "lighting",
+        "flat-area"
+      ],
+      "rules": [
+        "施設の利用許可と現地ルールに従ってください。",
+        "夜間利用時は周辺への騒音に配慮してください。"
+      ],
+      "access": {
+        "stations": [
+          "南海高師浜線 高師浜駅から徒歩約8分"
+        ],
+        "parking": "高師浜野球場横の有料駐車場",
+        "notes": "高師浜総合運動施設内"
+      },
+      "englishTranslation": {
+        "name": "Takashinohama General Sports Facility Skateboard Area",
+        "address": "8 Takashinohamacho, Takaishi, Osaka",
+        "scheduleNotes": [
+          "Open 09:00-21:00 from January 4 through December 28.",
+          "Apply at the facility desk or through the city's sports-facility information system."
+        ],
+        "price": "JPY 400 for adults and JPY 200 for children; an additional fee applies to users from outside the city.",
+        "reservation": "Registration and advance application are required.",
+        "rules": [
+          "Follow the facility permit conditions and posted rules.",
+          "Be considerate of surrounding noise during evening use."
+        ],
+        "accessNotes": "About eight minutes on foot from Takashinohama Station; paid parking is next to the baseball field."
+      },
+      "sourceUrl": "https://www.city.takaishi.lg.jp/kakuka/kyouiku/syakaikyouiku__ka/lifelongstudy/undoushisetsu/hokashisetsu.html",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F023",
+      "name": "倉治1丁目高架下スケボー広場",
+      "address": "大阪府交野市倉治1丁目",
+      "prefecture": "大阪府",
+      "municipality": "交野市",
+      "location": {
+        "latitude": 34.7921486,
+        "longitude": 135.695883
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "17:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "2025年4月開設は確認できましたが、公式ページでスケート広場固有の営業時間・料金が不足しています。推薦には使用せず、来場前に市の案内と現地掲示を確認してください。",
+      "scheduleNotes": [
+        "スケートボード等を利用できる高架下広場です。",
+        "周辺住民への騒音と安全に配慮してください。"
+      ],
+      "price": "無料（公式ページで要確認）",
+      "reservation": "公式ページと現地掲示で確認してください。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "roof",
+        "flat-area"
+      ],
+      "rules": [
+        "現地掲示の利用ルールに従ってください。"
+      ],
+      "access": {
+        "notes": "倉治1丁目高架下"
+      },
+      "englishTranslation": {
+        "name": "Kuraji 1-chome Underpass Skateboard Plaza",
+        "address": "Kuraji 1-chome, Katano, Osaka",
+        "availabilityNote": "The April 2025 opening is confirmed, but the official page lacks skate-plaza-specific hours and fees. It is excluded from recommendations; check city guidance and posted notices before visiting.",
+        "scheduleNotes": [
+          "This underpass plaza allows skateboards and related activities.",
+          "Be considerate of nearby residents and safety."
+        ],
+        "price": "Free (confirm with the official source)",
+        "reservation": "Confirm the current procedure on the official page and at the site.",
+        "rules": [
+          "Follow the posted rules."
+        ],
+        "accessNotes": "Under the Kuraji 1-chome railway overpass."
+      },
+      "sourceUrl": "https://www.city.katano.osaka.jp/docs/2025031800021/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    },
+    {
+      "facilityId": "OSK-F024",
+      "name": "せんなん里海公園 PLAYGROUND AREA",
+      "address": "大阪府泉南郡岬町淡輪地内",
+      "prefecture": "大阪府",
+      "municipality": "岬町",
+      "location": {
+        "latitude": 34.338706,
+        "longitude": 135.1975284
+      },
+      "activities": [
+        "skateboard"
+      ],
+      "hours": [
+        {
+          "day": "daily",
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "generalUseStatus": "schedule_check_required",
+      "hoursBasis": "conservative",
+      "availabilityNote": "スケート利用は可能ですが、固定の滑走時間は公式ページに明記されていません。夜間利用・イベント・海水浴期間の制限を確認するまで推薦対象にしません。",
+      "scheduleNotes": [
+        "誰でもスケート利用できる無料・無人のエリアです。",
+        "夜間は避け、イベントや海水浴期間の案内を確認してください。"
+      ],
+      "price": "無料",
+      "reservation": "予約不要です。イベント時は利用できない場合があります。",
+      "beginnerFriendly": false,
+      "features": [
+        "outdoor",
+        "flat-area"
+      ],
+      "rules": [
+        "周辺施設の利用者と譲り合ってください。",
+        "夜間やイベント時は利用を控えてください。"
+      ],
+      "access": {
+        "parking": "せんなん里海公園の駐車場を利用",
+        "notes": "PLAYGROUND AREA内"
+      },
+      "englishTranslation": {
+        "name": "Sennan Satoumi Park PLAYGROUND AREA",
+        "address": "Tannowa, Misaki, Osaka",
+        "availabilityNote": "Skating is allowed, but fixed skate hours are not stated on the official page. The area is excluded from recommendations until nighttime, event, and bathing-season restrictions are checked.",
+        "scheduleNotes": [
+          "This is a free, unmanned area open to anyone for skating.",
+          "Avoid nighttime use and check event or bathing-season notices."
+        ],
+        "price": "Free",
+        "reservation": "No reservation is required, but events may restrict use.",
+        "rules": [
+          "Share the area with users of nearby facilities.",
+          "Avoid use at night or during events."
+        ],
+        "accessNotes": "In Sennan Satoumi Park; use the park parking areas."
+      },
+      "sourceUrl": "https://sennan.osaka-park.or.jp/2024/10/06/playground-area%EF%BC%863on3%E3%83%90%E3%82%B9%E3%82%B1%E3%83%83%E3%83%88%E3%82%B3%E3%83%BC%E3%83%88/",
+      "sourceType": "municipality_or_operator_official",
+      "status": "verified",
+      "confidence": "medium",
+      "verifiedAt": "2026-07-19T23:59:00+09:00",
+      "dynamicVerifiedAt": "2026-07-19T23:59:00+09:00",
+      "stableVerifiedAt": "2026-07-19T23:59:00+09:00"
+    }
+  ]
+}

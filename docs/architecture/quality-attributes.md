@@ -1,92 +1,138 @@
 # Quality Attributes and Architecture Guardrails
 
-- Status: Draft
-- Date: 2026-07-12
-- Decision authority: Accepted ADR
+- Status: Active MVP architecture
+- Date: 2026-07-20
+- Decision authority: [Product Baseline](../product_baseline.md) and Accepted ADRs
 
-## 目的
+## 1. Architecture summary
 
-技術スタックを選ぶ前に、spot-diggzが優先する品質特性と、その検証方法を定義する。
-この文書は特定の実装方式を確定するものではない。
-
-## 優先する品質特性
-
-| Priority | Quality attribute | このプロダクトでの意味 | 検証方法 |
-|---|---|---|---|
-| P0 | 信頼可能性 | 施設、営業時間、料金、ルールを創作せず、根拠を示す | 根拠付与率、未確認情報の拒否テスト、評価セット |
-| P0 | プライバシー | 正確な現在地や自由入力を必要以上に保存しない | データフロー確認、ログ検査、保持期間テスト |
-| P0 | セキュリティ | 不正な閲覧・変更、AIツール悪用、秘密漏えいを防ぐ | 脅威モデル、権限テスト、SAST/DAST、秘密情報検査 |
-| P0 | データ鮮度 | 推薦に使う施設情報の出典と確認時刻を追跡する | `source_url`、`verified_at`、期限超過率 |
-| P1 | 変更容易性 | 推薦ルール、UI、AI、データ取得を独立して変更できる | モジュール依存検査、テスト容易性、ADRレビュー |
-| P1 | 観測性 | 利用者影響、失敗経路、AI品質、データ鮮度を追跡できる | ログ・メトリクス・トレースの受入テスト |
-| P1 | 信頼性 | 主要ユーザージャーニーが許容範囲で完了する | SLI/SLO、エラーバジェット、スモークテスト |
-| P1 | 性能 | 推薦候補と理由を利用者が待てる時間内に返す | p50/p95/p99レイテンシー、依存別トレース |
-| P1 | コスト効率 | 個人開発で継続可能な固定費・従量費に収める | リクエスト当たり費用、AI呼び出し当たり費用 |
-| P1 | アクセシビリティ | モバイルWebで入力と推薦結果を利用できる | 自動検査、キーボード操作、スクリーンリーダー確認 |
-| P1 | 国際化 | 日本語と英語で同じ事実と意味を提供する | locale別テスト、固定文言検査、翻訳欠落検査 |
-
-## 初期アーキテクチャ仮説
-
-MVPは、単一のデプロイ可能単位を基本とするモジュラーモノリスとする。
-次の論理境界は維持するが、初期段階で別サービスへ分割しない。
+spot-diggzは、Web UI、HTTP API、facility catalog、決定論的推薦、外部provider adapter、訂正store、observabilityを1つのGo applicationとしてdeployするモジュラーモノリスである。facility catalog用のdatabase、queue、cacheは分離しないが、Productionの訂正reportだけは永続性のためmanaged Neonへ保存する。
 
 ```text
-Web UI
-  -> Session Input
-  -> Recommendation Application
-       -> Deterministic Filter and Score
-       -> Facility Catalog
-       -> AI Explanation Adapter
-  -> Feedback
-  -> Observability
+Browser
+  -> embedded Web UI / HTTP API
+       -> session input validation
+       -> facility catalog (read-only JSON snapshot)
+       -> deterministic recommendation
+            -> Google Routes adapter (optional)
+            -> straight-line adapter (fallback)
+       -> Google Geocoding adapter (optional)
+       -> correction store (Neon/PostgreSQL in production, file fallback locally)
+       -> rate limit / observability
 ```
 
-### 境界の責務
+production成果物は `CGO_ENABLED=0` の静的な単一binaryを含むscratch OCI imageである。imageはGoogle HTTPS用CA bundleとnon-root UID `65532` が書き込めるlocal fallback directoryを持つ。facility catalogはimage内のread-only snapshot、Productionのcorrection reportはNeon/PostgreSQLへ置く。
 
-- Session Input: 目的、レベル、時間、交通手段、位置条件の検証
-- Facility Catalog: 検証済み施設情報、出典、鮮度、状態の管理
-- Deterministic Filter and Score: 利用可否の除外と説明可能な順位付け
-- AI Explanation Adapter: 自然言語理解、比較、説明、翻訳
-- Feedback: 推薦の有用性、訪問結果、誤情報報告
-- Observability: 技術・プロダクト・AI品質シグナルの記録
+## 2. Module boundaries
 
-AI説明層は推薦結果を上書きせず、検証済み候補と根拠から説明を生成する。
+| Module / package | Responsibility | Must not own |
+| --- | --- | --- |
+| `internal/webui` | 埋め込み静的assetとbrowser entry point | 推薦rule、catalog更新 |
+| `internal/httpapi` | route、HTTP validation、response/error contract、security header | provider固有request、永続化format |
+| `internal/session` | purpose、mood、level、time、transport、originのdomain validation | HTTPやGoogle型 |
+| `internal/facility` | catalog model/load/validation、freshness、営業時間・休場判定 | user request、外部API credential |
+| `internal/recommendation` | hard condition、score、stable ordering、reason生成 | network、AI、catalog mutation |
+| `internal/travel` | travel provider interface、Google Routes、straight-line fallback | recommendation ranking |
+| `internal/geocoding` | Google Geocoding境界とlocation result | catalog scope拡張、query保存 |
+| `internal/correction` | report validation、file/PostgreSQL保存、90日retention purge、read-only file store診断 | catalog自動更新 |
+| `internal/ratelimit` | process内token bucket | user identity、distributed quota |
+| `internal/observability` | Prometheus metricsとstable label | request body、正確な位置、contact |
+| `cmd/api` | dependency composition、configuration、lifecycle | domain rule |
 
-## アーキテクチャ適応度関数の候補
+依存方向はHTTP / runtime adapterからdomainへ向ける。Recommendationはtravel provider interfaceに依存し、Google HTTP形式へ直接依存しない。Geocoding結果は起点候補であり、5府県catalogをruntimeで増やさない。Correctionは運用者review前にcatalogを書き換えない。
 
-実装開始時に、次をCIまたは定期検査へ追加する。
+## 3. Quality attributes
 
-- ドメイン層からUI、DB、AI SDKへの逆向き依存がない
-- 循環依存がない
-- 施設事実を返す応答に出典と確認時刻がある
-- 位置情報と秘密情報が構造化ログへ含まれない
-- APIスキーマとAI構造化出力が検証される
-- 主要ユーザージャーニーのスモークテストが通る
-- AI評価セットの最低品質を下回らない
-- 依存ライブラリに許容不能な脆弱性やライセンスがない
-- p95レイテンシーと1推薦当たりAI費用が予算内にある
+| Priority | Attribute | MVP contract | Verification |
+| --- | --- | --- | --- |
+| P0 | Catalog trust | verified record、公式source、検証時刻、日英必須属性だけを公開 | startup validation、catalog tests、source review |
+| P0 | Freshness safety | dynamic 30日・stable 180日の両方がfreshな施設だけを推薦 | freshness unit tests、`/readyz`、fresh/stale gauge |
+| P0 | Privacy | origin/queryを非保存・非logging。Google有効時の送信を明示 | log tests、store inspection、privacy review |
+| P0 | Determinism | 同じcatalog、input、時刻、provider結果から同じ順位・理由を返す | clock/provider injection、stable-order tests |
+| P0 | Recoverability | Google障害時もstraight-line推薦を継続し、artifact rollbackでreportを失わない | provider failure tests、Runbook smoke、volume-preserving rollback |
+| P1 | Modifiability | UI、HTTP、domain、provider、storeをmodule境界で変更できる | package review、focused tests、ADR review |
+| P1 | Observability | HTTP、推薦、product event、catalog freshnessを低cardinalityで測る | metrics tests、dashboard/alert review |
+| P1 | Security | input/size/rate/secret/container controlを多層化する | CI scans、HTTP tests、threat review |
+| P1 | Performance | 小規模catalogの主要flowを同期処理で完了する | HTTP duration histogram、p95 observation |
+| P1 | Accessibility / i18n | mobileで主要flowを日英利用できる | Playwright desktop/mobile、manual keyboard/screen-reader review |
+| P1 | Operability | static binary、scratch image、health/readiness、smoke/rollbackを揃える | CI image smoke、Runbook exercise |
 
-## 技術選定時に作成するADR
+## 4. Runtime behavior and failure isolation
 
-- Webフレームワークと実行環境
-- 永続化方式と施設データの更新方法
-- 地図表示と外部ナビゲーション連携
-- AIプロバイダー、モデル選択、構造化出力、フォールバック
-- 認証の要否と方式
-- 観測基盤とテレメトリー標準
-- デプロイ先と環境分離
-- CI/CD、成果物、ロールバック方式
+### Startup
 
-各ADRでは、要件、品質特性、代替案、費用、運用負荷、撤退容易性を比較する。
+1. facility JSONを読み、schema、source、座標、translation、時刻、休場形式を検証する。
+2. correction storeを初期化し、`deleteAfter` 超過reportをpurgeする。file fallback時はfileの作成・書込・sync可否も確認する。
+3. keyがあればGoogle adapter、なければstraight-line recommendationとdisabled geocodingを構成する。
+4. catalogのfresh件数を評価し、HTTP serverと1時間ごとのretention workerを開始する。
 
-## 分散化を検討する条件
+構造的に不正なcatalogまたはcorrection store初期化失敗はstartup failureとする。期限超過catalogはloadできるが、fresh施設が0件なら `/healthz` は200、`/readyz` は503である。
 
-次のいずれかが実測された場合だけ、サービス分割、キュー、キャッシュ、専用検索基盤を検討する。
+### Request path
 
-- 独立したスケーリングが必要
-- 障害分離がSLO達成に必要
-- デプロイ頻度または変更責務が明確に異なる
-- 同期処理ではレイテンシーまたは信頼性目標を達成できない
-- 単一DBでデータ量・クエリ・権限分離の要求を満たせない
+- Recommendationは候補のfreshness、休場、営業時間、時間、levelを除外し、provider結果を使って最大3件をstable orderで返す。
+- Google Routesは4秒timeoutとし、HTTP / decode / element failure時はrequest全体をstraight-lineへfallbackする。
+- GeocodingはGoogle専用で、JSON bodyのPOSTと専用rate limitを通し、key未設定またはprovider failure時に503を返す。代表地点・browser geolocationはUI側の代替経路である。
+- Correctionは32 MiBのstore上限内でappendとsyncに成功した場合だけ202を返す。reportには90日後の `deleteAfter` を付け、起動時と1時間ごとにpurgeする。
+- `/metrics` はapplication内で認証せず、deployment networkで制限する。
 
-分割によって増えるネットワーク障害、データ一貫性、監視、デプロイ、コストも同時に評価する。
+## 5. Deployment boundaries
+
+```text
+immutable image
+  - static Go binary
+  - embedded UI
+  - verified catalog snapshot
+  - CA bundle
+runtime configuration
+  - PORT / catalog path / correction path / environment / version
+  - GOOGLE_MAPS_API_KEY (optional secret)
+persistent state
+  - correction JSON Lines volume
+external state
+  - Google Routes / Geocoding (optional)
+  - Prometheus-compatible collector
+```
+
+- 同一image digestを環境間で昇格し、環境ごとにrebuildしない。
+- root filesystemとcatalogをread-onlyにし、correction directoryだけを書込可能にする。
+- livenessは `/healthz`、readinessはfresh施設が1件以上であることを確認する `/readyz` を使う。
+- Google-only rollbackはkey削除と再起動、application rollbackは直前imageと同じcorrection volumeを使う。
+- scratch imageにはshellがないため、container内部での手作業を運用手段にせず、endpoint、log、metrics、volume inspectionで診断する。
+- 同じapplication binaryの `correctioncheck` subcommandはstoreを変更せず、本文を出力しない診断境界として利用できる。
+
+## 6. Fitness functions and release checks
+
+Current automated checks:
+
+- `gofmt`、`go vet`、`go test -race ./...`
+- catalog schema/freshness/closure/translation validation
+- deterministic recommendationとprovider fallback tests
+- HTTP endpoint、strict JSON、body limit、rate limit、error code tests
+- correction consent、file mode、retention purge tests
+- metrics / privacy-sensitive logging tests
+- `make verify-mvp` の実HTTP smoke
+- Playwright desktop/mobile E2E
+- static binary check、scratch image health/readiness smoke
+- source/binary dependency、filesystem/image、secret scans
+
+Release environment checks:
+
+- 5府県すべてを含み、fresh施設が1件以上ある
+- `/metrics` がpublic Internetから到達できない
+- correction volumeのowner、mode、暗号化、backup、retentionを確認した
+- Google有効時はkey制限、quota/billing alert、実通信、privacy表示を確認した
+- post-deploy smoke、observation window、rollbackを実施した
+
+[事実] Vercel ContainerとNeonの接続、migration、health/readiness、facility API、訂正API、desktop/mobile E2EをProductionで確認した。[未検証] metrics network restriction、alert、Google quota、custom domain、main pushからの自動deployは未設定である。
+
+## 7. Guardrails and evolution triggers
+
+- AIをMVP推薦へ追加しない。追加時は事実生成、位置送信、評価、fallbackを新ADRで決める。
+- facility catalog databaseはoperator更新、履歴、同時更新がJSON運用を超えた時だけ検討する。訂正reportの永続化はProductionでNeonを利用する。
+- distributed rate limitは複数instance運用またはabuse実測後に導入する。
+- queue、cache、service分割は独立scale、障害分離、release cadence、SLOの必要性を計測してから採用する。
+- provider追加は品質、cost、privacy、利用規約、fallback semanticsをADRで比較する。
+- 5府県外へのscope拡大は需要証拠、catalog owner、更新工数を満たしてから決める。
+
+関連する運用詳細は [Observability](../operations/observability.md)、[Continuous Delivery](../operations/continuous-delivery.md)、[MVP Runbook](../operations/mvp-runbook.md)、privacy controlは [Security Baseline](../security/security-baseline.md) を正とする。
