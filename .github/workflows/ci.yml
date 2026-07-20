@@ -11,26 +11,31 @@ on:
     branches:
       - main
       - "feature/**"
+  schedule:
+    - cron: "17 0 * * 1"
   workflow_dispatch:
 
 env:
   GO_VERSION: "1.25.12"
   GOVULNCHECK_VERSION: "v1.1.4"
+  GITLEAKS_VERSION: "8.28.0"
+  NODE_VERSION: "24.18.0"
+  TRIVY_VERSION: "v0.70.0"
+  IMAGE_NAME: "spotdiggz-api"
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   go-ci:
     name: Go verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
@@ -41,14 +46,22 @@ jobs:
       - name: Vet
         run: go vet ./cmd/... ./internal/...
 
-      - name: Test
-        run: go test ./cmd/... ./internal/...
+      - name: Test with race detector
+        run: go test -race ./...
+
+      - name: Verify production catalog freshness horizon
+        run: make verify-catalog
 
       - name: Verify runnable MVP flow
         run: make verify-mvp
 
       - name: Build API binary
-        run: go build -trimpath -o bin/spotdiggz-api ./cmd/api
+        run: |
+          mkdir -p bin
+          CGO_ENABLED=0 GOOS=linux go build -trimpath -o bin/spotdiggz-api ./cmd/api
+
+      - name: Verify static API binary
+        run: file bin/spotdiggz-api | grep --quiet "statically linked"
 
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
@@ -59,54 +72,216 @@ jobs:
       - name: Scan Go binary
         run: govulncheck -mode=binary ./bin/spotdiggz-api
 
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-24.04
+    needs: go-ci
+    env:
+      E2E_PORT: "18080"
+      PLAYWRIGHT_OUTPUT_DIR: ${{ github.workspace }}/artifacts/playwright-results
+      PLAYWRIGHT_REPORT_DIR: ${{ github.workspace }}/artifacts/playwright-report
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Validate data and OpenAPI contracts
+        run: npm run test:contracts
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run desktop and mobile E2E
+        run: npm run test:e2e
+
+      - name: Save Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report-${{ github.run_attempt }}
+          path: |
+            artifacts/playwright-report
+            artifacts/playwright-results
+          if-no-files-found: warn
+          retention-days: 7
+
   docker-ci:
-    name: Docker build
-    runs-on: ubuntu-latest
+    name: Docker security and smoke
+    runs-on: ubuntu-24.04
     needs: go-ci
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Build API image
-        run: docker build --tag spotdiggz-api:${GITHUB_SHA} .
+        run: docker build --tag "${IMAGE_NAME}:${GITHUB_SHA}" .
+
+      - name: Smoke application and correction store
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          container_name="spotdiggz-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup() {
+            docker rm --force "${container_name}" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker run \
+            --detach \
+            --name "${container_name}" \
+            --publish 127.0.0.1:18080:8080 \
+            "${IMAGE_NAME}:${GITHUB_SHA}"
+
+          ready=false
+          for attempt in {1..30}; do
+            health_status="$(curl --fail --silent --show-error http://127.0.0.1:18080/healthz || true)"
+            readiness_status="$(curl --fail --silent --show-error http://127.0.0.1:18080/readyz || true)"
+            if [[ "${health_status}" == '{"status":"ok"}' \
+              && "${readiness_status}" == '{"status":"ready"}' ]]; then
+              ready=true
+              break
+            fi
+            if [[ "$(docker inspect --format='{{.State.Running}}' "${container_name}")" != "true" ]]; then
+              break
+            fi
+            sleep 1
+          done
+
+          if [[ "${ready}" != "true" ]]; then
+            docker logs "${container_name}"
+            exit 1
+          fi
+
+          correction_response="$(curl --fail --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{"facilityId":"OSK-F001","category":"hours","details":"CI smoke verifies that the correction store is writable."}' \
+            http://127.0.0.1:18080/api/corrections)"
+          if [[ "${correction_response}" != *'"reportId":"COR-'* ]]; then
+            printf 'unexpected correction response: %s\n' "${correction_response}"
+            exit 1
+          fi
+          docker exec "${container_name}" \
+            /spotdiggz-api correctioncheck \
+            -path /var/lib/spotdiggz/corrections.jsonl
+
+      - name: Prepare SBOM output
+        run: mkdir -p artifacts
+
+      - name: Generate CycloneDX SBOM
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: image
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          scanners: vuln
+          format: cyclonedx
+          output: artifacts/spotdiggz-sbom.cdx.json
+          exit-code: "0"
+
+      - name: Save image SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: spotdiggz-sbom-${{ github.sha }}
+          path: artifacts/spotdiggz-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Scan API image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          skip-setup-trivy: true
+          scan-type: image
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          format: table
+          exit-code: "1"
+
+      - name: Package verified API image
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          docker image inspect --format='{{.Id}}' "${IMAGE_NAME}:${GITHUB_SHA}" > artifacts/spotdiggz-api.image-id.txt
+          docker save "${IMAGE_NAME}:${GITHUB_SHA}" | gzip -9 > artifacts/spotdiggz-api.docker.tar.gz
+          sha256sum artifacts/spotdiggz-api.docker.tar.gz > artifacts/spotdiggz-api.docker.tar.gz.sha256
+
+      - name: Save verified API image
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: spotdiggz-api-image-${{ github.sha }}
+          path: |
+            artifacts/spotdiggz-api.image-id.txt
+            artifacts/spotdiggz-api.docker.tar.gz
+            artifacts/spotdiggz-api.docker.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
 
   filesystem-scan:
     name: Trivy filesystem scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          version: ${{ env.TRIVY_VERSION }}
           scan-type: fs
           scan-ref: .
+          scanners: vuln,secret,misconfig
           severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          format: table
           exit-code: "1"
 
   secret-scan:
     name: Secret scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: ${{ env.GITLEAKS_VERSION }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
 
   dependency-review:
     name: Dependency review
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: moderate

@@ -12,11 +12,36 @@ func TestHandlerServesApplicationAndAssets(t *testing.T) {
 	tests := []struct {
 		path        string
 		contentType string
-		contains    string
+		contains    []string
 	}{
-		{path: "/", contentType: "text/html", contains: `id="quick-search-button"`},
-		{path: "/assets/app.css", contentType: "text/css", contains: ".mood-action-grid"},
-		{path: "/assets/app.js", contentType: "text/javascript", contains: "scheduleNotes"},
+		{
+			path:        "/",
+			contentType: "text/html",
+			contains: []string{
+				`id="quick-search-button"`,
+				`id="locale-switch"`,
+				`id="location-search-results"`,
+				`id="correction-dialog"`,
+			},
+		},
+		{
+			path:        "/assets/app.css",
+			contentType: "text/css",
+			contains:    []string{".mood-action-grid", ".location-search-result", ".correction-dialog"},
+		},
+		{
+			path:        "/assets/app.js",
+			contentType: "text/javascript",
+			contains: []string{
+				"spotdiggz.locale.v1",
+				"englishTranslation",
+				"/api/locations/search",
+				"/api/corrections",
+				"/api/events",
+				"google_routes",
+				"tokushima-station",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -29,8 +54,10 @@ func TestHandlerServesApplicationAndAssets(t *testing.T) {
 			if got := response.Header().Get("Content-Type"); !strings.HasPrefix(got, test.contentType) {
 				t.Fatalf("Content-Type = %q, want prefix %q", got, test.contentType)
 			}
-			if !strings.Contains(response.Body.String(), test.contains) {
-				t.Fatalf("body does not contain %q", test.contains)
+			for _, marker := range test.contains {
+				if !strings.Contains(response.Body.String(), marker) {
+					t.Fatalf("body does not contain %q", marker)
+				}
 			}
 		})
 	}

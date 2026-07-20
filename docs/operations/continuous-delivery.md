@@ -1,192 +1,195 @@
 # Continuous Delivery Pipeline Design
 
-- Status: Draft
-- Date: 2026-07-12
-- Platform: 未選定
+- Status: CI and rollback artifact implemented; Vercel/Neon Production smoke verified
+- Date: 2026-07-20
+- CI: GitHub Actions
+- Deployment platform: Vercel Container (Services single `app` service)
+- Correction store: Neon/PostgreSQL in Production, file fallback in local/CI
 
 ## 1. 目的
 
-小さな変更を早く検証し、同じ手順で繰り返しリリースし、問題時に安全に戻せる状態を作る。
-CI/CDはツール導入ではなく、Git上の変更を検証済み成果物へ変換する再現可能なプロセスとして設計する。
+同じcommitから静的Go binaryとscratch OCI imageを再現し、code、catalog、UI、security、container起動をrelease前に検証する。CI成功はdeploy成功を意味しない。registry公開、production設定、smoke、観察、rollbackを完了してreleaseとする。
 
-## 2. 原則
+## 2. Delivery contract
 
-- Gitをコード、スキーマ、設定、パイプライン、インフラ定義のSingle Source of Truthにする。
-- `main`を常にリリース可能に保つ。
-- 長期ブランチを避け、小さな変更を頻繁に統合する。
-- 失敗を早く返すため、安価で高速な検査を先に実行する。
-- 成果物を一度だけビルドし、同一物を環境間で昇格させる。
-- 手作業を前提にせず、同じ入力から同じ結果を再現できるようにする。
-- デプロイ成功を完了とせず、スモークテストとSLI確認までをリリースに含める。
-- ロールバックまたは安全な前方修正を事前に設計する。
+- source、catalog、OpenAPI、CI、DockerfileをGitでversion管理する
+- `main` と短命branchに同じrequired verificationを適用する
+- `CGO_ENABLED=0` で静的な単一Go binaryをbuildする
+- production imageはscratch、non-root UID `65532` で実行する
+- imageには検証済みcatalog、Google HTTPS用CA bundle、non-root書込directoryを含める
+- Productionのcorrection reportはimage外のNeon/PostgreSQLに保存し、local/CIではfile storeを使う
+- secretをsource、image、artifact、logへ含めない
+- deploy後にhealth、freshness-aware readiness、recommendation、metricsを確認する
+- rollbackは直前imageと同じNeon接続設定を使い、reportやschemaを上書きしない。file fallbackでは同じcorrection volumeを使う
 
-## 3. ブランチとレビュー
+## 3. Branch and review
 
-- デフォルトブランチは `main`。
-- 作業ブランチは短命にし、1つの目的に限定する。
-- PRにはWHAT、WHY、受入条件、リスク、検証方法、ロールバック方法を記載する。
-- 必須レビュー人数は個人開発では0または1とし、AIレビューを人間の承認の代替にしない。
-- 必須チェックが成功するまでmainへ統合しない。
-- mainへのforce pushと履歴書き換えを禁止する。
+- default branchは `main`
+- 共有branchへ直接commitしない
+- branchは1つの目的に限定する
+- PRへWHAT、WHY、受入条件、risk、verification、rollbackを書く
+- required checkを無効化せず、失敗を再実行だけで隠さない
+- `main` へのforce pushと履歴書き換えを禁止する
 
-## 4. PRパイプライン
+## 4. Implemented CI
 
-採用技術に応じて次の順序で構成する。
+### 4.1 Go verification
 
-### Stage 1: Repository hygiene
+Ubuntu 24.04とGo 1.25.12で次を実行する。
 
-目標時間: 1分以内。
+1. `gofmt` 差分検査
+2. `go vet ./cmd/... ./internal/...`
+3. `go test -race ./...`
+4. `make verify-catalog`
+5. `make verify-mvp`
+6. `CGO_ENABLED=0 GOOS=linux go build -trimpath`
+7. `file` によるstatically linked確認
+8. `govulncheck` のsource scan
+9. `govulncheck -mode=binary` のbinary scan
 
-- 変更ファイルと禁止ファイルの確認
-- 改行、空白、生成物混入の検査
-- Markdownリンクと設定構文の検査
-- 秘密情報スキャン
-- コミット・PRメタデータ検査
+Go testはcatalog schema、production catalogの事実回帰、freshness horizon command、休場、provider fallback、geocoding、correction retention、rate limit、metrics、HTTP contractを含む。workflowは毎週月曜00:17 UTC（09:17 JST）にも起動し、production catalogが168時間後も鮮度内かを検査する。
 
-### Stage 2: Static verification
+### 4.2 Browser E2E
 
-目標時間: 3分以内。
+Go verification後、Node.js 24とPlaywright Chromiumでdesktop / mobileの主要flowを実行する。
 
-- formatter check
-- linter
-- type check
-- API・設定・AI出力スキーマ検査
-- 依存方向と循環依存の検査
+- `npm ci`
+- `npm run test:contracts`
+- `npx playwright install --with-deps chromium`
+- `npm run test:e2e`
 
-### Stage 3: Automated tests
+failure時のscreenshot、trace、videoとHTML reportは7日保持のCI artifactにする。E2Eは固定test catalogとlocal serverを使い、実Google APIへ接続しない。固定fixtureの時刻調整はE2E再現性のためであり、production catalogの鮮度検査とは分離する。
 
-- ドメイン単体テスト
-- コンポーネントテスト
-- DB・外部境界の統合テスト
-- 認証・認可・入力検証テスト
-- 回帰テスト
-- AI評価セット
+### 4.3 Container security and smoke
 
-テストは並列化するが、失敗原因が追跡できる粒度を保つ。
+Go verification後に同じcommitからimageをbuildする。
 
-### Stage 4: Security and supply chain
+1. scratch imageをbuildする
+2. containerをlocalhostだけへpublishする
+3. `/healthz` が `{"status":"ok"}` になるまで待つ
+4. `/readyz` が `{"status":"ready"}` になるまで待つ
+5. 訂正APIへCI専用reportをPOSTし、同じbinaryの `correctioncheck` でstoreを検証する
+6. CycloneDX SBOMを生成し、30日保持のartifactにする
+7. imageのHIGH / CRITICAL vulnerabilityをTrivyで検査する
+8. scan済みimageをDocker archive、image ID、archive SHA-256として30日保持する
 
-- 依存関係脆弱性検査
-- ライセンス検査
-- SAST
-- コンテナ・IaC検査（採用時）
-- SBOM生成
-- 依存関係とアクションのバージョン固定
-- ビルド来歴と署名（本番公開時）
+readinessはcatalogにdynamic 30日・stable 180日の両方が鮮度内の施設が1件以上ある場合だけ成功する。emptyまたは全件staleのimageはsmokeを通過しない。
 
-### Stage 5: Build
+### 4.4 Repository and supply-chain checks
 
-- production相当設定でビルド
-- 成果物の再現性確認
-- サイズと依存関係の予算検査
-- Git SHA、ビルド日時、スキーマ版を成果物メタデータへ付与
+- Trivy filesystem scan: vulnerability、secret、misconfiguration
+- Gitleaks full-history scan
+- pull request dependency review: moderate以上でfail
+- third-party GitHub Actionsはcommit SHAへ固定
+- workflow tokenは `contents: read` を既定にする
 
-## 5. mainパイプライン
+## 5. Local commands
+
+```bash
+make test
+make vet
+make verify-catalog
+make verify-mvp
+make build
+npm ci
+npm run test:contracts
+npx playwright install chromium
+npm run test:e2e
+docker build --tag spotdiggz-api:local .
+```
+
+`make build` は `CGO_ENABLED=0` を設定する。local環境にGo、Node.js、Playwright browser、container runtimeがない場合、未実行checkを完了扱いにしない。
+
+## 6. Artifact flow
+
+Target flow:
 
 ```text
-main update
-  -> full verification
-  -> build once
-  -> artifact + SBOM + provenance
-  -> preview/staging deploy
-  -> smoke + migration compatibility
-  -> production approval policy
-  -> progressive deployment
-  -> post-deploy SLI check
+commit
+  -> Go / race / smoke / vuln checks
+  -> Playwright desktop + mobile
+  -> static binary + scratch image
+  -> image smoke + SBOM + image scan
+  -> immutable registry artifact
+  -> approved environment configuration
+  -> deployment
+  -> post-deploy smoke + observation window
   -> promote or rollback
 ```
 
-個人開発のMVPでは、常設staging環境を必須にしない。PR previewとproduction前スモークで要求を満たせるか、費用と運用負荷を比較してADRで決定する。
+[事実] CIはbinary、image、SBOMを検証し、scan済みDocker image archive、image ID、archive checksumをcommit SHA単位のartifactとして30日保持する。このarchiveは `sha256sum -c` と `docker load` で同一成果物をpreviewまたはrollback演習へ渡せる。
 
-## 6. データベース変更
+[事実] Vercel Project `spotdiggz`へのCLI deploy、Vercel Container build、Vercel alias、既存Neon OrganizationのProject、migration、Production smokeは2026-07-20に確認した。GitHub `main` pushからの自動Production deployは、変更をmainへmergeした後に別途確認する。
 
-- スキーマ変更は後方互換なexpand/contractを基本とする。
-- アプリとスキーマを同時に戻せない前提で設計する。
-- migrationをバージョン管理し、適用済み状態を追跡する。
-- 本番データを使わずにmigrationの前進・後退または安全な前方修正を検証する。
-- 削除・型変更・必須化は、移行期間と利用状況確認後に行う。
-- バックアップの存在だけでなく、復元テストを行う。
+[未検証] image署名・provenance、private metrics scrape、Google API quota監視、custom domain/DNS、GitHub main pushからの自動deployは未設定である。CI artifactの保持期限を越える長期rollbackにはVercelまたは別registryのimmutable artifact運用が必要になる。
 
-## 7. デプロイ戦略
+## 7. Configuration and secret gate
 
-初期候補:
+Non-secret:
 
-- preview: PRごとの一時環境
-- production: rollingまたはplatform標準の安全な置換
-- 高リスク変更: canaryまたはfeature flag
+- `PORT`
+- `FACILITY_CATALOG_PATH`
+- `CORRECTION_STORE_PATH`
+- `APP_ENV`
+- `APP_VERSION`
 
-feature flagには所有者、目的、既定値、削除期限を持たせる。恒久設定として放置しない。
+Secret:
 
-デプロイ中は次を記録する。
+- `DATABASE_URL`
+- `GOOGLE_MAPS_API_KEY`
 
-- release SHA
-- 開始・終了時刻
-- 実行者または自動化主体
-- DB migration版
-- feature flag変更
-- デプロイ方式と対象割合
+production keyはserver-side secret storeから注入し、Routes API / Geocoding APIと送信元を制限する。fork PR、E2E、image buildへproduction keyを渡さない。Googleを使わないreleaseではkeyを設定せず、straight-lineを明示的な既定modeとする。
 
-## 8. リリース検証
+## 8. Data and compatibility
 
-デプロイ後に自動で確認する。
+facility catalogはimage内のread-only JSON snapshotである。catalog変更はcodeと同じCIを通し、未来時刻、未検証status、日英欠落、不正休場形式を拒否する。`make verify-catalog` は全公開施設について、実行時点から168時間後もdynamic 30日・stable 180日の両方が鮮度内であることを要求する。期限内でない施設IDと区分を出力して非0で終了する。
 
-- health/readiness
-- 主要ユーザージャーニーのスモークテスト
-- APIエラー率とp95レイテンシー
-- 推薦availability
-- AI構造化出力・根拠付与率のサンプル
-- 新しいセキュリティ拒否の異常増加
-- データベースmigration状態
+週次checkの失敗は、データを自動延命せず再調査を開始するsignalである。各施設の公式 `sourceUrl` で営業、料金、休場、予約、設備、主要ルールを確認し、確認済み属性だけの検証時刻と将来の `one_time` 休場を更新する。更新後は `make verify-catalog` と全CIを通してdata-only releaseを行う。`testdata/` やE2E用の固定fixtureでproduction checkを代替しない。
 
-一定時間の観察窓を設け、基準を外れた場合は昇格を停止する。
+correction storeは32 MiB上限のJSON Lines persistent fileである。applicationは起動時にfileの書込・sync可否を確認し、同じbinaryのread-only `correctioncheck` で破損行を本文非表示のまま診断できる。rollback時は同じvolumeをmountし、fileを旧imageへcopy、truncate、schema downgradeしない。保存形式を破壊的に変える場合はmigration、backup、forward-fixを別途設計する。
 
-## 9. ロールバック
+## 9. Post-deploy smoke
 
-リリースごとに次のいずれかを用意する。
+[MVP Runbook](mvp-runbook.md) に従い、次を確認する。
 
-- 直前成果物への即時切り戻し
-- feature flagによる無効化
-- AI機能から決定的推薦のみへの縮退
-- 外部依存を無効化した縮退モード
-- 後方互換を維持した前方修正
+- `/healthz`: process liveness
+- `/readyz`: fresh施設が1件以上。empty / all-staleは503
+- facility API: 5府県、日英、鮮度field
+- recommendation API: 最大3件、origin非再掲、provider種別
+- location search: Google有効時200、無効時503
+- metrics: catalog、HTTP、recommendation、event
+- correction store: Neon接続とretention worker errorなし。file fallbackではvolume writable
 
-ロールバック条件を主観にせず、SLI、エラー率、セキュリティイベント、データ不整合で定義する。
+production write-path smokeは承認済みpreviewで行う。実利用者の訂正dataをtestに使わない。
 
-## 10. CI/CD自体の観測
+## 10. Rollback
 
-次を計測する。
+Rollback条件:
 
-- deployment frequency
-- lead time for changes
-- change failure rate
-- failed deployment recovery time
-- パイプライン成功率とp95所要時間
-- flaky test率
-- キュー待ち時間
-- ロールバック回数
-- セキュリティ修正までの時間
+- health非200
+- readiness 503かつfresh catalogへ即時修正できない
+- recommendation 5xxまたはlatencyの継続悪化
+- correction store初期化・書込・purge failure
+- secret、location、contactのlog混入
+- catalog内容またはtranslationの重大誤り
 
-パイプラインの遅さや不安定さを放置すると、小さく頻繁な統合が妨げられるため、プロダクトと同様に改善対象とする。
+Application rollback:
 
-## 11. 秘密情報と環境設定
+1. 新releaseへのtrafficを停止する。
+2. 直前image digestを同じNeon接続設定で起動する。file fallbackでは同じpersistent volumeを使う。
+3. health、readiness、recommendation、metricsを再確認する。
+4. rollback marker、原因、data状態を記録する。
 
-- 秘密情報はGitへ保存しない。
-- 環境差分は秘密ではない設定と秘密情報を分離する。
-- CI/CDの権限は短命な認証情報と最小権限を使う。
-- productionへの書き込み権限をPR検証ジョブへ与えない。
-- third-party actionはcommit SHAまたは検証済み版へ固定する。
-- fork PRや外部入力から秘密情報へアクセスさせない。
+Google-only rollbackは `GOOGLE_MAPS_API_KEY` を削除して再起動する。推薦はstraight-lineへ縮退し、location searchは503になる。詳細は [MVP Runbook](mvp-runbook.md) を正とする。
 
-## 12. 実装開始時の決定事項
+## 11. Remaining release decisions
 
-- CI/CDプラットフォーム
-- preview/staging/productionの環境構成
-- 成果物形式とregistry
-- SBOM、署名、provenance方式
-- DB migration方式
-- feature flag方式
-- rollbackと縮退方式
-- 必須チェックと目標実行時間
-- AI評価の合格条件
+- image署名、provenance
+- Vercel Production/Previewのenvironment分離とPreview DB access policy
+- Neonのbackup、retention、接続pool設定
+- secret injectionとkey rotation
+- private metrics scrape、dashboard、alert
+- deploy方式、observation window、traffic rollback command
+- production URLでのGoogle実通信とquota / billing alert
 
-これらをADRで確定してから本番パイプラインを実装する。
+これらは資格情報とplatform権限が必要であり、local CI実装とは別のrelease gateとして扱う。

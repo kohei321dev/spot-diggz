@@ -1,52 +1,92 @@
 openapi: 3.1.0
 info:
   title: spot-diggz MVP API
-  version: 0.3.0
-  description: Verified facility catalog and deterministic recommendation API.
+  version: 0.5.0
+  description: |-
+    Verified facility catalog, deterministic recommendation, correction, and
+    observability API. Every application response includes `X-Request-ID` and
+    `Cache-Control: no-store`.
+
+    Origin coordinates and location-search queries are not persisted, written
+    to access logs, or echoed by the application. When `GOOGLE_MAPS_API_KEY` is
+    configured, origin coordinates are sent to Google Routes and location-search
+    queries are sent to Google Geocoding.
 paths:
   /healthz:
     get:
       operationId: getHealth
+      summary: Check process liveness
       responses:
         '200':
-          description: Service is ready to accept requests.
+          description: The process can serve HTTP requests.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
           content:
             application/json:
               schema:
-                type: object
-                required: [status]
-                properties:
-                  status:
-                    type: string
-                    const: ok
+                $ref: '#/components/schemas/HealthStatus'
+  /readyz:
+    get:
+      operationId: getReadiness
+      summary: Check application readiness
+      description: |-
+        Returns ready only when the loaded catalog contains at least one facility
+        whose dynamic and stable verification timestamps are both within their
+        freshness windows. This handler does not probe Google APIs or correction-
+        store writability.
+      responses:
+        '200':
+          description: At least one loaded facility is fresh for both freshness windows.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyStatus'
+        '503':
+          description: The catalog is empty or every facility is stale.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotReadyStatus'
   /api/facilities:
     get:
       operationId: listFacilities
+      summary: List verified facilities
       parameters:
         - name: activity
           in: query
           required: false
+          description: Case-insensitive activity filter.
           schema:
             type: string
             maxLength: 50
       responses:
         '200':
           description: Verified facilities sorted by facility ID.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
           content:
             application/json:
               schema:
-                type: object
-                required: [facilities]
-                properties:
-                  facilities:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Facility'
+                $ref: '#/components/schemas/FacilityList'
         '400':
-          $ref: '#/components/responses/InvalidQuery'
+          description: The activity query is longer than 50 characters.
+          x-error-codes: [invalid_query]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/facilities/{facilityId}:
     get:
       operationId: getFacility
+      summary: Get one verified facility
       parameters:
         - name: facilityId
           in: path
@@ -57,18 +97,88 @@ paths:
       responses:
         '200':
           description: Verified facility detail.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Facility'
         '404':
-          $ref: '#/components/responses/FacilityNotFound'
+          description: The facility does not exist in the loaded catalog.
+          x-error-codes: [facility_not_found]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: The catalog lookup failed unexpectedly.
+          x-error-codes: [facility_lookup_failed]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/locations/search:
+    post:
+      operationId: searchLocations
+      summary: Search a Japanese station or address
+      description: |-
+        Available only when `GOOGLE_MAPS_API_KEY` configures the Google
+        Geocoding provider. The JSON-body query is sent to Google and is not
+        persisted, written to the application access log, or exposed in the
+        request URL. The process-local token bucket refills at 30 requests per
+        minute with a burst of 5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationSearchRequest'
+      responses:
+        '200':
+          description: At most five Google Geocoding results.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationSearchResponse'
+        '400':
+          description: JSON decoding failed, or the query is blank, too long, or contains a forbidden control character.
+          x-error-codes: [invalid_json, invalid_location_query]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: The request body exceeds 1 KiB.
+          x-error-codes: [request_too_large]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          description: Google Geocoding is not configured or is temporarily unavailable.
+          x-error-codes: [location_search_unavailable]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/recommendations:
     post:
       operationId: createRecommendations
-      description: >-
-        Returns at most three deterministic recommendations. Origin coordinates are
-        processed for this request only and are not returned or persisted.
+      summary: Create deterministic facility recommendations
+      description: |-
+        Returns at most three recommendations. The process-local token bucket
+        refills at 60 requests per minute with a burst of 10. Origin coordinates
+        are not returned or persisted. With Google enabled they are sent to
+        Compute Route Matrix; any Google Routes failure falls back to the
+        straight-line provider.
       requestBody:
         required: true
         content:
@@ -77,60 +187,261 @@ paths:
               $ref: '#/components/schemas/SessionInput'
       responses:
         '200':
-          description: Ranked recommendations from the verified facility catalog.
+          description: Ranked recommendations, or an empty list when no facility meets every hard condition.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecommendationResponse'
         '400':
-          $ref: '#/components/responses/InvalidRequest'
+          description: JSON decoding or session-input validation failed.
+          x-error-codes: [invalid_json, invalid_session_input]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '413':
-          $ref: '#/components/responses/RequestTooLarge'
+          description: The request body exceeds 16 KiB.
+          x-error-codes: [request_too_large]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          description: Both the selected travel provider and its fallback failed.
+          x-error-codes: [recommendation_unavailable]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/corrections:
+    post:
+      operationId: submitCorrection
+      summary: Submit a facility-data correction
+      description: |-
+        Stores a validated report in the configured JSON Lines file. The
+        process-local token bucket refills at 30 requests per minute with a burst
+        of 10. A contact email is optional and requires `contactConsent=true`.
+        Stored reports receive a deletion deadline 90 days after receipt.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrectionSubmission'
+      responses:
+        '202':
+          description: The correction was accepted and stored.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrectionReceipt'
+        '400':
+          description: JSON decoding or correction-field validation failed.
+          x-error-codes: [invalid_json, invalid_correction]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The submitted facility ID is not in the loaded catalog.
+          x-error-codes: [facility_not_found]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: The request body exceeds 8 KiB.
+          x-error-codes: [request_too_large]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          description: The correction report could not be written.
+          x-error-codes: [correction_store_unavailable]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/events:
+    post:
+      operationId: recordProductEvent
+      summary: Record an allow-listed product journey event
+      description: |-
+        Accepts only a low-cardinality event name and no user, session, location,
+        or free-text field. The process-local token bucket refills at 300 requests
+        per minute with a burst of 60.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductEventRequest'
+      responses:
+        '202':
+          description: The product event was counted.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedStatus'
+        '400':
+          description: JSON decoding failed or the event is not allow-listed.
+          x-error-codes: [invalid_json, invalid_product_event]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: The request body exceeds 1 KiB.
+          x-error-codes: [request_too_large]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /metrics:
+    get:
+      operationId: getPrometheusMetrics
+      summary: Expose Prometheus metrics
+      description: |-
+        This endpoint has no application-level authentication. A production
+        deployment must restrict it at the network or ingress boundary.
+      responses:
+        '200':
+          description: Prometheus text exposition format version 0.0.4.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
+  headers:
+    RequestID:
+      description: Random request correlation ID generated by the application.
+      schema:
+        type: string
+        minLength: 1
+    RetryAfter:
+      description: Seconds before retrying a process-local rate-limited request.
+      schema:
+        type: integer
+        const: 60
   responses:
-    InvalidQuery:
-      description: Query parameter validation failed.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    FacilityNotFound:
-      description: Facility does not exist in the verified catalog.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    InvalidRequest:
-      description: JSON or session selection validation failed.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    RequestTooLarge:
-      description: Request body exceeds 16 KiB.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
     UnsupportedMediaType:
-      description: Content-Type is not application/json.
+      description: "`Content-Type` is missing, invalid, or not `application/json`."
+      x-error-codes: [unsupported_media_type]
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: The process-local token bucket rejected the request.
+      x-error-codes: [rate_limited]
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    HealthStatus:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    ReadyStatus:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ready
+    NotReadyStatus:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: not_ready
+    AcceptedStatus:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: accepted
+    FacilityList:
+      type: object
+      additionalProperties: false
+      required: [facilities]
+      properties:
+        facilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Facility'
+    LocationSearchResponse:
+      type: object
+      additionalProperties: false
+      required: [results]
+      properties:
+        results:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/LocationSearchResult'
+    LocationSearchRequest:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: A non-blank query without CR, LF, or NUL characters.
+    LocationSearchResult:
+      type: object
+      additionalProperties: false
+      required: [label, location]
+      properties:
+        label:
+          type: string
+          minLength: 1
+        location:
+          $ref: '#/components/schemas/Location'
     SessionInput:
       type: object
       additionalProperties: false
-      required:
-        - purpose
-        - mood
-        - level
-        - availableMinutes
-        - transport
-        - origin
+      required: [purpose, mood, level, availableMinutes, transport, origin]
       properties:
         purpose:
           type: string
@@ -144,7 +455,7 @@ components:
         availableMinutes:
           type: integer
           enum: [60, 120, 180, 240]
-          description: Total time available for the round trip and skating session.
+          description: Total time available for outbound travel, skating, and return travel.
         transport:
           type: string
           enum: [public_transit, car, bicycle, walk]
@@ -168,6 +479,7 @@ components:
           maximum: 180
     RecommendationResponse:
       type: object
+      additionalProperties: false
       required: [recommendations, travelEstimateNote, availabilityNote]
       properties:
         recommendations:
@@ -177,10 +489,13 @@ components:
             $ref: '#/components/schemas/Recommendation'
         travelEstimateNote:
           type: string
+          minLength: 1
         availabilityNote:
           type: string
+          minLength: 1
     Recommendation:
       type: object
+      additionalProperties: false
       required:
         - facility
         - reasons
@@ -208,142 +523,371 @@ components:
         estimatedSkateMinutes:
           type: integer
           minimum: 1
-          description: Estimated skating time after outbound and return travel, limited by facility closing time.
         arrivalAt:
           type: string
           format: date-time
-          description: Estimated arrival time in Japan Standard Time.
+          description: Estimated arrival in Japan Standard Time.
         facilityClosesAt:
           type: string
           format: date-time
-          description: Closing time of the matching operating-hours window.
+          description: End of the matching operating-hours window in Japan Standard Time.
         sessionEndsAt:
           type: string
           format: date-time
-          description: Estimated time to leave the facility before closing or the end of the available window.
+          description: Earlier of closing time and the latest return-departure time.
         travelEstimateKind:
           type: string
-          const: straight_line
+          enum: [straight_line, google_routes]
     RecommendationReason:
       type: object
+      additionalProperties: false
       required: [code, message]
       properties:
         code:
           type: string
+          enum: [purpose_match, beginner_friendly, mood_match, session_time_estimate, travel_estimate]
         message:
           type: string
+          minLength: 1
     Facility:
       type: object
+      additionalProperties: false
       required:
         - facilityId
         - name
         - address
+        - prefecture
+        - municipality
         - location
         - activities
         - hours
+        - scheduleNotes
         - price
         - reservation
         - beginnerFriendly
         - features
         - rules
+        - access
+        - englishTranslation
         - sourceUrl
         - sourceType
         - status
         - confidence
         - verifiedAt
+        - dynamicVerifiedAt
+        - stableVerifiedAt
       properties:
         facilityId:
           type: string
+          minLength: 1
         name:
           type: string
+          minLength: 1
         address:
           type: string
+          minLength: 1
+        prefecture:
+          type: string
+          enum: [大阪府, 兵庫県, 和歌山県, 奈良県, 徳島県]
+        municipality:
+          type: string
+          minLength: 1
         location:
-          type: object
-          required: [latitude, longitude]
-          properties:
-            latitude:
-              type: number
-              minimum: -90
-              maximum: 90
-            longitude:
-              type: number
-              minimum: -180
-              maximum: 180
+          $ref: '#/components/schemas/Location'
         activities:
           type: array
           minItems: 1
           items:
             type: string
+            minLength: 1
         hours:
           type: array
+          minItems: 1
           items:
-            type: object
-            required: [day]
-            properties:
-              day:
-                type: string
-              opens:
-                type: string
-              closes:
-                type: string
-              closed:
-                type: boolean
+            $ref: '#/components/schemas/OperatingHours'
+        generalUseStatus:
+          type: string
+          enum: [regular, limited, schedule_check_required]
+          description: Whether ordinary general use is regular, limited, or requires a date-specific schedule check.
+        hoursBasis:
+          type: string
+          enum: [official, conservative]
+          description: Whether the recommendation hours are directly published or a conservative interpretation of official information.
+        availabilityNote:
+          type: string
+          minLength: 1
+          description: User-facing explanation of limits on ordinary general use or the hours interpretation.
         scheduleNotes:
           type: array
-          description: Recurring closures and conditions that can override normal operating hours.
+          minItems: 1
           items:
             type: string
+            minLength: 1
+        closurePeriods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClosurePeriod'
         price:
           type: string
+          minLength: 1
         reservation:
           type: string
+          minLength: 1
         beginnerFriendly:
           type: boolean
         features:
           type: array
+          minItems: 1
           items:
             type: string
+            minLength: 1
         rules:
           type: array
+          minItems: 1
           items:
             type: string
+            minLength: 1
         access:
-          type: object
-          properties:
-            stations:
-              type: array
-              items:
-                type: string
-            parking:
-              type: string
-            notes:
-              type: string
+          $ref: '#/components/schemas/Access'
+        englishTranslation:
+          $ref: '#/components/schemas/FacilityEnglishTranslation'
         sourceUrl:
           type: string
           format: uri
+          pattern: '^https?://'
         sourceType:
           type: string
+          minLength: 1
         status:
           type: string
           const: verified
         confidence:
           type: string
+          minLength: 1
         updatedAt:
           type: string
           format: date-time
         verifiedAt:
           type: string
           format: date-time
+        dynamicVerifiedAt:
+          type: string
+          format: date-time
+          description: Verification time for information with a 30-day freshness window.
+        stableVerifiedAt:
+          type: string
+          format: date-time
+          description: Verification time for information with a 180-day freshness window.
+    Location:
+      type: object
+      additionalProperties: false
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+    OperatingHours:
+      type: object
+      additionalProperties: false
+      required: [day]
+      properties:
+        day:
+          type: string
+          description: "`daily`, `weekday`, `weekend`, or an English weekday; matching is case-insensitive."
+        opens:
+          type: string
+          pattern: '^(?:[01][0-9]|2[0-3]):[0-5][0-9]$'
+        closes:
+          type: string
+          pattern: '^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$'
+        closed:
+          type: boolean
+      oneOf:
+        - required: [opens, closes]
+          properties:
+            closed:
+              const: false
+        - required: [closed]
+          properties:
+            closed:
+              const: true
+    ClosurePeriod:
+      oneOf:
+        - $ref: '#/components/schemas/OneTimeClosurePeriod'
+        - $ref: '#/components/schemas/AnnualClosurePeriod'
+    OneTimeClosurePeriod:
+      type: object
+      additionalProperties: false
+      required: [type, start, end, reason]
+      properties:
+        type:
+          type: string
+          const: one_time
+        start:
+          type: string
+          format: date
+        end:
+          type: string
+          format: date
+        reason:
+          type: string
+          minLength: 1
+    AnnualClosurePeriod:
+      type: object
+      additionalProperties: false
+      required: [type, start, end, reason]
+      properties:
+        type:
+          type: string
+          const: annual
+        start:
+          type: string
+          pattern: '^(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$'
+        end:
+          type: string
+          pattern: '^(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$'
+        reason:
+          type: string
+          minLength: 1
+    Access:
+      type: object
+      additionalProperties: false
+      properties:
+        stations:
+          type: array
+          items:
+            type: string
+        parking:
+          type: string
+        notes:
+          type: string
+    FacilityEnglishTranslation:
+      type: object
+      additionalProperties: false
+      required: [name, address, scheduleNotes, price, reservation, rules, accessNotes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        availabilityNote:
+          type: string
+          minLength: 1
+        scheduleNotes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+        price:
+          type: string
+          minLength: 1
+        reservation:
+          type: string
+          minLength: 1
+        rules:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+        accessNotes:
+          type: string
+          minLength: 1
+    CorrectionSubmission:
+      type: object
+      additionalProperties: false
+      required: [facilityId, category, details]
+      properties:
+        facilityId:
+          type: string
+          pattern: '^[A-Za-z0-9][A-Za-z0-9-]{0,63}$'
+        category:
+          type: string
+          enum: [hours, price, rules, closure, access, other]
+        details:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        evidenceUrl:
+          type: string
+          format: uri
+          maxLength: 500
+          pattern: '^https://'
+        contact:
+          type: string
+          format: email
+          maxLength: 254
+        contactConsent:
+          type: boolean
+      dependentSchemas:
+        contact:
+          required: [contactConsent]
+          properties:
+            contactConsent:
+              const: true
+    CorrectionReceipt:
+      type: object
+      additionalProperties: false
+      required: [reportId, receivedAt, nextAction]
+      properties:
+        reportId:
+          type: string
+          pattern: '^COR-[0-9a-f]{32}$'
+        receivedAt:
+          type: string
+          format: date-time
+        nextAction:
+          type: string
+          minLength: 1
+    ProductEventRequest:
+      type: object
+      additionalProperties: false
+      required: [event]
+      properties:
+        event:
+          type: string
+          enum:
+            - input_started
+            - input_completed
+            - recommendation_completed
+            - result_displayed
+            - source_opened
+            - navigation_opened
     ErrorResponse:
       type: object
+      additionalProperties: false
       required: [error]
       properties:
         error:
           type: object
+          additionalProperties: false
           required: [code, message]
           properties:
             code:
               type: string
+              enum:
+                - invalid_query
+                - facility_not_found
+                - facility_lookup_failed
+                - invalid_location_query
+                - location_search_unavailable
+                - invalid_json
+                - invalid_session_input
+                - recommendation_unavailable
+                - invalid_correction
+                - correction_store_unavailable
+                - invalid_product_event
+                - unsupported_media_type
+                - request_too_large
+                - rate_limited
             message:
               type: string
+              minLength: 1

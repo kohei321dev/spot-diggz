@@ -19,6 +19,17 @@ func TestNewCatalogRejectsUnverifiedFacility(t *testing.T) {
 	}
 }
 
+func TestNewCatalogRejectsFacilityOutsideMVPPrefectures(t *testing.T) {
+	item := validFacility()
+	item.Prefecture = "京都府"
+	item.Municipality = "京都市"
+
+	_, err := NewCatalog([]Facility{item})
+	if !errors.Is(err, ErrInvalidData) {
+		t.Fatalf("NewCatalog() error = %v, want ErrInvalidData", err)
+	}
+}
+
 func TestNewCatalogRejectsDuplicateIDs(t *testing.T) {
 	item := validFacility()
 
@@ -108,20 +119,31 @@ func TestProductionCatalogContainsOnlyVerifiedRealFacilities(t *testing.T) {
 	}
 	catalogPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "data", "facilities.json")
 
-	catalog, err := LoadCatalogFile(catalogPath)
+	asOf := time.Date(2026, time.July, 20, 0, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+	catalog, err := LoadCatalogFileAt(catalogPath, asOf)
 	if err != nil {
 		t.Fatalf("LoadCatalogFile() error = %v", err)
 	}
 	items := catalog.List("")
-	if len(items) < 3 {
-		t.Fatalf("List() returned %d facilities, want at least 3", len(items))
+	if len(items) != 31 {
+		t.Fatalf("List() returned %d facilities, want 31", len(items))
 	}
+	prefectureCounts := make(map[string]int)
 	for _, item := range items {
 		if item.SourceType == "test_fixture" || item.Confidence == "test" || strings.Contains(strings.ToUpper(item.Name), "DUMMY") || strings.Contains(item.SourceURL, "example.com") {
 			t.Fatalf("production facility %s is marked as test data", item.ID)
 		}
 		if len(item.ScheduleNotes) == 0 {
 			t.Fatalf("production facility %s has no schedule notes", item.ID)
+		}
+		if !IsDynamicInformationFresh(item.DynamicVerifiedAt, asOf) || !IsStableInformationFresh(item.StableVerifiedAt, asOf) {
+			t.Fatalf("production facility %s is stale at catalog snapshot", item.ID)
+		}
+		prefectureCounts[item.Prefecture]++
+	}
+	for _, prefecture := range []string{"大阪府", "兵庫県", "和歌山県", "奈良県", "徳島県"} {
+		if prefectureCounts[prefecture] == 0 {
+			t.Fatalf("production catalog has no facility in %s", prefecture)
 		}
 	}
 }
@@ -131,18 +153,33 @@ func validFacility() Facility {
 		ID:               "facility-a",
 		Name:             "Test Facility",
 		Address:          "大阪府大阪市",
+		Prefecture:       "大阪府",
+		Municipality:     "大阪市",
 		Location:         Location{Latitude: 34.6937, Longitude: 135.5023},
 		Activities:       []string{"skateboard"},
 		Hours:            []OperatingHours{{Day: "daily", Opens: "09:00", Closes: "21:00"}},
+		ScheduleNotes:    []string{"来場前に公式情報を確認してください。"},
 		Price:            "500円",
 		Reservation:      "当日受付",
 		BeginnerFriendly: true,
 		Features:         []string{"flat-area"},
 		Rules:            []string{"ヘルメット必須"},
-		SourceURL:        "https://example.com/facilities/a",
-		SourceType:       "official",
-		Status:           "verified",
-		Confidence:       "high",
-		VerifiedAt:       time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
+		Access:           Access{Notes: "最寄り駅から徒歩5分"},
+		EnglishTranslation: FacilityEnglishTranslation{
+			Name:          "Test Facility",
+			Address:       "Osaka City, Osaka Prefecture",
+			ScheduleNotes: []string{"Check official information before visiting."},
+			Price:         "JPY 500",
+			Reservation:   "Same-day registration",
+			Rules:         []string{"Helmets are required."},
+			AccessNotes:   "Five minutes on foot from the nearest station.",
+		},
+		SourceURL:         "https://example.com/facilities/a",
+		SourceType:        "official",
+		Status:            "verified",
+		Confidence:        "high",
+		VerifiedAt:        time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
+		DynamicVerifiedAt: time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
+		StableVerifiedAt:  time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
 	}
 }

@@ -18,6 +18,14 @@ var (
 	ErrNotFound    = errors.New("facility not found")
 )
 
+var supportedPrefectures = map[string]struct{}{
+	"大阪府":  {},
+	"兵庫県":  {},
+	"和歌山県": {},
+	"奈良県":  {},
+	"徳島県":  {},
+}
+
 type catalogFile struct {
 	Facilities []Facility `json:"facilities"`
 }
@@ -28,16 +36,34 @@ type Catalog struct {
 }
 
 func LoadCatalogFile(path string) (*Catalog, error) {
+	return loadCatalogFile(path, nil)
+}
+
+// LoadCatalogFileAt rejects verification timestamps later than asOf.
+func LoadCatalogFileAt(path string, asOf time.Time) (*Catalog, error) {
+	return loadCatalogFile(path, &asOf)
+}
+
+func loadCatalogFile(path string, asOf *time.Time) (*Catalog, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open facility catalog %q: %w", path, err)
 	}
 	defer file.Close()
 
-	return LoadCatalog(file)
+	return loadCatalog(file, asOf)
 }
 
 func LoadCatalog(reader io.Reader) (*Catalog, error) {
+	return loadCatalog(reader, nil)
+}
+
+// LoadCatalogAt rejects verification timestamps later than asOf.
+func LoadCatalogAt(reader io.Reader, asOf time.Time) (*Catalog, error) {
+	return loadCatalog(reader, &asOf)
+}
+
+func loadCatalog(reader io.Reader, asOf *time.Time) (*Catalog, error) {
 	var data catalogFile
 	decoder := json.NewDecoder(reader)
 	decoder.DisallowUnknownFields()
@@ -53,14 +79,28 @@ func LoadCatalog(reader io.Reader) (*Catalog, error) {
 		return nil, fmt.Errorf("decode trailing facility catalog data: %w", err)
 	}
 
-	return NewCatalog(data.Facilities)
+	return newCatalog(data.Facilities, asOf)
 }
 
 func NewCatalog(facilities []Facility) (*Catalog, error) {
+	return newCatalog(facilities, nil)
+}
+
+// NewCatalogAt rejects verification timestamps later than asOf.
+func NewCatalogAt(facilities []Facility, asOf time.Time) (*Catalog, error) {
+	return newCatalog(facilities, &asOf)
+}
+
+func newCatalog(facilities []Facility, asOf *time.Time) (*Catalog, error) {
 	byID := make(map[string]Facility, len(facilities))
 	for _, item := range facilities {
 		if err := validateFacility(item); err != nil {
 			return nil, err
+		}
+		if asOf != nil {
+			if err := validateFacilityAt(item, *asOf); err != nil {
+				return nil, err
+			}
 		}
 		if _, exists := byID[item.ID]; exists {
 			return nil, fmt.Errorf("%w: %s", ErrDuplicateID, item.ID)
@@ -95,6 +135,12 @@ func validateFacility(item Facility) error {
 	if strings.TrimSpace(item.ID) == "" || strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Address) == "" {
 		return fmt.Errorf("%w: facilityId, name, and address are required", ErrInvalidData)
 	}
+	if strings.TrimSpace(item.Prefecture) == "" || strings.TrimSpace(item.Municipality) == "" {
+		return fmt.Errorf("%w: prefecture and municipality are required for %s", ErrInvalidData, item.ID)
+	}
+	if _, supported := supportedPrefectures[item.Prefecture]; !supported {
+		return fmt.Errorf("%w: prefecture is outside the MVP scope for %s", ErrInvalidData, item.ID)
+	}
 	if item.Location.Latitude < -90 || item.Location.Latitude > 90 || item.Location.Longitude < -180 || item.Location.Longitude > 180 {
 		return fmt.Errorf("%w: location is out of range for %s", ErrInvalidData, item.ID)
 	}
@@ -107,11 +153,20 @@ func validateFacility(item Facility) error {
 	if err := validateOperatingHours(item.ID, item.Hours); err != nil {
 		return err
 	}
+	if err := validateAvailability(item); err != nil {
+		return err
+	}
+	if err := validateClosurePeriods(item.ID, item.ClosurePeriods); err != nil {
+		return err
+	}
 	if strings.TrimSpace(item.Price) == "" || strings.TrimSpace(item.Reservation) == "" {
 		return fmt.Errorf("%w: price and reservation guidance are required for %s", ErrInvalidData, item.ID)
 	}
 	if len(item.Features) == 0 || len(item.Rules) == 0 {
 		return fmt.Errorf("%w: features and rules are required for %s", ErrInvalidData, item.ID)
+	}
+	if err := validateEnglishTranslation(item); err != nil {
+		return err
 	}
 	if item.Status != "verified" {
 		return fmt.Errorf("%w: only verified facilities can be published: %s", ErrInvalidData, item.ID)
@@ -126,7 +181,114 @@ func validateFacility(item Facility) error {
 	if item.VerifiedAt.IsZero() {
 		return fmt.Errorf("%w: verifiedAt is required for %s", ErrInvalidData, item.ID)
 	}
+	if item.DynamicVerifiedAt.IsZero() || item.StableVerifiedAt.IsZero() {
+		return fmt.Errorf("%w: dynamicVerifiedAt and stableVerifiedAt are required for %s", ErrInvalidData, item.ID)
+	}
 	return nil
+}
+
+func validateAvailability(item Facility) error {
+	if item.GeneralUseStatus != "" && item.GeneralUseStatus != GeneralUseRegular &&
+		item.GeneralUseStatus != GeneralUseLimited && item.GeneralUseStatus != GeneralUseScheduleCheckRequired {
+		return fmt.Errorf("%w: unsupported generalUseStatus %q for %s", ErrInvalidData, item.GeneralUseStatus, item.ID)
+	}
+	if item.HoursBasis != "" && item.HoursBasis != HoursBasisOfficial && item.HoursBasis != HoursBasisConservative {
+		return fmt.Errorf("%w: unsupported hoursBasis %q for %s", ErrInvalidData, item.HoursBasis, item.ID)
+	}
+	if item.GeneralUseStatus == GeneralUseScheduleCheckRequired && strings.TrimSpace(item.AvailabilityNote) == "" {
+		return fmt.Errorf("%w: availabilityNote is required when generalUseStatus is %q for %s", ErrInvalidData, GeneralUseScheduleCheckRequired, item.ID)
+	}
+	return nil
+}
+
+func validateFacilityAt(item Facility, asOf time.Time) error {
+	if asOf.IsZero() {
+		return fmt.Errorf("%w: validation reference time is required", ErrInvalidData)
+	}
+
+	type verificationTime struct {
+		name  string
+		value time.Time
+	}
+	verificationTimes := []verificationTime{
+		{name: "verifiedAt", value: item.VerifiedAt},
+		{name: "dynamicVerifiedAt", value: item.DynamicVerifiedAt},
+		{name: "stableVerifiedAt", value: item.StableVerifiedAt},
+	}
+	if item.UpdatedAt != nil {
+		verificationTimes = append(verificationTimes, verificationTime{name: "updatedAt", value: *item.UpdatedAt})
+	}
+
+	for _, candidate := range verificationTimes {
+		if candidate.value.After(asOf) {
+			return fmt.Errorf("%w: %s must not be later than the validation time for %s", ErrInvalidData, candidate.name, item.ID)
+		}
+	}
+	return nil
+}
+
+func validateEnglishTranslation(item Facility) error {
+	translation := item.EnglishTranslation
+	if strings.TrimSpace(translation.Name) == "" ||
+		strings.TrimSpace(translation.Address) == "" ||
+		strings.TrimSpace(translation.Price) == "" ||
+		strings.TrimSpace(translation.Reservation) == "" ||
+		strings.TrimSpace(translation.AccessNotes) == "" {
+		return fmt.Errorf("%w: complete English name, address, price, reservation, and access notes are required for %s", ErrInvalidData, item.ID)
+	}
+	if len(item.ScheduleNotes) == 0 || len(translation.ScheduleNotes) != len(item.ScheduleNotes) || containsBlank(translation.ScheduleNotes) {
+		return fmt.Errorf("%w: every schedule note requires an English translation for %s", ErrInvalidData, item.ID)
+	}
+	if len(translation.Rules) != len(item.Rules) || containsBlank(translation.Rules) {
+		return fmt.Errorf("%w: every rule requires an English translation for %s", ErrInvalidData, item.ID)
+	}
+	return nil
+}
+
+func validateClosurePeriods(facilityID string, periods []ClosurePeriod) error {
+	for index, period := range periods {
+		if strings.TrimSpace(period.Reason) == "" {
+			return fmt.Errorf("%w: closure period %d requires a reason for %s", ErrInvalidData, index, facilityID)
+		}
+
+		switch period.Type {
+		case ClosurePeriodOneTime:
+			start, startOK := parseDate(period.Start)
+			end, endOK := parseDate(period.End)
+			if !startOK || !endOK {
+				return fmt.Errorf("%w: one-time closure period %d must use YYYY-MM-DD dates for %s", ErrInvalidData, index, facilityID)
+			}
+			if end.Before(start) {
+				return fmt.Errorf("%w: closure period %d ends before it starts for %s", ErrInvalidData, index, facilityID)
+			}
+		case ClosurePeriodAnnual:
+			if !isMonthDay(period.Start) || !isMonthDay(period.End) {
+				return fmt.Errorf("%w: annual closure period %d must use MM-DD dates for %s", ErrInvalidData, index, facilityID)
+			}
+		default:
+			return fmt.Errorf("%w: unsupported closure period type %q for %s", ErrInvalidData, period.Type, facilityID)
+		}
+	}
+	return nil
+}
+
+func parseDate(value string) (time.Time, bool) {
+	parsed, err := time.Parse("2006-01-02", value)
+	return parsed, err == nil && parsed.Format("2006-01-02") == value
+}
+
+func isMonthDay(value string) bool {
+	parsed, err := time.Parse("2006-01-02", "2000-"+value)
+	return err == nil && parsed.Format("01-02") == value
+}
+
+func containsBlank(values []string) bool {
+	for _, value := range values {
+		if strings.TrimSpace(value) == "" {
+			return true
+		}
+	}
+	return false
 }
 
 func validateOperatingHours(facilityID string, hours []OperatingHours) error {

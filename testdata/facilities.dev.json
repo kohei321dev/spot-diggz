@@ -4,6 +4,8 @@
       "facilityId": "DEV-F001",
       "name": "[DUMMY] リバーサイド・フラットパーク",
       "address": "大阪府テスト市北区1-1",
+      "prefecture": "大阪府",
+      "municipality": "テスト市北区",
       "location": {
         "latitude": 34.7001,
         "longitude": 135.5001
@@ -17,6 +19,9 @@
           "opens": "00:00",
           "closes": "24:00"
         }
+      ],
+      "scheduleNotes": [
+        "開発・E2E専用の架空施設です。"
       ],
       "price": "無料（テストデータ）",
       "reservation": "不要（テストデータ）",
@@ -37,17 +42,35 @@
         "parking": "なし（テストデータ）",
         "notes": "駅から徒歩8分（テストデータ）"
       },
+      "englishTranslation": {
+        "name": "[DUMMY] Riverside Flat Park",
+        "address": "1-1 Kita-ku, Test City, Osaka",
+        "scheduleNotes": [
+          "This is a fictional facility used only for development and E2E tests."
+        ],
+        "price": "Free (test data)",
+        "reservation": "Not required (test data)",
+        "rules": [
+          "Helmet recommended (test data)",
+          "Unavailable in rain (test data)"
+        ],
+        "accessNotes": "Eight minutes on foot from the test station (test data)"
+      },
       "sourceUrl": "https://example.com/spot-diggz/fixtures/dev-f001",
       "sourceType": "test_fixture",
       "status": "verified",
       "confidence": "test",
       "updatedAt": "2026-07-16T00:00:00Z",
-      "verifiedAt": "2026-07-16T00:00:00Z"
+      "verifiedAt": "2026-07-16T00:00:00Z",
+      "dynamicVerifiedAt": "2026-07-16T00:00:00Z",
+      "stableVerifiedAt": "2026-07-16T00:00:00Z"
     },
     {
       "facilityId": "DEV-F002",
       "name": "[DUMMY] ベイサイド・インドアパーク",
       "address": "大阪府テスト市港区2-2",
+      "prefecture": "大阪府",
+      "municipality": "テスト市港区",
       "location": {
         "latitude": 34.6502,
         "longitude": 135.4802
@@ -67,6 +90,9 @@
           "opens": "10:00",
           "closes": "22:00"
         }
+      ],
+      "scheduleNotes": [
+        "開発・E2E専用の架空施設です。"
       ],
       "price": "1セッション1,500円（テストデータ）",
       "reservation": "混雑時は予約推奨（テストデータ）",
@@ -88,17 +114,35 @@
         "parking": "10台（テストデータ）",
         "notes": "駅から徒歩5分（テストデータ）"
       },
+      "englishTranslation": {
+        "name": "[DUMMY] Bayside Indoor Park",
+        "address": "2-2 Minato-ku, Test City, Osaka",
+        "scheduleNotes": [
+          "This is a fictional facility used only for development and E2E tests."
+        ],
+        "price": "JPY 1,500 per session (test data)",
+        "reservation": "Reservation recommended when busy (test data)",
+        "rules": [
+          "Helmet required (test data)",
+          "Registration at reception is required (test data)"
+        ],
+        "accessNotes": "Five minutes on foot from the test station (test data)"
+      },
       "sourceUrl": "https://example.com/spot-diggz/fixtures/dev-f002",
       "sourceType": "test_fixture",
       "status": "verified",
       "confidence": "test",
       "updatedAt": "2026-07-16T00:00:00Z",
-      "verifiedAt": "2026-07-16T00:00:00Z"
+      "verifiedAt": "2026-07-16T00:00:00Z",
+      "dynamicVerifiedAt": "2026-07-16T00:00:00Z",
+      "stableVerifiedAt": "2026-07-16T00:00:00Z"
     },
     {
       "facilityId": "DEV-F003",
       "name": "[DUMMY] サウス・ストリートセクション",
       "address": "大阪府テスト市南区3-3",
+      "prefecture": "大阪府",
+      "municipality": "テスト市南区",
       "location": {
         "latitude": 34.5803,
         "longitude": 135.4803
@@ -112,6 +156,9 @@
           "opens": "10:00",
           "closes": "18:00"
         }
+      ],
+      "scheduleNotes": [
+        "開発・E2E専用の架空施設です。"
       ],
       "price": "500円（テストデータ）",
       "reservation": "不要（テストデータ）",
@@ -133,12 +180,28 @@
         "parking": "20台（テストデータ）",
         "notes": "駅から徒歩15分（テストデータ）"
       },
+      "englishTranslation": {
+        "name": "[DUMMY] South Street Section",
+        "address": "3-3 Minami-ku, Test City, Osaka",
+        "scheduleNotes": [
+          "This is a fictional facility used only for development and E2E tests."
+        ],
+        "price": "JPY 500 (test data)",
+        "reservation": "Not required (test data)",
+        "rules": [
+          "Junior-high-school students and younger need a guardian (test data)",
+          "Protective gear recommended (test data)"
+        ],
+        "accessNotes": "Fifteen minutes on foot from the test station (test data)"
+      },
       "sourceUrl": "https://example.com/spot-diggz/fixtures/dev-f003",
       "sourceType": "test_fixture",
       "status": "verified",
       "confidence": "test",
       "updatedAt": "2026-07-16T00:00:00Z",
-      "verifiedAt": "2026-07-16T00:00:00Z"
+      "verifiedAt": "2026-07-16T00:00:00Z",
+      "dynamicVerifiedAt": "2026-07-16T00:00:00Z",
+      "stableVerifiedAt": "2026-07-16T00:00:00Z"
     }
   ]
 }
