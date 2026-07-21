@@ -1,9 +1,11 @@
 # 大阪都市圏の施設候補台帳
 
 - Status: Candidate inventory
-- Checked at: 2026-07-17
+- Checked at: 2026-07-19
 - Related issue: GitHub Issue #278
 - Next issue: GitHub Issue #280
+
+> この文書はIssue #280着手前の候補発見スナップショットです。2026-07-20の再監査後の公開状態は [`docs/discovery/facility-catalog-2026-07-19.md`](facility-catalog-2026-07-19.md) と [`data/facilities.json`](../../data/facilities.json) を正とします。候補から公開へ移した施設は、一般利用時間が日付で変わる場合も含めてカタログへ反映しています。
 
 ## 1. 目的
 
@@ -49,7 +51,7 @@
 | OSK-C010 | 今池公園 スケートボード広場 | 岸和田市 | 公共・屋外 | https://www.city.kishiwada.osaka.jp/soshiki/132/kouen-ichiran.html | 自治体公式あり・個別情報確認待ち |
 | OSK-C011 | 永楽ゆめの森公園スケートパーク | 熊取町 | 公共・屋外 | https://kumatori-eirakupark.net/yugu/ | 管理者公式あり・60分圏確認待ち |
 | OSK-C012 | 泉南りんくう公園 スケートパーク | 泉南市 | 公共・屋外 | https://sennanlongpark.com/?page_id=357 | 管理者公式あり・60分圏確認待ち |
-| OSK-C013 | 箕面スケートボードパーク | 箕面市 | 公共・屋外 | https://shisetsu.mizuno.jp/m-7207 | 管理者公式あり・個別情報確認待ち |
+| OSK-C013 | 箕面スケートボードパーク | 箕面市 | 公共・屋外 | https://shisetsu.mizuno.jp/skatepark/minoh | verified・OSK-F004として公開 |
 | OSK-C014 | スポーツパークまつばら | 松原市 | 公共・屋内外 | https://shisetsu.mizuno.jp/skatepark/sportspark-matsubara | verified・OSK-F002として公開 |
 | OSK-C015 | EKL SKATE PARK 寝屋川 | 寝屋川市 | 民間・屋内 | https://e-kl.jp/ | 施設公式あり・詳細確認待ち |
 | OSK-C016 | AKAMARUスケートパーク | 東大阪市 | 民間・屋内 | https://akamaru-sk8park.jp/ | 施設公式あり・詳細確認待ち |
@@ -62,7 +64,7 @@
 | OSK-C023 | ラウンドワンスタジアム堺中央環状店 スポッチャ | 堺市 | 民間・屋外設備 | https://www.round1.co.jp/service/spo-cha/item/skateboardpark.html | 施設公式あり・設備稼働確認待ち |
 | OSK-C024 | おくさま印スケボーパーク | 松原市 | 公共・屋内外 | https://shisetsu.mizuno.jp/m-7288/guide | verified・OSK-F003として公開 |
 
-候補数は24件で、Issue #278の「20〜30施設の候補を確認する」を満たす。2026-07-17時点の掲載確定は3件である。
+この旧台帳の候補数は24件で、Issue #278の「20〜30施設の候補を確認する」を満たす。再監査時点では、大阪府の公開カタログを24件まで拡張し、施設固有の営業時間が確認できないものは `schedule_check_required` として推薦から分離した。
 
 ## 5. 検証済みカタログ
 
@@ -71,6 +73,7 @@
 | OSK-F001 | SPOTAKA Skateboard Park（スポパー） | [施設公式](https://spotaka-skateboardpark.com/)、[BIGSTEP公式](https://big-step.co.jp/shop/detail/24) | 料金表、営業時間、会員登録、初心者向け体験・スクール、設備、アクセスを確認。不定休と貸切は来場前確認とした |
 | OSK-F002 | スポーツパークまつばら | [指定管理者公式](https://shisetsu.mizuno.jp/skatepark/sportspark-matsubara)、[松原市](https://www.city.matsubara.lg.jp/docs/page3591.html) | 終了時刻が23:00と22:00で分かれるため、推薦判定は安全側の22:00を採用した |
 | OSK-F003 | おくさま印スケボーパーク | [指定管理者利用案内](https://shisetsu.mizuno.jp/m-7288/guide)、[松原市](https://www.city.matsubara.lg.jp/docs/page18557.html) | 営業時間、料金、登録、年齢・防具ルール、屋内外設備、アクセスを確認した |
+| OSK-F004 | 箕面スケートボードパーク | [指定管理者](https://shisetsu.mizuno.jp/skatepark/minoh)、[箕面市](https://www.city.minoh.lg.jp/sports/sukebopark.html) | 第4木曜休場、料金、登録、年齢・防具ルール、初心者エリア、設備、アクセスを確認した |
 
 緯度経度は、各公式ページが案内する地図リンクまたは公式施設所在地の地図座標を使用した。推薦APIの移動時間は実経路ではなく直線距離による概算であり、施設情報の `verified` と経路精度を混同しない。
 

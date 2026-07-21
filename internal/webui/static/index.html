@@ -11,12 +11,25 @@
   </head>
   <body>
     <header class="app-header">
-      <div class="brand-block">
-        <div class="brand-row">
-          <h1>spot-diggz</h1>
-          <span class="environment-label">OSAKA MVP</span>
+      <div class="header-inner">
+        <div class="brand-block">
+          <div class="brand-row">
+            <h1>spot-diggz</h1>
+            <span class="environment-label">5-PREFECTURE MVP</span>
+          </div>
+          <p data-i18n="brandTagline">今日の自分に合うスケート先を決める</p>
         </div>
-        <p>今日の自分に合うスケート先を決める</p>
+
+        <div
+          id="locale-switch"
+          class="locale-switch"
+          role="group"
+          aria-label="表示言語"
+          data-i18n-aria-label="localeLabel"
+        >
+          <button type="button" data-locale="ja" aria-pressed="true">日本語</button>
+          <button type="button" data-locale="en" aria-pressed="false">English</button>
+        </div>
       </div>
     </header>
 
@@ -24,29 +37,38 @@
       <section class="search-panel" aria-labelledby="search-title">
         <div class="decision-intro">
           <p class="section-kicker">RIGHT NOW</p>
-          <h2 id="search-title">今から滑る場所を決める</h2>
-          <p>いつもの条件を使って、公式情報の通常営業時間内にある候補を選びます。</p>
+          <h2 id="search-title" data-i18n="searchTitle">今から滑る場所を決める</h2>
+          <p data-i18n="searchDescription">いつもの条件を使って、公式情報の通常営業時間内にある候補を選びます。</p>
         </div>
 
-        <div class="quick-actions" aria-label="すぐにおすすめを見る">
-          <button id="quick-search-button" class="primary-button quick-search-button" type="button">
+        <div
+          class="quick-actions"
+          aria-label="すぐにおすすめを見る"
+          data-i18n-aria-label="quickActionsLabel"
+        >
+          <button
+            id="quick-search-button"
+            class="primary-button quick-search-button"
+            type="button"
+            data-i18n="quickSearch"
+          >
             おまかせで今から滑る
           </button>
 
           <fieldset class="mood-actions">
-            <legend>今の気分から選ぶ</legend>
+            <legend data-i18n="moodActionsLegend">今の気分から選ぶ</legend>
             <div class="mood-action-grid">
               <button class="mood-action" type="button" data-mood="easygoing">
-                <strong>気軽に</strong>
-                <span>近さと使いやすさ</span>
+                <strong data-i18n="moodEasygoingShort">気軽に</strong>
+                <span data-i18n="moodEasygoingHint">近さと使いやすさ</span>
               </button>
               <button class="mood-action" type="button" data-mood="focused">
-                <strong>じっくり</strong>
-                <span>練習目的との相性</span>
+                <strong data-i18n="moodFocusedShort">じっくり</strong>
+                <span data-i18n="moodFocusedHint">練習目的との相性</span>
               </button>
               <button class="mood-action" type="button" data-mood="challenge">
-                <strong>挑戦する</strong>
-                <span>セクションを重視</span>
+                <strong data-i18n="moodChallengeShort">挑戦する</strong>
+                <span data-i18n="moodChallengeHint">セクションを重視</span>
               </button>
             </div>
           </fieldset>
@@ -54,94 +76,174 @@
 
         <div class="preference-summary">
           <div>
-            <p class="preference-label">いつもの条件</p>
-            <p id="condition-summary">大阪駅・初心者・公共交通・2時間</p>
+            <p class="preference-label" data-i18n="currentConditions">現在の条件</p>
+            <p id="condition-summary">大阪駅・初心者・公共交通・2時間・基礎を練習</p>
           </div>
         </div>
 
         <details id="condition-details" class="condition-details">
-          <summary>条件を変更</summary>
+          <summary data-i18n="changeConditions">条件を変更</summary>
           <form id="recommendation-form" novalidate>
             <fieldset class="form-group origin-group">
-              <legend>検索位置</legend>
+              <legend data-i18n="searchOrigin">検索位置</legend>
               <div class="segmented-control">
                 <label>
                   <input type="radio" name="originMode" value="specified_location" checked>
-                  <span>地点を選ぶ</span>
+                  <span data-i18n="chooseLocation">地点を選ぶ</span>
                 </label>
                 <label>
                   <input type="radio" name="originMode" value="current_location">
-                  <span>現在地</span>
+                  <span data-i18n="currentLocation">現在地</span>
                 </label>
               </div>
 
               <div id="specified-location-fields" class="origin-fields">
-                <label for="specified-location">出発地点</label>
+                <label for="specified-location" data-i18n="departurePoint">出発地点</label>
                 <select id="specified-location" name="specifiedLocation">
-                  <option value="osaka-station">大阪駅</option>
-                  <option value="namba-station">なんば駅</option>
-                  <option value="sakai-station">堺駅</option>
-                  <option value="nakamozu-station">なかもず駅</option>
+                  <option value="osaka-station" data-location-key="osaka-station">大阪駅</option>
+                  <option value="namba-station" data-location-key="namba-station">なんば駅</option>
+                  <option value="sakai-station" data-location-key="sakai-station">堺駅</option>
+                  <option value="nakamozu-station" data-location-key="nakamozu-station">なかもず駅</option>
+                  <option value="kobe-station" data-location-key="kobe-station">神戸駅</option>
+                  <option value="himeji-station" data-location-key="himeji-station">姫路駅</option>
+                  <option value="wakayama-station" data-location-key="wakayama-station">和歌山駅</option>
+                  <option value="nara-station" data-location-key="nara-station">奈良駅</option>
+                  <option value="tokushima-station" data-location-key="tokushima-station">徳島駅</option>
                 </select>
+
+                <div class="location-search">
+                  <label for="location-search-query" data-i18n="locationSearchLabel">任意の駅名・住所</label>
+                  <p
+                    id="location-search-provider-notice"
+                    class="provider-privacy-note"
+                    data-i18n="locationSearchProviderNotice"
+                  >
+                    Google連携が有効な環境では、候補検索のため入力した住所文字列をGoogleへ送る場合があります。外部送信は保存とは別で、住所文字列と候補はこの画面・端末に保存または永続化しません。
+                  </p>
+                  <div class="location-search-controls">
+                    <input
+                      id="location-search-query"
+                      name="locationSearchQuery"
+                      type="search"
+                      maxlength="120"
+                      autocomplete="off"
+                      aria-describedby="location-search-provider-notice location-search-status"
+                      placeholder="例: 京都駅、兵庫県神戸市..."
+                      data-i18n-placeholder="locationSearchPlaceholder"
+                    >
+                    <button
+                      id="location-search-button"
+                      class="location-search-button"
+                      type="button"
+                      aria-controls="location-search-results"
+                      data-i18n="locationSearchButton"
+                    >
+                      検索
+                    </button>
+                  </div>
+                  <p id="location-search-status" class="field-status" role="status" aria-live="polite"></p>
+                  <div
+                    id="location-search-results"
+                    class="location-search-results"
+                    role="radiogroup"
+                    aria-label="検索候補"
+                    data-i18n-aria-label="locationSearchResultsLabel"
+                    hidden
+                  ></div>
+                </div>
               </div>
 
               <div id="current-location-fields" class="origin-fields" hidden>
-                <button id="locate-button" class="secondary-button" type="button">現在地を確認</button>
+                <p
+                  id="current-location-provider-notice"
+                  class="provider-privacy-note"
+                  data-i18n="currentLocationProviderNotice"
+                >
+                  Google連携が有効な環境では、経路計算のため現在地の座標をGoogleへ送る場合があります。外部送信は保存とは別で、正確な位置はこの画面・端末に保存または永続化しません。
+                </p>
+                <button
+                  id="locate-button"
+                  class="secondary-button icon-text-action"
+                  type="button"
+                  aria-describedby="current-location-provider-notice"
+                >
+                  <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                  </svg>
+                  <span data-i18n="locateButton">現在地を確認</span>
+                </button>
                 <p id="location-status" class="field-status" aria-live="polite">検索時に取得します</p>
               </div>
             </fieldset>
 
             <div class="form-grid">
               <div class="form-field">
-                <label for="purpose">練習したいこと</label>
+                <label for="purpose" data-i18n="purposeLabel">練習したいこと</label>
                 <select id="purpose" name="purpose">
-                  <option value="basics">基礎を練習</option>
-                  <option value="street">ストリートを練習</option>
-                  <option value="transition">ランプ・ボウルを練習</option>
+                  <option value="basics" data-option-key="purposeBasics">基礎を練習</option>
+                  <option value="street" data-option-key="purposeStreet">ストリートを練習</option>
+                  <option value="transition" data-option-key="purposeTransition">ランプ・ボウルを練習</option>
                 </select>
               </div>
 
               <div class="form-field">
-                <label for="mood">いつもの気分</label>
+                <label for="mood" data-i18n="moodLabel">いつもの気分</label>
                 <select id="mood" name="mood">
-                  <option value="focused">じっくり練習</option>
-                  <option value="easygoing">気軽に滑る</option>
-                  <option value="challenge">新しいことに挑戦</option>
+                  <option value="focused" data-option-key="moodFocused">じっくり練習</option>
+                  <option value="easygoing" data-option-key="moodEasygoing">気軽に滑る</option>
+                  <option value="challenge" data-option-key="moodChallenge">新しいことに挑戦</option>
                 </select>
               </div>
 
               <div class="form-field">
-                <label for="level">レベル</label>
+                <label for="level" data-i18n="levelLabel">レベル</label>
                 <select id="level" name="level">
-                  <option value="beginner">初心者</option>
-                  <option value="returning">久しぶり</option>
-                  <option value="intermediate">中級</option>
+                  <option value="beginner" data-option-key="levelBeginner">初心者</option>
+                  <option value="returning" data-option-key="levelReturning">久しぶり</option>
+                  <option value="intermediate" data-option-key="levelIntermediate">中級</option>
                 </select>
               </div>
 
               <div class="form-field">
-                <label for="available-minutes">使える時間</label>
+                <label for="available-minutes" data-i18n="availableTimeLabel">使える時間</label>
                 <select id="available-minutes" name="availableMinutes">
-                  <option value="60">1時間</option>
-                  <option value="120" selected>2時間</option>
-                  <option value="180">3時間</option>
-                  <option value="240">4時間</option>
+                  <option value="60" data-option-key="duration60">1時間</option>
+                  <option value="120" data-option-key="duration120" selected>2時間</option>
+                  <option value="180" data-option-key="duration180">3時間</option>
+                  <option value="240" data-option-key="duration240">4時間</option>
                 </select>
               </div>
 
               <div class="form-field full-width">
-                <label for="transport">交通手段</label>
+                <label for="transport" data-i18n="transportLabel">交通手段</label>
                 <select id="transport" name="transport">
-                  <option value="public_transit">公共交通</option>
-                  <option value="car">車</option>
-                  <option value="bicycle">自転車</option>
-                  <option value="walk">徒歩</option>
+                  <option value="public_transit" data-option-key="transportPublic">公共交通</option>
+                  <option value="car" data-option-key="transportCar">車</option>
+                  <option value="bicycle" data-option-key="transportBicycle">自転車</option>
+                  <option value="walk" data-option-key="transportWalk">徒歩</option>
                 </select>
               </div>
             </div>
 
-            <p class="privacy-note">設定はこの端末だけに保存します。正確な現在地は保存しません。</p>
-            <button id="search-button" class="secondary-submit-button" type="submit">保存しておすすめを更新</button>
+            <p class="privacy-note" data-i18n="preferencePrivacy">
+              表示言語だけをこの端末に保存します。正確な現在地と検索条件は保存しません。
+            </p>
+            <button
+              id="search-button"
+              class="secondary-submit-button"
+              type="submit"
+              data-i18n="updateRecommendations"
+            >
+              この条件でおすすめを更新
+            </button>
           </form>
         </details>
         <p id="form-status" class="form-status" aria-live="polite"></p>
@@ -152,7 +254,7 @@
           <div class="section-heading">
             <p class="section-number">02</p>
             <div>
-              <h2 id="results-title">今日のおすすめ</h2>
+              <h2 id="results-title" data-i18n="resultsTitle">今日のおすすめ</h2>
               <p id="results-summary" aria-live="polite">「今から滑る」で今日の一択を表示します</p>
             </div>
           </div>
@@ -161,12 +263,137 @@
 
         <div id="results" class="results-list">
           <div id="empty-state" class="empty-state">
-            <p>条件入力は不要です。いつもの設定ですぐに探せます。</p>
+            <p data-i18n="initialEmpty">条件入力は不要です。現在の設定ですぐに探せます。</p>
           </div>
         </div>
         <p id="availability-notice" class="travel-notice" hidden></p>
         <p id="travel-notice" class="travel-notice" hidden></p>
       </section>
     </main>
+
+    <dialog id="correction-dialog" class="correction-dialog" aria-labelledby="correction-title">
+      <div class="dialog-header">
+        <div>
+          <p class="dialog-kicker">DATA CORRECTION</p>
+          <h2 id="correction-title" data-i18n="correctionTitle">情報の誤りを報告</h2>
+          <p id="correction-facility" class="correction-facility"></p>
+        </div>
+        <button
+          id="correction-close-button"
+          class="dialog-close-button"
+          type="button"
+          aria-label="閉じる"
+          title="閉じる"
+          data-i18n-aria-label="closeDialog"
+          data-i18n-title="closeDialog"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form id="correction-form" class="correction-form" novalidate>
+        <input id="correction-facility-id" name="facilityId" type="hidden">
+
+        <div class="correction-field">
+          <label for="correction-category">
+            <span data-i18n="correctionCategory">訂正する項目</span>
+            <span class="required-label" data-i18n="requiredLabel">必須</span>
+          </label>
+          <select id="correction-category" name="category" required>
+            <option value="hours" data-option-key="categoryHours">営業時間</option>
+            <option value="price" data-option-key="categoryPrice">料金</option>
+            <option value="rules" data-option-key="categoryRules">利用ルール</option>
+            <option value="closure" data-option-key="categoryClosure">休場・閉鎖</option>
+            <option value="access" data-option-key="categoryAccess">アクセス</option>
+            <option value="other" data-option-key="categoryOther">その他</option>
+          </select>
+        </div>
+
+        <div class="correction-field">
+          <label for="correction-details">
+            <span data-i18n="correctionDetails">訂正内容</span>
+            <span class="required-label" data-i18n="requiredLabel">必須</span>
+          </label>
+          <textarea
+            id="correction-details"
+            name="details"
+            rows="5"
+            minlength="10"
+            maxlength="1000"
+            required
+            aria-describedby="correction-details-help correction-privacy-warning"
+            placeholder="誤っている情報と、確認できた正しい情報を10文字以上で入力してください"
+            data-i18n-placeholder="correctionDetailsPlaceholder"
+          ></textarea>
+          <p id="correction-details-help" class="field-help" data-i18n="correctionDetailsHelp">
+            10〜1000文字で入力してください。
+          </p>
+        </div>
+
+        <div class="correction-field">
+          <label for="correction-evidence-url">
+            <span data-i18n="evidenceUrlLabel">根拠URL</span>
+            <span class="optional-label" data-i18n="optionalLabel">任意</span>
+          </label>
+          <input
+            id="correction-evidence-url"
+            name="evidenceUrl"
+            type="url"
+            inputmode="url"
+            maxlength="500"
+            placeholder="https://example.com/official-notice"
+          >
+          <p class="field-help" data-i18n="evidenceUrlHelp">施設や自治体の公式ページがあれば入力してください。</p>
+        </div>
+
+        <div class="correction-field">
+          <label for="correction-contact">
+            <span data-i18n="contactLabel">連絡先メールアドレス</span>
+            <span class="optional-label" data-i18n="optionalLabel">任意</span>
+          </label>
+          <input
+            id="correction-contact"
+            name="contact"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            maxlength="254"
+            aria-describedby="contact-use-note"
+            placeholder="you@example.com"
+          >
+          <p id="contact-use-note" class="field-help" data-i18n="contactUseNote">
+            確認が必要な場合の連絡だけに利用し、送信から90日を上限に保持して定期的に削除します。
+          </p>
+        </div>
+
+        <label class="consent-row" for="correction-contact-consent">
+          <input id="correction-contact-consent" name="contactConsent" type="checkbox" disabled>
+          <span data-i18n="contactConsentLabel">連絡先の利用目的と、送信から最長90日間の保持・定期削除に同意します。</span>
+        </label>
+
+        <p id="correction-privacy-warning" class="correction-warning" data-i18n="correctionPrivacyWarning">
+          訂正内容や根拠URLに、正確な現在地、氏名、電話番号などの個人情報を書かないでください。
+        </p>
+        <p id="correction-status" class="correction-status" role="status" aria-live="polite"></p>
+
+        <div class="dialog-actions">
+          <button id="correction-cancel-button" class="dialog-cancel-button" type="button" data-i18n="cancel">
+            キャンセル
+          </button>
+          <button id="correction-submit-button" class="dialog-submit-button" type="submit" data-i18n="submitCorrection">
+            報告を送信
+          </button>
+        </div>
+      </form>
+
+      <section id="correction-success" class="correction-success" aria-live="polite" hidden>
+        <p class="success-label" data-i18n="correctionAccepted">報告を受け付けました</p>
+        <p><span data-i18n="reportIdLabel">受付番号</span>: <code id="correction-report-id"></code></p>
+        <p id="correction-next-action"></p>
+        <button id="correction-success-close-button" class="dialog-submit-button" type="button" data-i18n="closeDialog">
+          閉じる
+        </button>
+      </section>
+    </dialog>
   </body>
 </html>

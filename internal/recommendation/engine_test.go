@@ -1,11 +1,14 @@
 package recommendation
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/kohei321dev/spot-diggz/internal/facility"
 	"github.com/kohei321dev/spot-diggz/internal/session"
+	"github.com/kohei321dev/spot-diggz/internal/travel"
 )
 
 func TestEngineReturnsAtMostThreeRankedRecommendations(t *testing.T) {
@@ -57,6 +60,22 @@ func TestEngineExcludesFacilitiesOutsideHardConditions(t *testing.T) {
 	})
 	engine := NewEngine(catalog, fixedTestTime)
 
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 1 || response.Recommendations[0].Facility.ID != "eligible" {
+		t.Fatalf("recommendations = %#v, want only eligible", response.Recommendations)
+	}
+}
+
+func TestEngineExcludesFacilityRequiringScheduleCheck(t *testing.T) {
+	needsScheduleCheck := recommendationFacility("needs-schedule-check", 34.7020, 135.4970, true, []string{"flat-area"})
+	needsScheduleCheck.GeneralUseStatus = facility.GeneralUseScheduleCheckRequired
+	needsScheduleCheck.AvailabilityNote = "来場前に公式予定を確認してください。"
+	eligible := recommendationFacility("eligible", 34.7030, 135.4970, true, []string{"flat-area"})
+
+	engine := NewEngine(newTestCatalog(t, []facility.Facility{needsScheduleCheck, eligible}), fixedTestTime)
 	response, err := engine.Recommend(validInput())
 	if err != nil {
 		t.Fatalf("Recommend() error = %v", err)
@@ -129,6 +148,109 @@ func TestEngineLimitsSkateTimeToFacilityClosing(t *testing.T) {
 	}
 }
 
+func TestEngineTreatsSpecificClosedDayAsOverrideForDailyHours(t *testing.T) {
+	item := recommendationFacility("thursday-closed", 34.7020, 135.4970, true, []string{"flat-area"})
+	item.Hours = append(item.Hours, facility.OperatingHours{Day: "thursday", Closed: true})
+	engine := NewEngine(newTestCatalog(t, []facility.Facility{item}), fixedTestTime)
+
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 0 {
+		t.Fatalf("recommendations = %#v, want none", response.Recommendations)
+	}
+}
+
+func TestEngineExcludesFacilityDuringOneTimeClosure(t *testing.T) {
+	item := recommendationFacility("one-time-closure", 34.7020, 135.4970, true, []string{"flat-area"})
+	item.ClosurePeriods = []facility.ClosurePeriod{{
+		Type: facility.ClosurePeriodOneTime, Start: "2026-07-16", End: "2026-07-16", Reason: "点検",
+	}}
+	engine := NewEngine(newTestCatalog(t, []facility.Facility{item}), fixedTestTime)
+
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 0 {
+		t.Fatalf("recommendations = %#v, want none", response.Recommendations)
+	}
+}
+
+func TestEngineExcludesFacilityDuringCrossYearAnnualClosure(t *testing.T) {
+	item := recommendationFacility("annual-closure", 34.7020, 135.4970, true, []string{"flat-area"})
+	item.ClosurePeriods = []facility.ClosurePeriod{{
+		Type: facility.ClosurePeriodAnnual, Start: "12-29", End: "01-03", Reason: "年末年始休場",
+	}}
+	now := time.Date(2026, time.December, 30, 12, 0, 0, 0, japanStandardTime)
+	item.DynamicVerifiedAt = now.Add(-24 * time.Hour)
+	item.StableVerifiedAt = now.Add(-24 * time.Hour)
+	engine := NewEngine(newTestCatalog(t, []facility.Facility{item}), func() time.Time { return now })
+
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 0 {
+		t.Fatalf("recommendations = %#v, want none", response.Recommendations)
+	}
+}
+
+func TestEngineExcludesFacilityWithStaleInformation(t *testing.T) {
+	item := recommendationFacility("stale", 34.7020, 135.4970, true, []string{"flat-area"})
+	item.DynamicVerifiedAt = fixedTestTime().Add(-facility.DynamicInformationFreshnessWindow - time.Minute)
+	engine := NewEngine(newTestCatalog(t, []facility.Facility{item}), fixedTestTime)
+
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 0 {
+		t.Fatalf("recommendations = %#v, want none", response.Recommendations)
+	}
+}
+
+func TestEngineUsesTravelProviderEstimatesAndNotice(t *testing.T) {
+	catalog := newTestCatalog(t, []facility.Facility{
+		recommendationFacility("slower", 34.7020, 135.4970, true, []string{"flat-area"}),
+		recommendationFacility("faster", 34.8020, 135.5970, true, []string{"flat-area"}),
+	})
+	provider := staticTravelProvider{estimates: []travel.Estimate{
+		{FacilityID: "slower", DistanceKm: 2, TravelMinutes: 18, Kind: travel.GoogleRoutesKind},
+		{FacilityID: "faster", DistanceKm: 10, TravelMinutes: 5, Kind: travel.GoogleRoutesKind},
+	}}
+	engine := NewEngineWithTravelProvider(catalog, fixedTestTime, provider)
+
+	response, err := engine.Recommend(validInput())
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if len(response.Recommendations) != 2 || response.Recommendations[0].Facility.ID != "faster" {
+		t.Fatalf("recommendations = %#v, want faster first", response.Recommendations)
+	}
+	if response.Recommendations[0].TravelEstimateKind != travel.GoogleRoutesKind {
+		t.Fatalf("TravelEstimateKind = %q", response.Recommendations[0].TravelEstimateKind)
+	}
+	if response.TravelEstimateNote != GoogleRoutesEstimateNotice {
+		t.Fatalf("TravelEstimateNote = %q", response.TravelEstimateNote)
+	}
+}
+
+func TestEngineReturnsTravelProviderError(t *testing.T) {
+	providerError := errors.New("provider failed")
+	engine := NewEngineWithTravelProvider(
+		newTestCatalog(t, []facility.Facility{recommendationFacility("facility", 34.7020, 135.4970, true, []string{"flat-area"})}),
+		fixedTestTime,
+		staticTravelProvider{err: providerError},
+	)
+
+	_, err := engine.Recommend(validInput())
+	if !errors.Is(err, providerError) {
+		t.Fatalf("Recommend() error = %v, want provider error", err)
+	}
+}
+
 func TestOpenUntilAtReturnsNextDayForOvernightHours(t *testing.T) {
 	hours := []facility.OperatingHours{{Day: "Thursday", Opens: "22:00", Closes: "02:00"}}
 	at := time.Date(2026, time.July, 17, 1, 0, 0, 0, japanStandardTime)
@@ -170,24 +292,41 @@ func newTestCatalog(t *testing.T, facilities []facility.Facility) *facility.Cata
 }
 
 func recommendationFacility(id string, latitude float64, longitude float64, beginnerFriendly bool, features []string) facility.Facility {
+	verifiedAt := time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC)
 	return facility.Facility{
-		ID:               id,
-		Name:             "Test Facility " + id,
-		Address:          "大阪府大阪市",
-		Location:         facility.Location{Latitude: latitude, Longitude: longitude},
-		Activities:       []string{"skateboard"},
-		Hours:            []facility.OperatingHours{{Day: "daily", Opens: "00:00", Closes: "24:00"}},
-		Price:            "500円",
-		Reservation:      "当日受付",
-		BeginnerFriendly: beginnerFriendly,
-		Features:         features,
-		Rules:            []string{"ヘルメット必須"},
-		SourceURL:        "https://example.com/facilities/" + id,
-		SourceType:       "official",
-		Status:           "verified",
-		Confidence:       "high",
-		VerifiedAt:       time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC),
+		ID:                 id,
+		Name:               "Test Facility " + id,
+		Address:            "大阪府大阪市",
+		Prefecture:         "大阪府",
+		Municipality:       "大阪市",
+		Location:           facility.Location{Latitude: latitude, Longitude: longitude},
+		Activities:         []string{"skateboard"},
+		Hours:              []facility.OperatingHours{{Day: "daily", Opens: "00:00", Closes: "24:00"}},
+		ScheduleNotes:      []string{"臨時変更は公式情報を確認"},
+		Price:              "500円",
+		Reservation:        "当日受付",
+		BeginnerFriendly:   beginnerFriendly,
+		Features:           features,
+		Rules:              []string{"ヘルメット必須"},
+		Access:             facility.Access{Notes: "テスト用アクセス"},
+		EnglishTranslation: facility.FacilityEnglishTranslation{Name: "Test Facility " + id, Address: "Osaka City, Osaka", ScheduleNotes: []string{"Check the official source for temporary changes."}, Price: "JPY 500", Reservation: "Register on arrival", Rules: []string{"Helmet required"}, AccessNotes: "Test access"},
+		SourceURL:          "https://example.com/facilities/" + id,
+		SourceType:         "official",
+		Status:             "verified",
+		Confidence:         "high",
+		VerifiedAt:         verifiedAt,
+		DynamicVerifiedAt:  verifiedAt,
+		StableVerifiedAt:   verifiedAt,
 	}
+}
+
+type staticTravelProvider struct {
+	estimates []travel.Estimate
+	err       error
+}
+
+func (provider staticTravelProvider) Matrix(_ context.Context, _ travel.Request) ([]travel.Estimate, error) {
+	return provider.estimates, provider.err
 }
 
 func fixedTestTime() time.Time {

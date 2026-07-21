@@ -1,0 +1,224 @@
+{
+  "asOf": "2026-07-19",
+  "scope": [
+    "大阪府",
+    "兵庫県",
+    "和歌山県",
+    "奈良県",
+    "徳島県"
+  ],
+  "publication": {
+    "publishedCatalog": "data/facilities.json",
+    "publishedCount": 31,
+    "policy": "公式情報で存在・所在地・主要利用条件を確認した施設をカタログへ掲載する。generalUseStatus=limitedは安全側の営業時間を表示し、schedule_check_requiredは施設一覧には掲載するが、日付別の予定確認なしでは推薦しない。"
+  },
+  "heldCandidates": [
+    {
+      "candidateId": "OSK-C016",
+      "name": "AKAMARUスケートパーク",
+      "prefecture": "大阪府",
+      "municipality": "東大阪市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "一般滑走の予約要否が未確認",
+        "照明と路面材が未確認",
+        "2026-07-19のレッスン時間が未確認"
+      ],
+      "sourceUrls": [
+        "https://akamaru-sk8park.jp/",
+        "https://akamaru-sk8park.jp/archives/1852"
+      ]
+    },
+    {
+      "candidateId": "OSK-C017",
+      "name": "Hasco Skatepark & Skateshop",
+      "prefecture": "大阪府",
+      "municipality": "東大阪市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "一般利用の予約要否が未確認",
+        "照明と路面材が未確認",
+        "公式Webでの臨時営業情報が不足"
+      ],
+      "sourceUrls": [
+        "https://www.hasco.co.jp/skatepark/"
+      ]
+    },
+    {
+      "candidateId": "OSK-C018",
+      "name": "ムラサキパーク ららぽーとEXPOCITY",
+      "prefecture": "大阪府",
+      "municipality": "吹田市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "一般登録と予約要否が未確認",
+        "防具と年齢ルールが未確認",
+        "料金表に重複表記"
+      ],
+      "sourceUrls": [
+        "https://www.murasaki.jp/Page/Feature/FeaturePage092.aspx",
+        "https://shop.murasaki.jp/detail/734/"
+      ]
+    },
+    {
+      "candidateId": "HYG-C001",
+      "name": "KCPC木村化工機スケートパーク",
+      "prefecture": "兵庫県",
+      "municipality": "尼崎市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "パーク中心の正確な座標が未確認"
+      ],
+      "sourceUrls": [
+        "https://www.npoask.com/park",
+        "https://www.city.amagasaki.hyogo.jp/shisei/1001823/1010935/1043296/1041042.html"
+      ]
+    },
+    {
+      "candidateId": "HYG-C002",
+      "name": "カモロクスケートパーク",
+      "prefecture": "兵庫県",
+      "municipality": "川西市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "登録と予約要否が未確認",
+        "初心者適性・路面・照明が未確認"
+      ],
+      "sourceUrls": [
+        "https://www.city.kawanishi.hyogo.jp/kurashi/1017490/midori/1023730/index.html"
+      ]
+    },
+    {
+      "candidateId": "HYG-C003",
+      "name": "西宮浜総合公園 スケートボード広場",
+      "prefecture": "兵庫県",
+      "municipality": "西宮市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "初心者適性と主要セクションが未確認"
+      ],
+      "sourceUrls": [
+        "https://nishinomiyahama-omaehama-park.com/facility-sports/",
+        "https://www.nishi.or.jp/access/koen/nishinomiyahamasogo.html"
+      ]
+    },
+    {
+      "candidateId": "HYG-C004",
+      "name": "MDPスケートボードパーク",
+      "prefecture": "兵庫県",
+      "municipality": "相生市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "正確な公式座標が未確認",
+        "一般利用者の防具・年齢規定が未確認",
+        "エリア別営業時間を現schemaで表現できない"
+      ],
+      "sourceUrls": [
+        "https://www.mdp-skate.jp/skateboard/",
+        "https://www.mdp-skate.jp/"
+      ]
+    },
+    {
+      "candidateId": "HYG-C005",
+      "name": "Seven Two Surf スケートパーク",
+      "prefecture": "兵庫県",
+      "municipality": "明石市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "公式座標が未確認",
+        "登録・予約要否と屋内外・路面が未確認"
+      ],
+      "sourceUrls": [
+        "https://seventwosurf.ocnk.net/page/3",
+        "https://seventwosurf.ocnk.net/page/2"
+      ]
+    },
+    {
+      "candidateId": "HYG-C006",
+      "name": "姫路市立スケートボードパーク",
+      "prefecture": "兵庫県",
+      "municipality": "姫路市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "数値座標が未確認",
+        "路面・主要セクション・初心者適性が未確認"
+      ],
+      "sourceUrls": [
+        "https://himeji-machishin.jp/sports/shisetsu/skateboard/",
+        "https://www.city.himeji.lg.jp/sangyo/0000003846.html"
+      ]
+    },
+    {
+      "candidateId": "NAR-C001",
+      "name": "田原本町スケートボードパーク",
+      "prefecture": "奈良県",
+      "municipality": "田原本町",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "公式ページから施設座標を確認できない",
+        "主要セクションの構造化情報が不足"
+      ],
+      "sourceUrls": [
+        "https://www.town.tawaramoto.nara.jp/gyosei/shisetsu/sport/7442.html",
+        "https://www.town.tawaramoto.nara.jp/iken/goteian/r7/19182.html"
+      ]
+    },
+    {
+      "candidateId": "NAR-C002",
+      "name": "FSS35スポーツパーク スケートボードパーク",
+      "prefecture": "奈良県",
+      "municipality": "三郷町",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "公式座標が未確認",
+        "初心者適性と最新の定休日情報が不足"
+      ],
+      "sourceUrls": [
+        "https://www.town.sango.nara.jp/uploaded/attachment/8645.pdf",
+        "https://www.town.sango.nara.jp/uploaded/attachment/6506.pdf"
+      ]
+    },
+    {
+      "candidateId": "WAK-C001",
+      "name": "わかやまスケートパーク",
+      "prefecture": "和歌山県",
+      "municipality": "和歌山市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "公式座標が未確認",
+        "通常の利用可能時間が公式ページに明記されていない"
+      ],
+      "sourceUrls": [
+        "https://www.pref.wakayama.lg.jp/prefg/022600/d00217278.html"
+      ]
+    },
+    {
+      "candidateId": "TKS-C001",
+      "name": "UZU PARK",
+      "prefecture": "徳島県",
+      "municipality": "鳴門市",
+      "existence": "confirmed",
+      "publicationStatus": "held",
+      "blockers": [
+        "2026年リニューアル後の利用規則・料金・防具条件を一次情報で確認できない",
+        "最新の公式座標が未確認"
+      ],
+      "sourceUrls": [
+        "https://www.naruto-mon.jp/naruto_city/20260329/",
+        "https://www.naruto-mon.jp/corp/uzupark/"
+      ]
+    }
+  ]
+}

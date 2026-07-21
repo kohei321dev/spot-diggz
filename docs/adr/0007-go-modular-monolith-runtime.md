@@ -5,6 +5,8 @@
 - Related: [Product Baseline](../product_baseline.md)
 - Related: [Quality Attributes](../architecture/quality-attributes.md)
 - Related: [ADR-0006](0006-remove-legacy-implementation.md)
+- Related: [ADR-0009](0009-session-recommendation-ui.md)
+- Related: [ADR-0011](0011-five-prefecture-mvp-scope.md)
 
 ## Context
 
@@ -37,6 +39,19 @@ Goを採用する主理由は高トラフィック性能ではなく、次の運
 - runtime、rollback、障害調査の単位をapplication artifactへ揃えられる
 
 言語だけでsecurityが保証されるわけではない。入力検証、認証・認可、秘密情報管理、位置情報の非保存、依存関係更新、container scan、監視を組み合わせる。
+
+## Implementation Evolution (2026-07-20)
+
+本ADRのruntimeと単一deployable unitというゴールは維持する。後続実装とADRで手段を次のように具体化した。
+
+- 地理scopeはADR-0011により大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県へ拡大した。
+- ADR-0009により静的Web UIをGo binaryへ埋め込み、UIとAPIを同一origin・同一artifactで配信する方式を採用した。
+- moduleはfacility、session、recommendation、travel、geocoding、correction、rate limit、observability、HTTP、Web UIとして実装した。MVPの推薦にAI adapterは含めない。
+- `make build` は `CGO_ENABLED=0` で静的な単一binaryを生成する。
+- production imageはscratch、non-root UID `65532` とし、Google HTTPS用CA bundleとlocal fallback用の書込directoryだけを追加した。
+- read-only catalogはimageへ含める。Vercel Productionの訂正reportはADR-0012によりNeonへ保存し、Neon未設定のlocal/CIだけfile storeを使う。
+
+この追補はGo modular monolithというDecisionを変更せず、未確定だったUI配信・artifact・runtime filesystemを確定する。
 
 ## Alternatives
 

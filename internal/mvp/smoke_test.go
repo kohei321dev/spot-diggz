@@ -23,14 +23,17 @@ const smokeRequestTimeout = 3 * time.Second
 func TestRunnableMVPFlow(t *testing.T) {
 	t.Parallel()
 
+	now := func() time.Time {
+		return time.Date(2026, time.July, 19, 12, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+	}
 	catalogPath := filepath.Join("..", "..", "testdata", "facilities.dev.json")
-	catalog, err := facility.LoadCatalogFile(catalogPath)
+	catalog, err := facility.LoadCatalogFileAt(catalogPath, now())
 	if err != nil {
 		t.Fatalf("LoadCatalogFile() error = %v", err)
 	}
 
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	server := httptest.NewServer(httpapi.NewServer(catalog, logger))
+	server := httptest.NewServer(httpapi.NewServerWithOptions(catalog, logger, httpapi.Options{Now: now}))
 	t.Cleanup(server.Close)
 	client := &http.Client{Timeout: smokeRequestTimeout}
 
@@ -49,7 +52,7 @@ func TestProductionCatalogReturnsOsakaRecommendation(t *testing.T) {
 	latitude := 34.7025
 	longitude := 135.4960
 	now := func() time.Time {
-		return time.Date(2026, time.July, 17, 13, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+		return time.Date(2026, time.July, 20, 13, 0, 0, 0, time.FixedZone("JST", 9*60*60))
 	}
 	result, err := recommendation.NewEngine(catalog, now).Recommend(session.Input{
 		Purpose:          session.PurposeBasics,
@@ -76,6 +79,66 @@ func TestProductionCatalogReturnsOsakaRecommendation(t *testing.T) {
 		if len(item.Facility.ScheduleNotes) == 0 {
 			t.Fatalf("Recommend() returned facility %s without schedule notes", item.Facility.ID)
 		}
+	}
+}
+
+func TestProductionCatalogReturnsRecommendationInEverySupportedPrefecture(t *testing.T) {
+	t.Parallel()
+
+	catalogPath := filepath.Join("..", "..", "data", "facilities.json")
+	catalog, err := facility.LoadCatalogFile(catalogPath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFile() error = %v", err)
+	}
+	now := func() time.Time {
+		return time.Date(2026, time.July, 20, 13, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+	}
+	tests := []struct {
+		name       string
+		prefecture string
+		latitude   float64
+		longitude  float64
+	}{
+		{name: "Osaka", prefecture: "大阪府", latitude: 34.6724, longitude: 135.4966},
+		{name: "Hyogo", prefecture: "兵庫県", latitude: 34.7960, longitude: 134.9906},
+		{name: "Wakayama", prefecture: "和歌山県", latitude: 33.8616, longitude: 135.1693},
+		{name: "Nara", prefecture: "奈良県", latitude: 34.6990, longitude: 135.8274},
+		{name: "Tokushima", prefecture: "徳島県", latitude: 34.0655, longitude: 134.5980},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			latitude := test.latitude
+			longitude := test.longitude
+			result, err := recommendation.NewEngine(catalog, now).Recommend(session.Input{
+				Purpose:          session.PurposeBasics,
+				Mood:             session.MoodFocused,
+				Level:            session.LevelReturning,
+				AvailableMinutes: 120,
+				Transport:        session.TransportCar,
+				Origin: session.Origin{
+					Mode:      session.OriginSpecifiedLocation,
+					Latitude:  &latitude,
+					Longitude: &longitude,
+				},
+			})
+			if err != nil {
+				t.Fatalf("Recommend() error = %v", err)
+			}
+			if len(result.Recommendations) == 0 {
+				t.Fatal("Recommend() returned no facilities")
+			}
+			foundPrefecture := false
+			for _, item := range result.Recommendations {
+				if item.Facility.Prefecture == test.prefecture {
+					foundPrefecture = true
+					break
+				}
+			}
+			if !foundPrefecture {
+				t.Fatalf("recommendations do not contain %s: %#v", test.prefecture, result.Recommendations)
+			}
+		})
 	}
 }
 
