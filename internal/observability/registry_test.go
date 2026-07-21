@@ -131,7 +131,7 @@ func TestObserveClientProductEventRejectsServerOwnedEvent(t *testing.T) {
 
 	for _, event := range []ProductEvent{
 		ProductEventResultDisplayed,
-		ProductEventVideoEmbedRequested,
+		ProductEventVideoEmbedDisplayed,
 		ProductEventVideoEmbedLoaded,
 		ProductEventVideoExternalOpened,
 		ProductEventSocialProfileOpened,
@@ -146,7 +146,7 @@ func TestObserveClientProductEventRejectsServerOwnedEvent(t *testing.T) {
 
 	body := scrapeRegistry(t, registry).Body.String()
 	assertMetricLine(t, body, `spot_diggz_product_events_total{event="result_displayed"} 1`)
-	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_embed_requested"} 1`)
+	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_embed_displayed"} 1`)
 	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_embed_loaded"} 1`)
 	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_external_opened"} 1`)
 	assertMetricLine(t, body, `spot_diggz_product_events_total{event="social_profile_opened"} 1`)

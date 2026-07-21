@@ -27,7 +27,7 @@ const (
 	ProductEventResultDisplayed         ProductEvent = "result_displayed"
 	ProductEventSourceOpened            ProductEvent = "source_opened"
 	ProductEventNavigationOpened        ProductEvent = "navigation_opened"
-	ProductEventVideoEmbedRequested     ProductEvent = "video_embed_requested"
+	ProductEventVideoEmbedDisplayed     ProductEvent = "video_embed_displayed"
 	ProductEventVideoEmbedLoaded        ProductEvent = "video_embed_loaded"
 	ProductEventVideoExternalOpened     ProductEvent = "video_external_opened"
 	ProductEventSocialProfileOpened     ProductEvent = "social_profile_opened"
@@ -41,7 +41,7 @@ var productEvents = [...]ProductEvent{
 	ProductEventResultDisplayed,
 	ProductEventSourceOpened,
 	ProductEventNavigationOpened,
-	ProductEventVideoEmbedRequested,
+	ProductEventVideoEmbedDisplayed,
 	ProductEventVideoEmbedLoaded,
 	ProductEventVideoExternalOpened,
 	ProductEventSocialProfileOpened,
@@ -55,7 +55,7 @@ var clientProductEvents = [...]ProductEvent{
 	ProductEventResultDisplayed,
 	ProductEventSourceOpened,
 	ProductEventNavigationOpened,
-	ProductEventVideoEmbedRequested,
+	ProductEventVideoEmbedDisplayed,
 	ProductEventVideoEmbedLoaded,
 	ProductEventVideoExternalOpened,
 	ProductEventSocialProfileOpened,

@@ -49,13 +49,13 @@ production成果物は `CGO_ENABLED=0` の静的な単一binaryを含むscratch 
 | --- | --- | --- | --- |
 | P0 | Catalog trust | verified record、公式source、検証時刻、日英必須属性だけを公開 | startup validation、catalog tests、source review |
 | P0 | Freshness safety | dynamic 30日・stable 180日の両方がfreshな施設だけを推薦 | freshness unit tests、`/readyz`、fresh/stale gauge |
-| P0 | Privacy | origin/queryを非保存・非logging。Google送信と、明示操作後のYouTube通信を区別して明示 | log tests、store inspection、privacy review |
+| P0 | Privacy | origin/queryを非保存・非logging。Google送信と、動画を持つ推薦cardの初期YouTube通信を区別して明示 | log tests、store inspection、privacy review |
 | P0 | Determinism | 同じcatalog、input、時刻、provider結果から同じ順位・理由を返す | clock/provider injection、stable-order tests |
 | P0 | Recoverability | Google障害時もstraight-line推薦を継続し、artifact rollbackでreportを失わない | provider failure tests、Runbook smoke、volume-preserving rollback |
 | P1 | Modifiability | UI、HTTP、domain、provider、storeをmodule境界で変更できる | package review、focused tests、ADR review |
 | P1 | Observability | HTTP、推薦、product event、catalog freshnessを低cardinalityで測る | metrics tests、dashboard/alert review |
 | P1 | Security | input/size/rate/secret/container controlと外部media allowlistを多層化する | CI scans、HTTP/CSP tests、threat review |
-| P1 | Performance | 小規模catalogの主要flowを同期処理で完了し、外部mediaは初期表示でloadしない | HTTP duration histogram、browser network check、p95 observation |
+| P1 | Performance | 小規模catalogの主要flowを同期処理で完了し、動画を持つ推薦cardはYouTube playerを初期表示する | HTTP duration histogram、browser network check、p95 observation |
 | P1 | Accessibility / i18n | mobileで主要flowを日英利用でき、icon操作にも意味とテキスト代替がある | Playwright desktop/mobile、manual keyboard/screen-reader review |
 | P1 | Operability | static binary、scratch image、health/readiness、smoke/rollbackを揃える | CI image smoke、Runbook exercise |
 
@@ -78,7 +78,7 @@ production成果物は `CGO_ENABLED=0` の静的な単一binaryを含むscratch 
 - Correctionは32 MiBのstore上限内でappendとsyncに成功した場合だけ202を返す。reportには90日後の `deleteAfter` を付け、起動時と1時間ごとにpurgeする。
 - `/metrics` はapplication内で認証せず、deployment networkで制限する。
 - 外部メディアはcatalogのread-only metadataである。施設ごとのYouTube動画は最大1件に限り、allowlist providerと検証済みvideo IDからだけembed URLを組み立てる。任意iframe HTML、任意embed URL、server-side media fetchを受け付けない。
-- browserは結果表示時にiframe、外部thumbnail、player APIをloadしない。利用者が動画を明示操作した後だけYouTube privacy-enhanced playerを遅延作成し、autoplayしない。動画の削除、埋込拒否、network失敗時は、YouTube外部リンクを残して詳細・推薦flowを継続する。
+- browserは動画を持つ推薦cardの結果表示時に、YouTube privacy-enhanced playerを`autoplay=0`で作成する。同じトグル操作でplayerを閉じて再表示できる。動画の削除、埋込拒否、network失敗時は、YouTube外部リンクを残して詳細・推薦flowを継続する。
 - SNSはInstagram/Xのallowlist済み公式profileへの外部リンクだけとし、SNS post、feed、画像、動画、ハッシュタグ、OGPをapplicationまたはbrowserで収集・埋込しない。
 
 ## 5. Deployment boundaries
@@ -96,7 +96,7 @@ persistent state
   - correction JSON Lines volume
 external state
   - Google Routes / Geocoding (optional)
-  - YouTube player (browserの明示操作後だけ)
+  - YouTube player (動画を持つ推薦cardの初期表示時)
   - official Instagram / X profile (browserの外部遷移後だけ)
   - Prometheus-compatible collector
 ```
@@ -119,7 +119,7 @@ Current automated checks:
 - correction consent、file mode、retention purge tests
 - metrics / privacy-sensitive logging tests
 - curated mediaのprovider/video ID/HTTPS host/max 1 video validationと、任意iframe HTML・任意host拒否
-- initial renderで外部mediaをloadせず、明示操作後のYouTube iframe、`autoplay=0`、外部リンクfallback、Instagram/X external linkを確認するE2E
+- 動画を持つ推薦cardの初期YouTube iframe、開閉トグル、`autoplay=0`、外部リンクfallback、Instagram/X external linkを確認するE2E
 - CSP `frame-src`、Referrer-Policy、keyboard/screen-readerのexternal media操作を確認するHTTP/E2E
 - `make verify-mvp` の実HTTP smoke
 - Playwright desktop/mobile E2E
@@ -132,7 +132,7 @@ Release environment checks:
 - `/metrics` がpublic Internetから到達できない
 - correction volumeのowner、mode、暗号化、backup、retentionを確認した
 - Google有効時はkey制限、quota/billing alert、実通信、privacy表示を確認した
-- YouTubeまたはInstagram/X profileを表示する場合は、選定動画・profileの公式性、公開性、利用規約・branding・privacy確認、CSP、明示操作後の第三者通信表示を確認した
+- YouTubeまたはInstagram/X profileを表示する場合は、選定動画・profileの公式性、公開性、利用規約・branding・privacy確認、CSP、初期表示時の第三者通信表示を確認した
 - post-deploy smoke、observation window、rollbackを実施した
 
 [事実] Vercel ContainerとNeonの接続、migration、health/readiness、facility API、訂正API、desktop/mobile E2EをProductionで確認した。[未検証] metrics network restriction、alert、Google quota、custom domain、main pushからの自動deployは未設定である。
