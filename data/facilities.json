@@ -71,6 +71,17 @@
         "accessNotes": "Located on BIGSTEP B2F, about three minutes from Shinsaibashi or Yotsubashi Station.",
         "availabilityNote": "Classes, trial sessions, and private bookings change the time available for general skating by date. Check the official monthly schedule and booking slots before visiting."
       },
+      "media": {
+        "youtube": {
+          "provider": "youtube",
+          "videoId": "Map-nu_zJiM",
+          "title": "SPOPAR CUP VOL.5",
+          "sourceUrl": "https://www.youtube.com/watch?v=Map-nu_zJiM",
+          "selectedAt": "2026-07-21T00:00:00+09:00",
+          "verifiedAt": "2026-07-21T00:00:00+09:00",
+          "selectionReason": "SPOTAKA公式オンラインストアのスケートボード案内で、スポパーの動画として公開されていることを確認した。"
+        }
+      },
       "sourceUrl": "https://spotaka-skateboardpark.com/",
       "sourceType": "facility_operator_official",
       "status": "verified",
@@ -153,6 +164,17 @@
           "Crowding, competitions, or lessons may restrict general use."
         ],
         "accessNotes": "Under the Hanshin Expressway Yamatogawa Route, with paid parking and bicycle parking."
+      },
+      "media": {
+        "youtube": {
+          "provider": "youtube",
+          "videoId": "d6WCTfFX0iI",
+          "title": "パーク紹介    スポーツパーク松原様(大阪府松原市)    ※インプレも読んでやってください",
+          "sourceUrl": "https://www.youtube.com/watch?v=d6WCTfFX0iI",
+          "selectedAt": "2026-07-21T00:00:00+09:00",
+          "verifiedAt": "2026-07-21T00:00:00+09:00",
+          "selectionReason": "スポーツパーク松原を紹介する動画として、利用者から提供されたYouTube URLと動画タイトルを確認した。"
+        }
       },
       "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/sportspark-matsubara",
       "sourceType": "official_operator_and_municipality",
@@ -237,6 +259,17 @@
           "Junior-high-school students and younger require a guardian after 19:00."
         ],
         "accessNotes": "Five minutes from Tatsube 5-chome bus stop; ten free parking spaces are available."
+      },
+      "media": {
+        "youtube": {
+          "provider": "youtube",
+          "videoId": "bwkvMPOakm4",
+          "title": "おくさま印スケボーパークミューラルアート",
+          "sourceUrl": "https://www.youtube.com/watch?v=bwkvMPOakm4",
+          "selectedAt": "2026-07-21T00:00:00+09:00",
+          "verifiedAt": "2026-07-21T00:00:00+09:00",
+          "selectionReason": "おくさま印スケボーパークを紹介する記事で、施設のミューラルアートを扱う動画として公開されていることを確認した。"
+        }
       },
       "sourceUrl": "https://shisetsu.mizuno.jp/m-7288/guide",
       "sourceType": "official_operator_and_municipality",
@@ -1488,6 +1521,17 @@
           "Users under 16 may use the park until 19:00."
         ],
         "accessNotes": "In Baraike Park; first-time users must attend the orientation at reception."
+      },
+      "media": {
+        "youtube": {
+          "provider": "youtube",
+          "videoId": "5ZN7iMLnAF4",
+          "title": "最高の環境！原池公園スケートボードパークで修行！！！",
+          "sourceUrl": "https://www.youtube.com/watch?v=5ZN7iMLnAF4",
+          "selectedAt": "2026-07-21T00:00:00+09:00",
+          "verifiedAt": "2026-07-21T00:00:00+09:00",
+          "selectionReason": "原池公園スケートボードパークを紹介する動画として、利用者から提供されたYouTube URLと動画タイトルを確認した。"
+        }
       },
       "sourceUrl": "https://shisetsu.mizuno.jp/skatepark/baraike",
       "sourceType": "municipality_or_operator_official",

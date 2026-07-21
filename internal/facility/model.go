@@ -21,6 +21,35 @@ type Access struct {
 	Notes    string   `json:"notes,omitempty"`
 }
 
+// FacilityMedia contains optional, curator-reviewed external media metadata.
+// It intentionally excludes arbitrary embed URLs and HTML.
+type FacilityMedia struct {
+	YouTube *YouTubeVideo `json:"youtube,omitempty"`
+}
+
+type YouTubeVideo struct {
+	Provider        string    `json:"provider"`
+	VideoID         string    `json:"videoId"`
+	Title           string    `json:"title"`
+	SourceURL       string    `json:"sourceUrl"`
+	SelectedAt      time.Time `json:"selectedAt"`
+	VerifiedAt      time.Time `json:"verifiedAt"`
+	SelectionReason string    `json:"selectionReason"`
+}
+
+type SocialPlatform string
+
+const (
+	SocialPlatformInstagram SocialPlatform = "instagram"
+	SocialPlatformX         SocialPlatform = "x"
+)
+
+type SocialLink struct {
+	Platform   SocialPlatform `json:"platform"`
+	URL        string         `json:"url"`
+	VerifiedAt time.Time      `json:"verifiedAt"`
+}
+
 type FacilityEnglishTranslation struct {
 	Name             string   `json:"name"`
 	Address          string   `json:"address"`
@@ -68,6 +97,8 @@ type Facility struct {
 	Rules              []string                   `json:"rules,omitempty"`
 	Access             Access                     `json:"access,omitempty"`
 	EnglishTranslation FacilityEnglishTranslation `json:"englishTranslation"`
+	Media              *FacilityMedia             `json:"media,omitempty"`
+	SocialLinks        []SocialLink               `json:"socialLinks,omitempty"`
 	SourceURL          string                     `json:"sourceUrl"`
 	SourceType         string                     `json:"sourceType"`
 	Status             string                     `json:"status"`

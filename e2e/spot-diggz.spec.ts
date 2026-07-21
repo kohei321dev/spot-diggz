@@ -10,6 +10,22 @@ type Facility = {
   name: string;
   sourceUrl: string;
   verifiedAt: string;
+  media?: {
+    youtube?: {
+      provider: "youtube";
+      videoId: string;
+      title: string;
+      sourceUrl: string;
+      selectedAt: string;
+      verifiedAt: string;
+      selectionReason: string;
+    };
+  };
+  socialLinks?: Array<{
+    platform: "instagram" | "x";
+    url: string;
+    verifiedAt: string;
+  }>;
   location: {
     latitude: number;
     longitude: number;
@@ -139,10 +155,14 @@ async function assertRecommendationCards(
       exact: true,
     });
     await expect(sourceLink).toHaveAttribute("href", facility.sourceUrl);
+    await expect(sourceLink.locator("svg.action-icon")).toHaveCount(1);
+    expect((await sourceLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
     const navigationLink = card.getByRole("link", {
       name: /^(このプランで行く|経路を見る)$/,
     });
+    await expect(navigationLink.locator("svg.action-icon")).toHaveCount(1);
+    expect((await navigationLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     const navigationHref = await navigationLink.getAttribute("href");
     expect(navigationHref).not.toBeNull();
     const navigationURL = new URL(navigationHref as string);
@@ -159,6 +179,13 @@ async function assertRecommendationCards(
         navigationExpectation.travelMode,
       );
     }
+
+    const reportButton = card.getByRole("button", {
+      name: "情報の誤りを報告",
+      exact: true,
+    });
+    await expect(reportButton.locator("svg.action-icon")).toHaveCount(1);
+    expect((await reportButton.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   }
 }
 
@@ -254,6 +281,126 @@ test("全候補に推薦根拠、公式出典、外部ナビを表示する", as
     origin: "34.7025,135.496",
     travelMode: "transit",
   });
+});
+
+test("キュレーション済み動画とSNSを明示操作後にだけ表示し、集計eventに対象情報を送らない", async ({
+  page,
+  request,
+}) => {
+  const facilities = await loadFacilities(request);
+  expect(facilities.length).toBeGreaterThanOrEqual(3);
+  const videoIds = ["dQw4w9WgXcQ", "9bZkp7q19f0", "3JZ_D3ELwOQ"];
+  const curatedFacilities = facilities.slice(0, 3).map((facility, index) => ({
+    ...facility,
+    media: {
+      youtube: {
+        provider: "youtube" as const,
+        videoId: videoIds[index],
+        title: `E2E video ${index + 1}`,
+        sourceUrl: `https://www.youtube.com/watch?v=${videoIds[index]}`,
+        selectedAt: "2026-07-21T00:00:00Z",
+        verifiedAt: "2026-07-21T00:00:00Z",
+        selectionReason: "E2E fixture",
+      },
+    },
+    socialLinks: [
+      {
+        platform: "instagram" as const,
+        url: `https://www.instagram.com/e2e_spot_${index + 1}/`,
+        verifiedAt: "2026-07-21T00:00:00Z",
+      },
+      {
+        platform: "x" as const,
+        url: `https://x.com/e2e_spot_${index + 1}`,
+        verifiedAt: "2026-07-21T00:00:00Z",
+      },
+    ],
+  }));
+  const mockedResponse = buildRecommendationResponse(curatedFacilities);
+  await mockRecommendationResponse(page, mockedResponse);
+
+  const productEventPayloads: Array<Record<string, unknown>> = [];
+  await page.route("**/api/events", async (route) => {
+    const payload = route.request().postDataJSON() as Record<string, unknown>;
+    productEventPayloads.push(payload);
+    await route.fulfill({
+      status: 202,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "accepted" }),
+    });
+  });
+  await page.route("https://www.youtube-nocookie.com/embed/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<!doctype html><title>YouTube fixture</title>",
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", {
+    name: "おまかせで今から滑る",
+  }).click();
+
+  const cards = page.getByRole("article");
+  await expect(cards).toHaveCount(1);
+  await expect(page.locator(".facility-media")).toHaveCount(3);
+  await expect(page.locator(".facility-media:visible")).toHaveCount(1);
+  await expect(page.locator("iframe")).toHaveCount(0);
+
+  const primaryCard = cards.first();
+  const showVideo = primaryCard.getByRole("button", {
+    name: "動画を表示",
+    exact: true,
+  });
+  await expect(showVideo.locator("svg.action-icon")).toHaveCount(1);
+  expect((await showVideo.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  const youtubeLink = primaryCard.getByRole("link", {
+    name: "YouTubeで開く",
+    exact: true,
+  });
+  await expect(youtubeLink).toHaveAttribute(
+    "href",
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  );
+  await expect(youtubeLink).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(youtubeLink.locator("svg.action-icon")).toHaveCount(1);
+
+  const instagramLink = primaryCard.getByRole("link", {
+    name: "Instagramを開く",
+    exact: true,
+  });
+  await expect(instagramLink).toHaveAttribute("href", "https://www.instagram.com/e2e_spot_1/");
+  await expect(instagramLink.locator("svg.action-icon")).toHaveCount(1);
+  const xLink = primaryCard.getByRole("link", { name: "Xを開く", exact: true });
+  await expect(xLink).toHaveAttribute("href", "https://x.com/e2e_spot_1");
+  await expect(xLink.locator("svg.action-icon")).toHaveCount(1);
+
+  await showVideo.click();
+  const iframe = primaryCard.locator("iframe");
+  await expect(iframe).toHaveCount(1);
+  await expect(iframe).toHaveAttribute(
+    "src",
+    "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=0",
+  );
+  await expect(iframe).toHaveAttribute(
+    "allow",
+    "accelerometer; encrypted-media; gyroscope; picture-in-picture",
+  );
+  await expect(iframe).toHaveAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+
+  await expect.poll(() => productEventPayloads.map((payload) => payload.event)).toEqual(
+    expect.arrayContaining(["video_embed_requested", "video_embed_loaded"]),
+  );
+  for (const payload of productEventPayloads) {
+    expect(Object.keys(payload)).toEqual(["event"]);
+  }
+
+  await page.getByText("ほかの候補 2件", { exact: true }).click();
+  await expect(page.locator(".facility-media")).toHaveCount(3);
+  await expect(page.locator(".facility-media:visible")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: "動画を表示", exact: true })).toHaveCount(3);
 });
 
 test("施設単位の訂正dialogで報告を受け付ける", async ({
@@ -359,7 +506,10 @@ test("現在地を拒否したとき代表地点への切替を案内する", as
   });
   await page.getByText("現在地", { exact: true }).click();
   await expect(currentLocationRadio).toBeChecked();
-  await page.getByRole("button", { name: "現在地を確認" }).click();
+  const locateButton = page.getByRole("button", { name: "現在地を確認" });
+  await expect(locateButton.locator("svg.action-icon")).toHaveCount(1);
+  expect((await locateButton.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await locateButton.click();
 
   await expect(page.locator("#condition-details")).toHaveAttribute("open", "");
   await expect(page.getByRole("radio", {
