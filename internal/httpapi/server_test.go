@@ -656,7 +656,7 @@ func TestServerRecordsAllowListedEventsAndExposesMetrics(t *testing.T) {
 	handler := NewServerWithOptions(catalog, nil, Options{Metrics: registry, Now: fixedServerTime})
 	for _, event := range []string{
 		"result_displayed",
-		"video_embed_requested",
+		"video_embed_displayed",
 		"video_embed_loaded",
 		"video_external_opened",
 		"social_profile_opened",
@@ -677,7 +677,7 @@ func TestServerRecordsAllowListedEventsAndExposesMetrics(t *testing.T) {
 	}
 	for _, wanted := range []string{
 		`spot_diggz_product_events_total{event="result_displayed"} 1`,
-		`spot_diggz_product_events_total{event="video_embed_requested"} 1`,
+		`spot_diggz_product_events_total{event="video_embed_displayed"} 1`,
 		`spot_diggz_product_events_total{event="video_embed_loaded"} 1`,
 		`spot_diggz_product_events_total{event="video_external_opened"} 1`,
 		`spot_diggz_product_events_total{event="social_profile_opened"} 1`,
@@ -697,7 +697,7 @@ func TestServerRejectsProductEventsWithTargetData(t *testing.T) {
 	}
 	handler := NewServer(catalog, nil)
 
-	request := httptest.NewRequest(http.MethodPost, "/api/events", strings.NewReader(`{"event":"video_embed_requested","facilityId":"facility-a","videoId":"dQw4w9WgXcQ","url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/events", strings.NewReader(`{"event":"video_embed_displayed","facilityId":"facility-a","videoId":"dQw4w9WgXcQ","url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}`))
 	request.Header.Set("Content-Type", "application/json")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)

@@ -11,7 +11,7 @@ const allowedProductEvents = new Set([
   "result_displayed",
   "source_opened",
   "navigation_opened",
-  "video_embed_requested",
+  "video_embed_displayed",
   "video_embed_loaded",
   "video_external_opened",
   "social_profile_opened",
@@ -130,8 +130,9 @@ const messages = {
     reportCorrection: "情報の誤りを報告",
     mediaSection: "動画・公式SNS",
     youtubeVideo: "YouTube動画",
-    youtubePrivacyNotice: "動画を表示するとYouTubeに接続します。自動再生はしません。",
+    youtubePrivacyNotice: "埋め込み動画はYouTubeに接続します。自動再生はしません。",
     showVideo: "動画を表示",
+    hideVideo: "動画を閉じる",
     openYouTube: "YouTubeで開く",
     openInstagram: "Instagramを開く",
     openX: "Xを開く",
@@ -297,8 +298,9 @@ const messages = {
     reportCorrection: "Report incorrect information",
     mediaSection: "Video and official social profiles",
     youtubeVideo: "YouTube video",
-    youtubePrivacyNotice: "Showing this video connects to YouTube. It will not autoplay.",
+    youtubePrivacyNotice: "The embedded video connects to YouTube. It will not autoplay.",
     showVideo: "Show video",
+    hideVideo: "Hide video",
     openYouTube: "Open on YouTube",
     openInstagram: "Open Instagram",
     openX: "Open X",
@@ -1192,7 +1194,7 @@ function createPrimaryRecommendation(recommendation) {
   }
   const media = createFacilityMedia(facility);
   if (media) {
-    card.append(media);
+    card.append(media.element);
   }
   card.append(actions);
   return card;
@@ -1273,7 +1275,7 @@ function createFacilityActions(facility, isPrimary) {
   return actions;
 }
 
-function createFacilityMedia(facility, isCompact = false) {
+function createFacilityMedia(facility, isCompact = false, initiallyVisible = true) {
   const video = normalizedYouTubeVideo(facility?.media?.youtube);
   if (!video) {
     return null;
@@ -1308,29 +1310,40 @@ function createFacilityMedia(facility, isCompact = false) {
   );
   const player = document.createElement("div");
   player.className = "youtube-player";
-  player.hidden = true;
+  let hasPlayer = false;
+
+  const setPlayerVisibility = (isVisible) => {
+    if (isVisible && !hasPlayer) {
+      hasPlayer = true;
+      recordProductEvent("video_embed_displayed");
+      const iframe = document.createElement("iframe");
+      iframe.src = buildYouTubeEmbedURL(video.videoId);
+      iframe.title = video.title;
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+      iframe.allow = "accelerometer; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      iframe.addEventListener("load", () => recordProductEvent("video_embed_loaded"), { once: true });
+      player.replaceChildren(iframe);
+    }
+    player.hidden = !isVisible;
+    showVideo.setAttribute("aria-expanded", String(isVisible));
+    showVideo.replaceChildren();
+    appendIconText(showVideo, "video", t(isVisible ? "hideVideo" : "showVideo"));
+  };
 
   showVideo.addEventListener("click", () => {
-    if (!player.hidden) {
-      return;
-    }
-    recordProductEvent("video_embed_requested");
-    const iframe = document.createElement("iframe");
-    iframe.src = buildYouTubeEmbedURL(video.videoId);
-    iframe.title = video.title;
-    iframe.loading = "lazy";
-    iframe.referrerPolicy = "strict-origin-when-cross-origin";
-    iframe.allow = "accelerometer; encrypted-media; gyroscope; picture-in-picture";
-    iframe.allowFullscreen = true;
-    iframe.addEventListener("load", () => recordProductEvent("video_embed_loaded"), { once: true });
-    player.replaceChildren(iframe);
-    player.hidden = false;
-    showVideo.disabled = true;
+    setPlayerVisibility(player.hidden);
   });
+
+  setPlayerVisibility(initiallyVisible);
 
   controls.append(showVideo, externalLink);
   section.append(heading, title, privacy, controls, player);
-  return section;
+  return {
+    element: section,
+    showPlayer: () => setPlayerVisibility(true),
+  };
 }
 
 function normalizedYouTubeVideo(video) {
@@ -1403,6 +1416,7 @@ function createAlternativeRecommendations(recommendations) {
   summary.textContent = t("alternatives", { count: recommendations.length });
   const list = document.createElement("div");
   list.className = "alternative-list";
+  const deferredMedia = [];
 
   for (const recommendation of recommendations) {
     const facility = recommendation.facility || {};
@@ -1439,14 +1453,20 @@ function createAlternativeRecommendations(recommendations) {
     if (fallbackNotice) {
       copy.append(fallbackNotice);
     }
-    const media = createFacilityMedia(facility, true);
+    const media = createFacilityMedia(facility, true, false);
     if (media) {
-      copy.append(media);
+      copy.append(media.element);
+      deferredMedia.push(media);
     }
     row.append(copy, createFacilityActions(facility, false));
     list.append(row);
   }
 
+  alternatives.addEventListener("toggle", () => {
+    if (alternatives.open) {
+      deferredMedia.forEach((media) => media.showPlayer());
+    }
+  });
   alternatives.append(summary, list);
   return alternatives;
 }
