@@ -79,6 +79,84 @@ func TestServerGetsFacilityAndReturnsNotFound(t *testing.T) {
 	}
 }
 
+func TestServerReturnsCuratedExternalMetadataInFacilitiesAndRecommendations(t *testing.T) {
+	item := testFacility()
+	item.Media = &facility.FacilityMedia{
+		YouTube: &facility.YouTubeVideo{
+			Provider:        "youtube",
+			VideoID:         "a1B2c3D4e5F",
+			Title:           "Test Facility overview",
+			SourceURL:       "https://www.youtube.com/watch?v=a1B2c3D4e5F",
+			SelectedAt:      item.VerifiedAt,
+			VerifiedAt:      item.VerifiedAt,
+			SelectionReason: "施設のセクションを確認できるため",
+		},
+	}
+	item.SocialLinks = []facility.SocialLink{
+		{
+			Platform:   facility.SocialPlatformInstagram,
+			URL:        "https://www.instagram.com/spot_diggz/",
+			VerifiedAt: item.VerifiedAt,
+		},
+		{
+			Platform:   facility.SocialPlatformX,
+			URL:        "https://x.com/spotdiggz",
+			VerifiedAt: item.VerifiedAt,
+		},
+	}
+	catalog, err := facility.NewCatalog([]facility.Facility{item})
+	if err != nil {
+		t.Fatalf("NewCatalog() error = %v", err)
+	}
+	handler := NewServer(catalog, nil)
+
+	t.Run("facility list", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/facilities", nil))
+		if response.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+		}
+
+		var body struct {
+			Facilities []facility.Facility `json:"facilities"`
+		}
+		if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+			t.Fatalf("decode response: %v", err)
+		}
+		if len(body.Facilities) != 1 {
+			t.Fatalf("facilities = %#v, want one facility", body.Facilities)
+		}
+		assertCuratedExternalMetadata(t, body.Facilities[0])
+	})
+
+	t.Run("recommendations", func(t *testing.T) {
+		requestBody := `{
+			"purpose":"basics",
+			"mood":"focused",
+			"level":"beginner",
+			"availableMinutes":120,
+			"transport":"public_transit",
+			"origin":{"mode":"specified_location","latitude":34.7025,"longitude":135.4960}
+		}`
+		request := httptest.NewRequest(http.MethodPost, "/api/recommendations", strings.NewReader(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d; body = %s", response.Code, http.StatusOK, response.Body.String())
+		}
+
+		var body recommendation.Response
+		if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+			t.Fatalf("decode response: %v", err)
+		}
+		if len(body.Recommendations) != 1 {
+			t.Fatalf("recommendations = %#v, want one facility", body.Recommendations)
+		}
+		assertCuratedExternalMetadata(t, body.Recommendations[0].Facility)
+	})
+}
+
 func TestServerRejectsLongActivityQuery(t *testing.T) {
 	catalog, err := facility.NewCatalog([]facility.Facility{testFacility()})
 	if err != nil {
@@ -273,8 +351,11 @@ func TestServerServesWebUI(t *testing.T) {
 	if !strings.Contains(response.Body.String(), "spot-diggz") {
 		t.Fatal("response does not contain application name")
 	}
-	if response.Header().Get("Content-Security-Policy") == "" {
-		t.Fatal("Content-Security-Policy is empty")
+	if got, want := response.Header().Get("Content-Security-Policy"), "default-src 'self'; base-uri 'none'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; frame-src https://www.youtube-nocookie.com; img-src 'self' data:; script-src 'self'; style-src 'self'"; got != want {
+		t.Fatalf("Content-Security-Policy = %q, want %q", got, want)
+	}
+	if got, want := response.Header().Get("Referrer-Policy"), "strict-origin-when-cross-origin"; got != want {
+		t.Fatalf("Referrer-Policy = %q, want %q", got, want)
 	}
 }
 
@@ -573,12 +654,20 @@ func TestServerRecordsAllowListedEventsAndExposesMetrics(t *testing.T) {
 	}
 	registry := observability.NewRegistry()
 	handler := NewServerWithOptions(catalog, nil, Options{Metrics: registry, Now: fixedServerTime})
-	eventRequest := httptest.NewRequest(http.MethodPost, "/api/events", strings.NewReader(`{"event":"result_displayed"}`))
-	eventRequest.Header.Set("Content-Type", "application/json")
-	eventResponse := httptest.NewRecorder()
-	handler.ServeHTTP(eventResponse, eventRequest)
-	if eventResponse.Code != http.StatusAccepted {
-		t.Fatalf("event status = %d; body = %s", eventResponse.Code, eventResponse.Body.String())
+	for _, event := range []string{
+		"result_displayed",
+		"video_embed_requested",
+		"video_embed_loaded",
+		"video_external_opened",
+		"social_profile_opened",
+	} {
+		eventRequest := httptest.NewRequest(http.MethodPost, "/api/events", strings.NewReader(`{"event":"`+event+`"}`))
+		eventRequest.Header.Set("Content-Type", "application/json")
+		eventResponse := httptest.NewRecorder()
+		handler.ServeHTTP(eventResponse, eventRequest)
+		if eventResponse.Code != http.StatusAccepted {
+			t.Fatalf("event %q status = %d; body = %s", event, eventResponse.Code, eventResponse.Body.String())
+		}
 	}
 
 	metricsResponse := httptest.NewRecorder()
@@ -588,12 +677,40 @@ func TestServerRecordsAllowListedEventsAndExposesMetrics(t *testing.T) {
 	}
 	for _, wanted := range []string{
 		`spot_diggz_product_events_total{event="result_displayed"} 1`,
-		`spot_diggz_http_requests_total{route="/api/events",method="POST",status_class="2xx"} 1`,
+		`spot_diggz_product_events_total{event="video_embed_requested"} 1`,
+		`spot_diggz_product_events_total{event="video_embed_loaded"} 1`,
+		`spot_diggz_product_events_total{event="video_external_opened"} 1`,
+		`spot_diggz_product_events_total{event="social_profile_opened"} 1`,
+		`spot_diggz_http_requests_total{route="/api/events",method="POST",status_class="2xx"} 5`,
 		`spot_diggz_catalog_facilities 1`,
 	} {
 		if !strings.Contains(metricsResponse.Body.String(), wanted) {
 			t.Fatalf("metrics missing %q\n%s", wanted, metricsResponse.Body.String())
 		}
+	}
+}
+
+func TestServerRejectsProductEventsWithTargetData(t *testing.T) {
+	catalog, err := facility.NewCatalog(nil)
+	if err != nil {
+		t.Fatalf("NewCatalog() error = %v", err)
+	}
+	handler := NewServer(catalog, nil)
+
+	request := httptest.NewRequest(http.MethodPost, "/api/events", strings.NewReader(`{"event":"video_embed_requested","facilityId":"facility-a","videoId":"dQw4w9WgXcQ","url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}`))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d; body = %s", response.Code, http.StatusBadRequest, response.Body.String())
+	}
+	var body errorBody
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode error response: %v", err)
+	}
+	if body.Error.Code != "invalid_json" {
+		t.Fatalf("error code = %q, want invalid_json", body.Error.Code)
 	}
 }
 
@@ -675,6 +792,28 @@ func testFacility() facility.Facility {
 		VerifiedAt:        verifiedAt,
 		DynamicVerifiedAt: verifiedAt,
 		StableVerifiedAt:  verifiedAt,
+	}
+}
+
+func assertCuratedExternalMetadata(t *testing.T, item facility.Facility) {
+	t.Helper()
+	if item.Media == nil || item.Media.YouTube == nil {
+		t.Fatalf("media = %#v, want YouTube metadata", item.Media)
+	}
+	if got, want := item.Media.YouTube.VideoID, "a1B2c3D4e5F"; got != want {
+		t.Fatalf("media.youtube.videoId = %q, want %q", got, want)
+	}
+	if got, want := item.Media.YouTube.SourceURL, "https://www.youtube.com/watch?v=a1B2c3D4e5F"; got != want {
+		t.Fatalf("media.youtube.sourceUrl = %q, want %q", got, want)
+	}
+	if len(item.SocialLinks) != 2 {
+		t.Fatalf("socialLinks = %#v, want Instagram and X profiles", item.SocialLinks)
+	}
+	if got, want := item.SocialLinks[0].URL, "https://www.instagram.com/spot_diggz/"; got != want {
+		t.Fatalf("socialLinks[0].url = %q, want %q", got, want)
+	}
+	if got, want := item.SocialLinks[1].URL, "https://x.com/spotdiggz"; got != want {
+		t.Fatalf("socialLinks[1].url = %q, want %q", got, want)
 	}
 }
 

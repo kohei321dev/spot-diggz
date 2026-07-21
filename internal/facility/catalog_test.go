@@ -119,7 +119,7 @@ func TestProductionCatalogContainsOnlyVerifiedRealFacilities(t *testing.T) {
 	}
 	catalogPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "data", "facilities.json")
 
-	asOf := time.Date(2026, time.July, 20, 0, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+	asOf := time.Date(2026, time.July, 21, 0, 0, 0, 0, time.FixedZone("JST", 9*60*60))
 	catalog, err := LoadCatalogFileAt(catalogPath, asOf)
 	if err != nil {
 		t.Fatalf("LoadCatalogFile() error = %v", err)

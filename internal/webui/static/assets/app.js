@@ -11,6 +11,10 @@ const allowedProductEvents = new Set([
   "result_displayed",
   "source_opened",
   "navigation_opened",
+  "video_embed_requested",
+  "video_embed_loaded",
+  "video_external_opened",
+  "social_profile_opened",
 ]);
 
 const messages = {
@@ -124,6 +128,13 @@ const messages = {
     routeLink: "経路を見る",
     officialSource: "公式情報",
     reportCorrection: "情報の誤りを報告",
+    mediaSection: "動画・公式SNS",
+    youtubeVideo: "YouTube動画",
+    youtubePrivacyNotice: "動画を表示するとYouTubeに接続します。自動再生はしません。",
+    showVideo: "動画を表示",
+    openYouTube: "YouTubeで開く",
+    openInstagram: "Instagramを開く",
+    openX: "Xを開く",
     translationFallback: "英語情報が未整備のため日本語を表示しています。来場前に公式情報を確認してください。",
     alternatives: "ほかの候補 {count}件",
     alternativeReasonLabel: "おすすめ理由",
@@ -284,6 +295,13 @@ const messages = {
     routeLink: "View route",
     officialSource: "Official source",
     reportCorrection: "Report incorrect information",
+    mediaSection: "Video and official social profiles",
+    youtubeVideo: "YouTube video",
+    youtubePrivacyNotice: "Showing this video connects to YouTube. It will not autoplay.",
+    showVideo: "Show video",
+    openYouTube: "Open on YouTube",
+    openInstagram: "Open Instagram",
+    openX: "Open X",
     translationFallback: "English details are not available yet, so the Japanese facility information is shown. Check the official source before visiting.",
     alternatives: "{count} alternatives",
     alternativeReasonLabel: "Why it fits",
@@ -1172,6 +1190,10 @@ function createPrimaryRecommendation(recommendation) {
   if (rules) {
     card.append(rules);
   }
+  const media = createFacilityMedia(facility);
+  if (media) {
+    card.append(media);
+  }
   card.append(actions);
   return card;
 }
@@ -1233,20 +1255,145 @@ function createFacilityActions(facility, isPrimary) {
     isPrimary ? "navigation-link" : "alternative-link",
     buildNavigationURL(facility.location),
     "navigation_opened",
+    "route",
   );
   const sourceLink = createExternalLink(
     t("officialSource"),
     "source-link",
     facility.sourceUrl,
     "source_opened",
+    "external-link",
   );
   const reportButton = document.createElement("button");
-  reportButton.className = "report-button";
+  reportButton.className = "report-button icon-text-action";
   reportButton.type = "button";
-  reportButton.textContent = t("reportCorrection");
+  appendIconText(reportButton, "file-pen", t("reportCorrection"));
   reportButton.addEventListener("click", () => openCorrectionDialog(facility, reportButton));
-  actions.append(navigationLink, sourceLink, reportButton);
+  actions.append(navigationLink, sourceLink, ...createSocialProfileLinks(facility), reportButton);
   return actions;
+}
+
+function createFacilityMedia(facility, isCompact = false) {
+  const video = normalizedYouTubeVideo(facility?.media?.youtube);
+  if (!video) {
+    return null;
+  }
+
+  const section = document.createElement("section");
+  section.className = `facility-media${isCompact ? " is-compact" : ""}`;
+  section.setAttribute("aria-label", t("mediaSection"));
+
+  const heading = document.createElement("h4");
+  heading.textContent = t("youtubeVideo");
+  const title = document.createElement("p");
+  title.className = "facility-media-title";
+  title.textContent = video.title;
+  const privacy = document.createElement("p");
+  privacy.className = "facility-media-privacy";
+  privacy.textContent = t("youtubePrivacyNotice");
+
+  const controls = document.createElement("div");
+  controls.className = "facility-media-actions";
+  const showVideo = document.createElement("button");
+  showVideo.className = "video-button icon-text-action";
+  showVideo.type = "button";
+  appendIconText(showVideo, "video", t("showVideo"));
+
+  const externalLink = createExternalLink(
+    t("openYouTube"),
+    "youtube-link",
+    buildYouTubeWatchURL(video.videoId),
+    "video_external_opened",
+    "external-link",
+  );
+  const player = document.createElement("div");
+  player.className = "youtube-player";
+  player.hidden = true;
+
+  showVideo.addEventListener("click", () => {
+    if (!player.hidden) {
+      return;
+    }
+    recordProductEvent("video_embed_requested");
+    const iframe = document.createElement("iframe");
+    iframe.src = buildYouTubeEmbedURL(video.videoId);
+    iframe.title = video.title;
+    iframe.loading = "lazy";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.allow = "accelerometer; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.addEventListener("load", () => recordProductEvent("video_embed_loaded"), { once: true });
+    player.replaceChildren(iframe);
+    player.hidden = false;
+    showVideo.disabled = true;
+  });
+
+  controls.append(showVideo, externalLink);
+  section.append(heading, title, privacy, controls, player);
+  return section;
+}
+
+function normalizedYouTubeVideo(video) {
+  if (video?.provider !== "youtube") {
+    return null;
+  }
+
+  const videoId = typeof video?.videoId === "string" ? video.videoId.trim() : "";
+  if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    return null;
+  }
+  const title = typeof video.title === "string" && video.title.trim()
+    ? video.title.trim()
+    : t("youtubeVideo");
+  return { videoId, title };
+}
+
+function buildYouTubeEmbedURL(videoId) {
+  return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=0`;
+}
+
+function buildYouTubeWatchURL(videoId) {
+  return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+}
+
+function createSocialProfileLinks(facility) {
+  const links = [];
+  const seenPlatforms = new Set();
+  for (const socialLink of Array.isArray(facility?.socialLinks) ? facility.socialLinks : []) {
+    const platform = typeof socialLink?.platform === "string" ? socialLink.platform.toLowerCase() : "";
+    const href = normalizedSocialProfileURL(platform, socialLink?.url);
+    if (!href || seenPlatforms.has(platform)) {
+      continue;
+    }
+    seenPlatforms.add(platform);
+    links.push(createExternalLink(
+      platform === "instagram" ? t("openInstagram") : t("openX"),
+      `social-link social-link-${platform}`,
+      href,
+      "social_profile_opened",
+      platform,
+    ));
+  }
+  return links;
+}
+
+function normalizedSocialProfileURL(platform, value) {
+  const allowedHosts = {
+    instagram: new Set(["instagram.com", "www.instagram.com"]),
+    x: new Set(["x.com", "www.x.com"]),
+  };
+  if (!allowedHosts[platform] || typeof value !== "string") {
+    return "";
+  }
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || !allowedHosts[platform].has(url.hostname.toLowerCase())) {
+      return "";
+    }
+    return url.href;
+  } catch {
+    return "";
+  }
 }
 
 function createAlternativeRecommendations(recommendations) {
@@ -1291,6 +1438,10 @@ function createAlternativeRecommendations(recommendations) {
     const fallbackNotice = createTranslationFallback(localizedFacility.usesJapaneseFallback);
     if (fallbackNotice) {
       copy.append(fallbackNotice);
+    }
+    const media = createFacilityMedia(facility, true);
+    if (media) {
+      copy.append(media);
     }
     row.append(copy, createFacilityActions(facility, false));
     list.append(row);
@@ -1484,17 +1635,80 @@ function buildNavigationURL(location) {
   return `https://www.google.com/maps/dir/?${parameters.toString()}`;
 }
 
-function createExternalLink(label, className, href, productEvent = "") {
+function createExternalLink(label, className, href, productEvent = "", iconName = "") {
   const link = document.createElement("a");
-  link.className = className;
+  link.className = `${className}${iconName ? " icon-text-action" : ""}`;
   link.href = safeHTTPURL(href);
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.textContent = label;
+  link.setAttribute("aria-label", label);
+  if (iconName) {
+    appendIconText(link, iconName, label);
+  } else {
+    link.textContent = label;
+  }
   if (productEvent) {
     link.addEventListener("click", () => recordProductEvent(productEvent));
   }
   return link;
+}
+
+function appendIconText(element, iconName, label) {
+  element.replaceChildren(createIcon(iconName));
+  const text = document.createElement("span");
+  text.className = "action-label";
+  text.textContent = label;
+  element.append(text);
+}
+
+function createIcon(name) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("action-icon");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+
+  const shapes = {
+    route: [
+      ["circle", { cx: "6", cy: "19", r: "3" }],
+      ["path", { d: "M9 19h6.5a3.5 3.5 0 0 0 0-7H9" }],
+      ["path", { d: "m5 6 3-3 3 3" }],
+      ["path", { d: "M8 3v9" }],
+    ],
+    "external-link": [
+      ["path", { d: "M15 3h6v6" }],
+      ["path", { d: "M10 14 21 3" }],
+      ["path", { d: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" }],
+    ],
+    "file-pen": [
+      ["path", { d: "M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" }],
+      ["path", { d: "M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" }],
+    ],
+    video: [
+      ["path", { d: "m22 8-6 4 6 4V8Z" }],
+      ["rect", { x: "2", y: "6", width: "14", height: "12", rx: "2" }],
+    ],
+    instagram: [
+      ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "5" }],
+      ["path", { d: "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z" }],
+      ["path", { d: "M17.5 6.5h.01" }],
+    ],
+    x: [
+      ["path", { d: "M5 4h3.5l3.8 5L16.4 4H19l-5.4 6.2L20 20h-3.5l-4.2-5.5L7.6 20H5l5.9-6.8Z" }],
+    ],
+  };
+  for (const [tagName, attributes] of shapes[name] || []) {
+    const shape = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+    for (const [attributeName, value] of Object.entries(attributes)) {
+      shape.setAttribute(attributeName, value);
+    }
+    svg.append(shape);
+  }
+  return svg;
 }
 
 function safeHTTPURL(value) {

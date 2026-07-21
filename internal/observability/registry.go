@@ -27,6 +27,10 @@ const (
 	ProductEventResultDisplayed         ProductEvent = "result_displayed"
 	ProductEventSourceOpened            ProductEvent = "source_opened"
 	ProductEventNavigationOpened        ProductEvent = "navigation_opened"
+	ProductEventVideoEmbedRequested     ProductEvent = "video_embed_requested"
+	ProductEventVideoEmbedLoaded        ProductEvent = "video_embed_loaded"
+	ProductEventVideoExternalOpened     ProductEvent = "video_external_opened"
+	ProductEventSocialProfileOpened     ProductEvent = "social_profile_opened"
 	ProductEventCorrectionSubmitted     ProductEvent = "correction_submitted"
 )
 
@@ -37,6 +41,10 @@ var productEvents = [...]ProductEvent{
 	ProductEventResultDisplayed,
 	ProductEventSourceOpened,
 	ProductEventNavigationOpened,
+	ProductEventVideoEmbedRequested,
+	ProductEventVideoEmbedLoaded,
+	ProductEventVideoExternalOpened,
+	ProductEventSocialProfileOpened,
 	ProductEventCorrectionSubmitted,
 }
 
@@ -47,6 +55,10 @@ var clientProductEvents = [...]ProductEvent{
 	ProductEventResultDisplayed,
 	ProductEventSourceOpened,
 	ProductEventNavigationOpened,
+	ProductEventVideoEmbedRequested,
+	ProductEventVideoEmbedLoaded,
+	ProductEventVideoExternalOpened,
+	ProductEventSocialProfileOpened,
 }
 
 // RecommendationResult is the observable outcome of a recommendation.

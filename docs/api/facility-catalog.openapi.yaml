@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: spot-diggz MVP API
-  version: 0.5.0
+  version: 0.6.0
   description: |-
     Verified facility catalog, deterministic recommendation, correction, and
     observability API. Every application response includes `X-Request-ID` and
@@ -11,6 +11,9 @@ info:
     to access logs, or echoed by the application. When `GOOGLE_MAPS_API_KEY` is
     configured, origin coordinates are sent to Google Routes and location-search
     queries are sent to Google Geocoding.
+
+    Facility responses can include curator-reviewed YouTube metadata and official
+    social-profile links. They never contain arbitrary embed URLs or iframe HTML.
 paths:
   /healthz:
     get:
@@ -651,6 +654,14 @@ components:
           $ref: '#/components/schemas/Access'
         englishTranslation:
           $ref: '#/components/schemas/FacilityEnglishTranslation'
+        media:
+          $ref: '#/components/schemas/FacilityMedia'
+        socialLinks:
+          type: array
+          maxItems: 2
+          description: At most one verified profile for each supported platform. Platform uniqueness is enforced by the catalog validator.
+          items:
+            $ref: '#/components/schemas/SocialLink'
         sourceUrl:
           type: string
           format: uri
@@ -678,6 +689,68 @@ components:
           type: string
           format: date-time
           description: Verification time for information with a 180-day freshness window.
+    FacilityMedia:
+      type: object
+      additionalProperties: false
+      required: [youtube]
+      properties:
+        youtube:
+          $ref: '#/components/schemas/YouTubeVideo'
+    YouTubeVideo:
+      type: object
+      additionalProperties: false
+      required: [provider, videoId, title, sourceUrl, selectedAt, verifiedAt, selectionReason]
+      properties:
+        provider:
+          type: string
+          const: youtube
+        videoId:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{11}$'
+        title:
+          type: string
+          minLength: 1
+        sourceUrl:
+          type: string
+          format: uri
+          pattern: '^https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}$'
+          description: Canonical YouTube watch URL whose v parameter matches videoId.
+        selectedAt:
+          type: string
+          format: date-time
+          description: Curation selection time. Must not be later than verifiedAt.
+        verifiedAt:
+          type: string
+          format: date-time
+        selectionReason:
+          type: string
+          minLength: 1
+    SocialLink:
+      type: object
+      additionalProperties: false
+      required: [platform, url, verifiedAt]
+      properties:
+        platform:
+          type: string
+          enum: [instagram, x]
+        url:
+          type: string
+          format: uri
+          pattern: '^https://'
+        verifiedAt:
+          type: string
+          format: date-time
+      oneOf:
+        - properties:
+            platform:
+              const: instagram
+            url:
+              pattern: '^https://(?:www\.)?instagram\.com/[A-Za-z0-9._]+/?$'
+        - properties:
+            platform:
+              const: x
+            url:
+              pattern: '^https://(?:www\.)?x\.com/[A-Za-z0-9_]{1,15}/?$'
     Location:
       type: object
       additionalProperties: false

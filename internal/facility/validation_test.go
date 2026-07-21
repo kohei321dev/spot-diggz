@@ -149,6 +149,166 @@ func TestNewCatalogRejectsIncompleteEnglishTranslation(t *testing.T) {
 	}
 }
 
+func TestNewCatalogAcceptsOptionalCuratedMediaAndSocialLinks(t *testing.T) {
+	withoutExternalMetadata := validFacility()
+	if _, err := NewCatalog([]Facility{withoutExternalMetadata}); err != nil {
+		t.Fatalf("NewCatalog() error = %v, want media and social links to remain optional", err)
+	}
+
+	item := validFacility()
+	item.Media = validCuratedMedia()
+	item.SocialLinks = validSocialLinks()
+
+	catalog, err := NewCatalog([]Facility{item})
+	if err != nil {
+		t.Fatalf("NewCatalog() error = %v", err)
+	}
+	stored, err := catalog.Find(item.ID)
+	if err != nil {
+		t.Fatalf("Find() error = %v", err)
+	}
+	if stored.Media == nil || stored.Media.YouTube == nil || stored.Media.YouTube.VideoID != item.Media.YouTube.VideoID {
+		t.Fatalf("stored media = %#v, want YouTube video metadata", stored.Media)
+	}
+	if len(stored.SocialLinks) != len(item.SocialLinks) {
+		t.Fatalf("stored social links = %#v, want %#v", stored.SocialLinks, item.SocialLinks)
+	}
+}
+
+func TestNewCatalogRejectsInvalidCuratedMedia(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*Facility)
+	}{
+		{name: "empty media", mutate: func(item *Facility) { item.Media = &FacilityMedia{} }},
+		{name: "unsupported provider", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.Provider = "vimeo"
+		}},
+		{name: "invalid video ID", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.VideoID = "too-short"
+		}},
+		{name: "missing title", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.Title = " "
+		}},
+		{name: "mismatched watch URL", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.SourceURL = "https://www.youtube.com/watch?v=zYxWvUtSrQp"
+		}},
+		{name: "noncanonical watch URL", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.SourceURL = "https://youtu.be/a1B2c3D4e5F"
+		}},
+		{name: "missing selectedAt", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.SelectedAt = time.Time{}
+		}},
+		{name: "missing verifiedAt", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.VerifiedAt = time.Time{}
+		}},
+		{name: "selected after verification", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.SelectedAt = item.Media.YouTube.VerifiedAt.Add(time.Nanosecond)
+		}},
+		{name: "missing selection reason", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.SelectionReason = ""
+		}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			item := validFacility()
+			test.mutate(&item)
+
+			_, err := NewCatalog([]Facility{item})
+			if !errors.Is(err, ErrInvalidData) {
+				t.Fatalf("NewCatalog() error = %v, want ErrInvalidData", err)
+			}
+		})
+	}
+}
+
+func TestNewCatalogRejectsInvalidSocialLinks(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*Facility)
+	}{
+		{name: "unsupported platform", mutate: func(item *Facility) {
+			item.SocialLinks = []SocialLink{{Platform: "youtube", URL: "https://www.youtube.com/@spotdiggz", VerifiedAt: curatedReviewTime}}
+		}},
+		{name: "non-HTTPS URL", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[0].URL = "http://www.instagram.com/spot_diggz/"
+		}},
+		{name: "unsupported host", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[0].URL = "https://instagram.example/spot_diggz/"
+		}},
+		{name: "Instagram post URL", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[0].URL = "https://www.instagram.com/p/a1B2c3D4e5F/"
+		}},
+		{name: "X URL with query", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[1].URL = "https://x.com/spotdiggz?utm_source=catalog"
+		}},
+		{name: "duplicate platform", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[1] = SocialLink{
+				Platform:   SocialPlatformInstagram,
+				URL:        "https://instagram.com/spotdiggz_jp/",
+				VerifiedAt: curatedReviewTime,
+			}
+		}},
+		{name: "too many profiles", mutate: func(item *Facility) {
+			item.SocialLinks = append(validSocialLinks(), SocialLink{
+				Platform:   "other",
+				URL:        "https://example.com/profile",
+				VerifiedAt: curatedReviewTime,
+			})
+		}},
+		{name: "missing verifiedAt", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[0].VerifiedAt = time.Time{}
+		}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			item := validFacility()
+			test.mutate(&item)
+
+			_, err := NewCatalog([]Facility{item})
+			if !errors.Is(err, ErrInvalidData) {
+				t.Fatalf("NewCatalog() error = %v, want ErrInvalidData", err)
+			}
+		})
+	}
+}
+
+func TestLoadCatalogRejectsArbitraryMediaEmbedURL(t *testing.T) {
+	item := validFacility()
+	item.Media = validCuratedMedia()
+	payload, err := json.Marshal(catalogFile{Facilities: []Facility{item}})
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+	payload = bytes.Replace(
+		payload,
+		[]byte(`"selectedAt"`),
+		[]byte(`"embedUrl":"https://www.youtube-nocookie.com/embed/a1B2c3D4e5F","selectedAt"`),
+		1,
+	)
+
+	if _, err := LoadCatalog(bytes.NewReader(payload)); err == nil {
+		t.Fatal("LoadCatalog() error = nil, want unknown media embed URL to be rejected")
+	}
+}
+
 func TestNewCatalogRejectsMissingSplitVerificationTime(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -201,6 +361,18 @@ func TestNewCatalogAtRejectsFutureTimestamps(t *testing.T) {
 		{name: "dynamicVerifiedAt", mutate: func(item *Facility) { item.DynamicVerifiedAt = future }},
 		{name: "stableVerifiedAt", mutate: func(item *Facility) { item.StableVerifiedAt = future }},
 		{name: "updatedAt", mutate: func(item *Facility) { item.UpdatedAt = &future }},
+		{name: "media selectedAt", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.SelectedAt = future
+		}},
+		{name: "media verifiedAt", mutate: func(item *Facility) {
+			item.Media = validCuratedMedia()
+			item.Media.YouTube.VerifiedAt = future
+		}},
+		{name: "social verifiedAt", mutate: func(item *Facility) {
+			item.SocialLinks = validSocialLinks()
+			item.SocialLinks[0].VerifiedAt = future
+		}},
 	}
 
 	for _, test := range tests {
@@ -230,6 +402,13 @@ func TestNewCatalogAtAcceptsTimestampsEqualToReferenceTime(t *testing.T) {
 	item.DynamicVerifiedAt = asOf
 	item.StableVerifiedAt = asOf
 	item.UpdatedAt = &asOf
+	item.Media = validCuratedMedia()
+	item.Media.YouTube.SelectedAt = asOf
+	item.Media.YouTube.VerifiedAt = asOf
+	item.SocialLinks = validSocialLinks()
+	for index := range item.SocialLinks {
+		item.SocialLinks[index].VerifiedAt = asOf
+	}
 
 	if _, err := NewCatalogAt([]Facility{item}, asOf); err != nil {
 		t.Fatalf("NewCatalogAt() error = %v, want timestamps equal to reference time to be valid", err)
@@ -262,7 +441,7 @@ func TestProductionCatalogPreservesVerifiedFacilityFacts(t *testing.T) {
 		t.Fatal("runtime.Caller() could not resolve the test file")
 	}
 	catalogPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "data", "facilities.json")
-	asOf := time.Date(2026, time.July, 20, 0, 0, 0, 0, time.FixedZone("JST", 9*60*60))
+	asOf := time.Date(2026, time.July, 21, 0, 0, 0, 0, time.FixedZone("JST", 9*60*60))
 	catalog, err := LoadCatalogFileAt(catalogPath, asOf)
 	if err != nil {
 		t.Fatalf("LoadCatalogFileAt() error = %v", err)
@@ -333,4 +512,35 @@ func containsText(values []string, text string) bool {
 		}
 	}
 	return false
+}
+
+var curatedReviewTime = time.Date(2026, time.July, 15, 0, 0, 0, 0, time.UTC)
+
+func validCuratedMedia() *FacilityMedia {
+	return &FacilityMedia{
+		YouTube: &YouTubeVideo{
+			Provider:        youTubeProvider,
+			VideoID:         "a1B2c3D4e5F",
+			Title:           "Test Facility overview",
+			SourceURL:       "https://www.youtube.com/watch?v=a1B2c3D4e5F",
+			SelectedAt:      curatedReviewTime,
+			VerifiedAt:      curatedReviewTime,
+			SelectionReason: "施設のセクションを確認できるため",
+		},
+	}
+}
+
+func validSocialLinks() []SocialLink {
+	return []SocialLink{
+		{
+			Platform:   SocialPlatformInstagram,
+			URL:        "https://www.instagram.com/spot_diggz/",
+			VerifiedAt: curatedReviewTime,
+		},
+		{
+			Platform:   SocialPlatformX,
+			URL:        "https://x.com/spotdiggz",
+			VerifiedAt: curatedReviewTime,
+		},
+	}
 }

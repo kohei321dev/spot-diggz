@@ -163,12 +163,22 @@
                 </p>
                 <button
                   id="locate-button"
-                  class="secondary-button"
+                  class="secondary-button icon-text-action"
                   type="button"
                   aria-describedby="current-location-provider-notice"
-                  data-i18n="locateButton"
                 >
-                  現在地を確認
+                  <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                  </svg>
+                  <span data-i18n="locateButton">現在地を確認</span>
                 </button>
                 <p id="location-status" class="field-status" aria-live="polite">検索時に取得します</p>
               </div>

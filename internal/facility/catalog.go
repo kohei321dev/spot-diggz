@@ -26,6 +26,11 @@ var supportedPrefectures = map[string]struct{}{
 	"徳島県":  {},
 }
 
+const (
+	youTubeProvider      = "youtube"
+	youTubeCanonicalHost = "www.youtube.com"
+)
+
 type catalogFile struct {
 	Facilities []Facility `json:"facilities"`
 }
@@ -178,6 +183,12 @@ func validateFacility(item Facility) error {
 	if err != nil || (parsedURL.Scheme != "https" && parsedURL.Scheme != "http") || parsedURL.Host == "" {
 		return fmt.Errorf("%w: sourceUrl must be an absolute HTTP(S) URL for %s", ErrInvalidData, item.ID)
 	}
+	if err := validateFacilityMedia(item.ID, item.Media); err != nil {
+		return err
+	}
+	if err := validateSocialLinks(item.ID, item.SocialLinks); err != nil {
+		return err
+	}
 	if item.VerifiedAt.IsZero() {
 		return fmt.Errorf("%w: verifiedAt is required for %s", ErrInvalidData, item.ID)
 	}
@@ -201,6 +212,141 @@ func validateAvailability(item Facility) error {
 	return nil
 }
 
+func validateFacilityMedia(facilityID string, media *FacilityMedia) error {
+	if media == nil {
+		return nil
+	}
+	if media.YouTube == nil {
+		return fmt.Errorf("%w: media.youtube is required when media is set for %s", ErrInvalidData, facilityID)
+	}
+
+	video := media.YouTube
+	if video.Provider != youTubeProvider {
+		return fmt.Errorf("%w: unsupported media provider %q for %s", ErrInvalidData, video.Provider, facilityID)
+	}
+	if !isYouTubeVideoID(video.VideoID) {
+		return fmt.Errorf("%w: invalid YouTube videoId for %s", ErrInvalidData, facilityID)
+	}
+	if strings.TrimSpace(video.Title) == "" || strings.TrimSpace(video.SelectionReason) == "" {
+		return fmt.Errorf("%w: YouTube title and selectionReason are required for %s", ErrInvalidData, facilityID)
+	}
+	if !isCanonicalYouTubeWatchURL(video.SourceURL, video.VideoID) {
+		return fmt.Errorf("%w: YouTube sourceUrl must be the canonical HTTPS watch URL for %s", ErrInvalidData, facilityID)
+	}
+	if video.SelectedAt.IsZero() || video.VerifiedAt.IsZero() {
+		return fmt.Errorf("%w: YouTube selectedAt and verifiedAt are required for %s", ErrInvalidData, facilityID)
+	}
+	if video.SelectedAt.After(video.VerifiedAt) {
+		return fmt.Errorf("%w: YouTube selectedAt must not be later than verifiedAt for %s", ErrInvalidData, facilityID)
+	}
+	return nil
+}
+
+func validateSocialLinks(facilityID string, socialLinks []SocialLink) error {
+	if len(socialLinks) > 2 {
+		return fmt.Errorf("%w: at most one Instagram and one X profile are allowed for %s", ErrInvalidData, facilityID)
+	}
+
+	seenPlatforms := make(map[SocialPlatform]struct{}, len(socialLinks))
+	for _, link := range socialLinks {
+		if link.Platform != SocialPlatformInstagram && link.Platform != SocialPlatformX {
+			return fmt.Errorf("%w: unsupported social platform %q for %s", ErrInvalidData, link.Platform, facilityID)
+		}
+		if _, exists := seenPlatforms[link.Platform]; exists {
+			return fmt.Errorf("%w: duplicate social platform %q for %s", ErrInvalidData, link.Platform, facilityID)
+		}
+		seenPlatforms[link.Platform] = struct{}{}
+
+		if !isCanonicalSocialProfileURL(link.Platform, link.URL) {
+			return fmt.Errorf("%w: invalid %s profile URL for %s", ErrInvalidData, link.Platform, facilityID)
+		}
+		if link.VerifiedAt.IsZero() {
+			return fmt.Errorf("%w: social verifiedAt is required for %s", ErrInvalidData, facilityID)
+		}
+	}
+	return nil
+}
+
+func isYouTubeVideoID(value string) bool {
+	if len(value) != 11 {
+		return false
+	}
+	for _, character := range value {
+		if (character < 'a' || character > 'z') &&
+			(character < 'A' || character > 'Z') &&
+			(character < '0' || character > '9') &&
+			character != '_' && character != '-' {
+			return false
+		}
+	}
+	return true
+}
+
+func isCanonicalYouTubeWatchURL(value string, videoID string) bool {
+	parsedURL, ok := parseCanonicalHTTPSURL(value)
+	if !ok || parsedURL.Host != youTubeCanonicalHost || parsedURL.Path != "/watch" || parsedURL.Fragment != "" {
+		return false
+	}
+	return parsedURL.RawQuery == "v="+videoID
+}
+
+func isCanonicalSocialProfileURL(platform SocialPlatform, value string) bool {
+	parsedURL, ok := parseCanonicalHTTPSURL(value)
+	if !ok || parsedURL.RawQuery != "" || parsedURL.Fragment != "" {
+		return false
+	}
+
+	hostname := parsedURL.Hostname()
+	profileHandle := strings.Trim(parsedURL.Path, "/")
+	if profileHandle == "" || strings.Contains(profileHandle, "/") {
+		return false
+	}
+
+	switch platform {
+	case SocialPlatformInstagram:
+		return (hostname == "instagram.com" || hostname == "www.instagram.com") && isInstagramProfileHandle(profileHandle)
+	case SocialPlatformX:
+		return (hostname == "x.com" || hostname == "www.x.com") && isXProfileHandle(profileHandle)
+	default:
+		return false
+	}
+}
+
+func parseCanonicalHTTPSURL(value string) (*url.URL, bool) {
+	parsedURL, err := url.ParseRequestURI(value)
+	if err != nil || parsedURL.Scheme != "https" || parsedURL.Host == "" || parsedURL.User != nil || parsedURL.Port() != "" {
+		return nil, false
+	}
+	return parsedURL, true
+}
+
+func isInstagramProfileHandle(value string) bool {
+	for _, character := range value {
+		if (character < 'a' || character > 'z') &&
+			(character < 'A' || character > 'Z') &&
+			(character < '0' || character > '9') &&
+			character != '_' && character != '.' {
+			return false
+		}
+	}
+	return true
+}
+
+func isXProfileHandle(value string) bool {
+	if len(value) > 15 {
+		return false
+	}
+	for _, character := range value {
+		if (character < 'a' || character > 'z') &&
+			(character < 'A' || character > 'Z') &&
+			(character < '0' || character > '9') &&
+			character != '_' {
+			return false
+		}
+	}
+	return true
+}
+
 func validateFacilityAt(item Facility, asOf time.Time) error {
 	if asOf.IsZero() {
 		return fmt.Errorf("%w: validation reference time is required", ErrInvalidData)
@@ -217,6 +363,18 @@ func validateFacilityAt(item Facility, asOf time.Time) error {
 	}
 	if item.UpdatedAt != nil {
 		verificationTimes = append(verificationTimes, verificationTime{name: "updatedAt", value: *item.UpdatedAt})
+	}
+	if item.Media != nil && item.Media.YouTube != nil {
+		verificationTimes = append(verificationTimes,
+			verificationTime{name: "media.youtube.selectedAt", value: item.Media.YouTube.SelectedAt},
+			verificationTime{name: "media.youtube.verifiedAt", value: item.Media.YouTube.VerifiedAt},
+		)
+	}
+	for index, link := range item.SocialLinks {
+		verificationTimes = append(verificationTimes, verificationTime{
+			name:  fmt.Sprintf("socialLinks[%d].verifiedAt", index),
+			value: link.VerifiedAt,
+		})
 	}
 
 	for _, candidate := range verificationTimes {

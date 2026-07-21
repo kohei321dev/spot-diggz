@@ -129,8 +129,16 @@ func TestObserveProductEventRejectsUnknownEvent(t *testing.T) {
 func TestObserveClientProductEventRejectsServerOwnedEvent(t *testing.T) {
 	registry := NewRegistry()
 
-	if err := registry.ObserveClientProductEvent(ProductEventResultDisplayed); err != nil {
-		t.Fatalf("ObserveClientProductEvent() error = %v", err)
+	for _, event := range []ProductEvent{
+		ProductEventResultDisplayed,
+		ProductEventVideoEmbedRequested,
+		ProductEventVideoEmbedLoaded,
+		ProductEventVideoExternalOpened,
+		ProductEventSocialProfileOpened,
+	} {
+		if err := registry.ObserveClientProductEvent(event); err != nil {
+			t.Fatalf("ObserveClientProductEvent(%q) error = %v", event, err)
+		}
 	}
 	if err := registry.ObserveClientProductEvent(ProductEventCorrectionSubmitted); !errors.Is(err, ErrUnknownProductEvent) {
 		t.Fatalf("ObserveClientProductEvent() error = %v, want ErrUnknownProductEvent", err)
@@ -138,6 +146,10 @@ func TestObserveClientProductEventRejectsServerOwnedEvent(t *testing.T) {
 
 	body := scrapeRegistry(t, registry).Body.String()
 	assertMetricLine(t, body, `spot_diggz_product_events_total{event="result_displayed"} 1`)
+	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_embed_requested"} 1`)
+	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_embed_loaded"} 1`)
+	assertMetricLine(t, body, `spot_diggz_product_events_total{event="video_external_opened"} 1`)
+	assertMetricLine(t, body, `spot_diggz_product_events_total{event="social_profile_opened"} 1`)
 	assertMetricLine(t, body, `spot_diggz_product_events_total{event="correction_submitted"} 0`)
 }
 
