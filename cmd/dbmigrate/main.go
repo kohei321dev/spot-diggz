@@ -13,19 +13,19 @@ import (
 
 const (
 	databaseURLEnv = "DATABASE_URL"
-	migrationPath  = "db/migrations/0001-correction-reports.sql"
 	queryTimeout   = 10 * time.Second
 )
+
+var migrationPaths = []string{
+	"db/migrations/0001-correction-reports.sql",
+	"db/migrations/0002-slack-recommendation-requests.sql",
+	"db/migrations/0003-remove-saved-facilities.sql",
+}
 
 func main() {
 	databaseURL := strings.TrimSpace(os.Getenv(databaseURLEnv))
 	if databaseURL == "" {
 		fail(errors.New("DATABASE_URL is required"))
-	}
-
-	migration, err := os.ReadFile(migrationPath)
-	if err != nil {
-		fail(fmt.Errorf("read migration: %w", err))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
@@ -36,10 +36,16 @@ func main() {
 	}
 	defer connection.Close(context.Background())
 
-	if _, err := connection.Exec(ctx, string(migration)); err != nil {
-		fail(fmt.Errorf("apply migration: %w", err))
+	for _, migrationPath := range migrationPaths {
+		migration, err := os.ReadFile(migrationPath)
+		if err != nil {
+			fail(fmt.Errorf("read migration %s: %w", migrationPath, err))
+		}
+		if _, err := connection.Exec(ctx, string(migration)); err != nil {
+			fail(fmt.Errorf("apply migration %s: %w", migrationPath, err))
+		}
+		fmt.Printf("Applied %s\n", migrationPath)
 	}
-	fmt.Printf("Applied %s\n", migrationPath)
 }
 
 func fail(err error) {

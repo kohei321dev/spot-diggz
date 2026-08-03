@@ -1,0 +1,16 @@
+{
+  "runtime": "node",
+  "hooks": {
+    "get-manifest": "node scripts/slack-manifest-hook.mjs"
+  },
+  "config": {
+    "watch": {
+      "manifest": {
+        "paths": [
+          "slack-manifest.json"
+        ]
+      }
+    }
+  }
+}
+

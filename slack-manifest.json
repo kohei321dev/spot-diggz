@@ -1,0 +1,41 @@
+{
+  "_metadata": {
+    "major_version": 1,
+    "minor_version": 1
+  },
+  "display_information": {
+    "name": "spot-diggz",
+    "description": "条件に合うスケートスポットを探します"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "spot-diggz",
+      "always_online": false
+    },
+    "slash_commands": [
+      {
+        "command": "/spotdiggz",
+        "url": "https://spotdiggz.vercel.app/integrations/slack/commands",
+        "description": "条件に合うスケートスポットを探す",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "commands",
+        "chat:write"
+      ]
+    }
+  },
+  "settings": {
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://spotdiggz.vercel.app/integrations/slack/commands"
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

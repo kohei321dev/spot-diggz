@@ -1,20 +1,22 @@
 # Security and Privacy Baseline
 
 - Status: Active MVP baseline
-- Date: 2026-07-21
-- Scope: Web UI、HTTP API、verified facility catalog、検索位置、訂正報告、手動キュレーションmedia、公式SNS外部リンク、optional Google連携、CI/CD
+- Date: 2026-08-01
+- Scope: GitHub owner認証、Web UI、HTTP API、Slack/Discord command、verified facility catalog、検索位置、訂正報告、手動キュレーションmedia、公式SNS外部リンク、optional Google連携、CI/CD
 - Related: [Product Baseline](../product_baseline.md)
 - Related: [ADR-0010](../adr/0010-google-maps-provider-and-fallback.md)
+- Related: [ADR-0015](../adr/0015-owner-auth-and-chat-entrypoints.md)
 
 ## 1. MVP security posture
 
-- MVPにはaccount、login、管理画面を設けない。公開APIであることを前提に、入力検証、request size上限、process内rate limit、network境界を組み合わせる。
+- private MVPはGitHub OAuthで`GITHUB_OWNER`に一致するownerだけへWeb UIと`/api/*`を許可する。Productionの認証設定欠落は起動失敗とし、未認証APIはfail closedにする。
+- Slack/Discordはplatform request署名とownerへ対応付けたworkspace/guild/user IDを検証する。Browser session cookieや共通API keyをchat commandへ流用しない。
 - 施設選定は検証済みcatalogと決定論的ruleだけで行い、AI providerへdataを送信しない。
 - 正確な検索位置はapplicationで保存・access log出力・response再掲をしない。Google連携を有効にした場合の外部送信は別のprivacy boundaryとして明示する。
 - 訂正報告は目的をcatalog品質改善に限定し、任意contactは明示同意時だけ受理し、90日後の削除期限を持たせる。
 - secret、個人情報、正確な位置、request bodyをsource、image、log、metrics、traceへ含めない。
 - 動画はcatalogで手動確認したYouTube動画を施設ごとに最大1件に限る。SNSは公式性を確認したInstagram・Xプロフィールへの外部リンクだけとし、投稿・ハッシュタグ・フィードは取得・表示しない。
-- Google/Apple Maps、SKEPA等の第三者サイトやSNSから、画像・動画・投稿をスクレイピング、保存、再配信しない。YouTube iframeは動画を持つ推薦cardで初期表示し、自動再生しない。
+- Google/Apple Maps、SKEPA等の第三者サイトやSNSから、画像・動画・投稿をスクレイピング、保存、再配信しない。YouTube iframeは利用者が動画を含む施設詳細を開いた後だけ生成し、自動再生しない。
 
 ## 2. Data classification and retention
 
@@ -25,7 +27,8 @@
 | Internal | 推薦rule、設定名、集計metrics、release metadata | application運用 | 認可された開発・運用主体だけが参照 |
 | Sensitive location | 推薦起点の緯度経度、地点検索文字列 | 移動時間計算、geocoding | applicationでは非保存。request処理後に破棄 |
 | Personal | 訂正details、evidence URL、任意contact email、consent | catalog訂正の確認 | Neon/PostgreSQL in production、correction file in local/CI。receiptから90日後に削除 |
-| Secret | `DATABASE_URL`、`GOOGLE_MAPS_API_KEY`、platform credential | correction store、server-side Google API、deploy | secret storeのみ。Git、image、browser、logは禁止 |
+| Personal identifier | GitHub ID/login、Slack team/user ID、Discord application/guild/user ID | owner認証とplatform認可 | GitHub ID/loginは署名済みsessionに最大12時間。platform ID mappingはsecret storeのruntime設定。message historyと紐付けて保存しない |
+| Secret | `AUTH_SECRET`、GitHub OAuth client secret、Slack Signing Secret・Bot Token、Discord interaction token、`DATABASE_URL`、`GOOGLE_MAPS_API_KEY`、platform credential | owner session、request署名、Slack Web API、store、server-side provider | secret storeまたはrequest処理中だけ。Git、image、browser、log、metricsは禁止 |
 
 訂正reportには `receivedAt` と `deleteAfter=receivedAt+90日` を保存する。storeは起動時と1時間ごとに `deleteAfter` を過ぎたreportをpurgeするため、正常時も期限到達から削除まで最大1時間の差がある。purge失敗時は `correction_retention_purge_failed` を監視し、retention incidentとして扱う。backupや複製も元reportの `deleteAfter` を超えて保持しない。
 
@@ -33,13 +36,15 @@
 
 ```text
 Browser
-  -> Go HTTP application
+  -> GitHub OAuth -> Go HTTP application owner session
+Slack slash command -- HMAC署名 + team/user allowlist --> Go HTTP application
+Discord interaction -- Ed25519署名 + application/guild/user allowlist --> Go HTTP application
        -> read-only facility catalog JSON
        -> correction store (Neon/PostgreSQL in production, JSON Lines file locally)
        -> Prometheus metrics endpoint
        -> Google Routes API       (key設定時のみ)
        -> Google Geocoding API    (key設定時のみ)
-  -- 動画を持つ推薦cardの初期表示時 --> allowlistしたYouTube iframe
+  -- 動画を含む施設詳細を開いた時 --> allowlistしたYouTube iframe
   -- 利用者の明示操作後 --> 公式確認済みInstagram / Xプロフィール
 CI/CD
   -> source / binary / image verification
@@ -49,6 +54,9 @@ CI/CD
 ### Browser to application
 
 - TLS terminationはproduction ingressで行う。production URLとcertificateはdeploy時に確認する。
+- GitHub OAuthはrandom `state`とPKCE S256を検証する。owner判定後はOAuth access tokenを保存せず、12時間有効なHMAC-SHA256署名済みHttpOnly、Secure、SameSite=Lax cookieだけを発行する。
+- GitHub OAuthではpublic profileによるID/login確認だけを行い、repository、email、organizationのscopeを要求しない。loginはcase-insensitiveに`GITHUB_OWNER`と比較する。
+- `DEV_AUTH_BYPASS=1`はlocal UI/E2Eだけに使い、`APP_ENV=production`では設定されていても無効にする。
 - JSON write endpointは `Content-Type: application/json`、strict JSON、型・長さ・enum・座標範囲を検証する。
 - request body上限はrecommendation 16 KiB、location search 1 KiB、correction 8 KiB、event 1 KiBとする。
 - process内token bucketはrecommendation 60/min burst 10、location search 30/min burst 5、correction 30/min burst 10、event 300/min burst 60とする。
@@ -58,9 +66,18 @@ CI/CD
 
 process内rate limitはinstance間で共有されず、source単位でもない。production公開時はingressのrequest/body制限、DDoS対策、必要なIP policyを追加し、application limiterだけを濫用対策の根拠にしない。
 
+### Slack and Discord to application
+
+- Slackはraw form bodyを変更前にSigning SecretでHMAC-SHA256検証し、timestampがserver時刻から5分以内であることを確認する。deprecated verification tokenと表示名は認可に使わず、`team_id`と`user_id`だけを設定済みowner mappingと比較する。
+- Slack Appは`commands`と`chat:write`だけを許可し、Slash Commandでmodalを開く。modal submissionへ即時ackし、推薦結果はBot Tokenを使う`chat.postEphemeral`でownerだけへ送る。button actionの`response_url`はHTTPSかつSlack/GovSlack hostの`/commands/`または`/actions/`pathだけを許可する。
+- Discordはraw JSON bodyと`X-Signature-Timestamp`をapplication public keyでEd25519検証し、timestampがserver時刻から5分以内であることを確認する。`application_id`、`guild_id`、member/user IDがすべて設定と一致したcommandだけを許可する。
+- Discordは3秒以内にephemeral deferred responseを返し、固定Discord API origin上のinteraction webhookへoriginal response更新を送る。responseではmention展開を無効にする。
+- Slack/Discord commandは過去message、channel history、DM historyを読み取らない。Slackの地点入力・座標・推薦文・interaction tokenはstore、log、metricsへ残さず、冪等性に必要なHMAC化source key、request状態、候補/選択facility IDだけを短期保持する。
+- chatの代表起点座標はserver-side設定からrequest処理中だけ利用する。自宅等の正確な個人位置を設定せず、駅等の公開地点を使用する。platformへ起点座標を返さない。
+
 ### Browser to third-party media and social services
 
-- YouTube iframeは、catalogで許可した動画IDから固定の埋込URLを構成する。動画を持つ推薦cardは初期表示時にiframeを読み込む。同じトグル操作でplayerを閉じて再表示できる。任意URLをiframeの`src`へ渡さない。
+- YouTube iframeは、catalogで許可した動画IDから固定の埋込URLを構成する。利用者が動画を含む施設詳細を開いた後だけiframeを生成し、詳細または動画のトグルを閉じて再表示できる。任意URLをiframeの`src`へ渡さない。
 - embedは自動再生を許可しない。技術的な埋込失敗、動画削除、埋込禁止時は、推薦結果と施設情報を継続表示し、通常のYouTube外部リンクだけを提示する。
 - SNSは公式性を確認済みのInstagramまたはXプロフィールURLだけを許可する。外部リンクはallowlistしたHTTPS host、`noopener`、`noreferrer`を使い、投稿、ハッシュタグ、フィードをapplication内へ埋め込まない。
 - BrowserがYouTube iframeまたはSNS外部リンクを開くと、利用者のnetwork metadata等が当該providerへ送信され得る。applicationは閲覧履歴、動画再生状態、SNS投稿を受信・保存しない。
@@ -95,7 +112,11 @@ applicationで非保存であっても、Googleがrequestを受信する。利�
 - traceを追加する場合もrequest/response bodyをattributeへ保存しない。
 - `APP_VERSION` とdeploy時刻をrelease記録に残し、incidentとartifactを関連付ける。
 
-## 4. Secrets and Google credential
+## 4. Secrets and external credentials
+
+- `AUTH_SECRET`は32 bytes以上のrandom値とし、GitHub OAuth Appのclient secret、Slack Signing Secret、Discord public keyとplatform ID mappingはProduction secret/environment storeから注入する。値を起動logや診断endpointへ出力しない。
+- GitHub OAuth callback URLは`APP_BASE_URL + /auth/github/callback`と完全一致させる。domain変更時はGitHub OAuth App設定と`APP_BASE_URL`を同じ切替で更新する。
+- owner権限を失効する場合はGitHub OAuth grantとsession secretをrotateし、Slack/Discord app secretまたはplatform ID mappingも必要に応じて更新して再deployする。
 
 - `GOOGLE_MAPS_API_KEY` はserver-side secret storeからruntime注入する。`.env`、command履歴、CI artifact、test fixture、container layerへ保存しない。
 - production keyはRoutes APIとGeocoding APIだけに制限し、利用可能なら固定egress IP等のapplication restrictionを設定する。
@@ -126,12 +147,14 @@ applicationで非保存であっても、Googleがrequestを受信する。利�
 | Threat | Current control | Residual risk / next control |
 | --- | --- | --- |
 | malformed / oversized input | strict JSON、schema validation、body limit | fuzzとproduction trafficで境界を継続検証 |
-| public endpoint abuse | route別token bucket、Google接続数上限、429 | source別ingress / edge limit、Google quota、DDoS対策が未設定 |
+| unauthorized API use | GitHub owner session、Production fail-closed、platform署名とowner ID mapping | session revocationはsecret rotationまたは12時間expiry。複数user linkingは未実装 |
+| public endpoint abuse | health/readiness以外はowner認可、route別token bucket、Google接続数上限、429 | source別ingress / edge limit、Google quota、DDoS対策が未設定 |
+| forged/replayed chat command | Slack HMACと5分window、Discord Ed25519、platform ID allowlist、body limit | process停止時のdelayed response喪失とplatform側rate limit |
 | location disclosure | non-persistence、query/body非logging | Google有効時の外部送信とprovider retention |
 | correction PII leakage / disk exhaustion | consent、最小log、90日deadline、purge、32 MiB上限 | Neon backup / retention policyとlocal file fallbackのvolume運用が未検証 |
 | API key leakage or abuse | server-side injection、secret scan、fallback | production key restriction / rotationは未検証 |
 | stale or tampered catalog | source metadata、startup validation、readiness、CI review | official source自体の当日変更は検知できない |
-| third-party media tracking / unavailable embed | 初期表示時のprivacy通知、自動再生禁止、allowlist URL、外部リンクへの縮退 | provider telemetry、動画削除、埋込可否、規約変更をownerが定期確認する必要がある |
+| third-party media tracking / unavailable embed | 施設詳細の明示操作、privacy通知、自動再生禁止、allowlist URL、外部リンクへの縮退 | provider telemetry、動画削除、埋込可否、規約変更をownerが定期確認する必要がある |
 | scraped or unlicensed media | 自動収集・保存・再配信の禁止、手動review記録 | curatorの判断誤り、著作権・肖像権・規約の解釈はowner確認が必要 |
 | malicious external link / arbitrary iframe | catalog validation、platform/host allowlist、固定iframe URL、`noopener` / `noreferrer` | allowlistとprovider仕様の定期見直しが必要 |
 | metrics disclosure | data minimization | production network restrictionは未実装 |
@@ -154,6 +177,9 @@ applicationで非保存であっても、Googleがrequestを受信する。利�
 - [ ] catalog validationとfreshness readinessがPASSした
 - [ ] request validation、body limit、rate limitのtestがPASSした
 - [ ] log / metricsに位置、query、contact、key、request bodyがないことを確認した
+- [ ] ProductionのGitHub owner login、非owner拒否、session cookie属性、sign-outを正式domainで確認した
+- [ ] Slack Bot Token・Signing Secret・team/user ID、Discord public key・application/guild/user IDをsecret storeへ設定し、owner/non-owner commandを実環境で確認した
+- [ ] Slack/Discordのrequest body、地点入力・座標、interaction token、platform user ID、Discord既定起点座標がlog / metricsへ出力されないことを確認した
 - [ ] ProductionのNeon secret、権限、backup、90日retentionを確認した。file fallbackを使う環境ではvolumeのowner、mode、暗号化、backupも確認した
 - [ ] `/metrics` をpublic Internetから遮断した
 - [ ] secret、dependency、source/binary、filesystem/image scanがPASSした
@@ -165,4 +191,4 @@ applicationで非保存であっても、Googleがrequestを受信する。利�
 - [ ] CSP等でiframeと外部リンクのoriginをallowlistし、provider規約、埋込可否、著作権・肖像権、privacy表示をownerが確認・記録した
 - [x] production HTTPS、post-deploy smokeを確認した。[ ] rollback exerciseは未実施
 
-[事実] ProductionのVercel secret injection、Neon migration、訂正APIのwrite path、health/readiness、UI/API smokeを確認した。[未検証] 実Google credential、provider側retention、metrics network policy、alert、custom domain、incident exerciseである。
+[事実] GitHub owner認証とSlack/Discord署名・owner認可はlocal実装と自動testを確認した。既存ProductionのVercel secret injection、Neon migration、訂正APIのwrite path、health/readiness、UI/API smokeを確認した。[未検証] ProductionのGitHub OAuth、Slack/Discord command、実Google credential、provider側retention、metrics network policy、alert、custom domain、incident exerciseである。

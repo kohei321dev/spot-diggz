@@ -11,11 +11,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kohei321dev/spot-diggz/internal/chatbot"
 	"github.com/kohei321dev/spot-diggz/internal/correction"
 	"github.com/kohei321dev/spot-diggz/internal/facility"
 	"github.com/kohei321dev/spot-diggz/internal/geocoding"
 	"github.com/kohei321dev/spot-diggz/internal/httpapi"
 	"github.com/kohei321dev/spot-diggz/internal/observability"
+	"github.com/kohei321dev/spot-diggz/internal/owneraccess"
 	"github.com/kohei321dev/spot-diggz/internal/recommendation"
 	"github.com/kohei321dev/spot-diggz/internal/travel"
 )
@@ -36,6 +38,7 @@ func main() {
 		_, _ = fmt.Fprintln(os.Stderr, "unknown command")
 		os.Exit(2)
 	}
+	appEnvironment := envOrDefault("APP_ENV", "development")
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		ReplaceAttr: func(_ []string, attribute slog.Attr) slog.Attr {
 			if attribute.Key == slog.MessageKey {
@@ -45,7 +48,7 @@ func main() {
 		},
 	})).With(
 		"service", "spotdiggz-api",
-		"environment", envOrDefault("APP_ENV", "development"),
+		"environment", appEnvironment,
 		"version", envOrDefault("APP_VERSION", "unknown"),
 	)
 	catalogPath := os.Getenv("FACILITY_CATALOG_PATH")
@@ -125,6 +128,57 @@ func main() {
 		logger.Warn("google_maps_integrations_disabled", "travel_estimate", travel.StraightLineKind)
 	}
 	recommender := recommendation.NewEngineWithTravelProvider(catalog, now, travelProvider)
+	ownerAccess, err := owneraccess.New(owneraccess.Config{
+		Environment:        appEnvironment,
+		BaseURL:            os.Getenv("APP_BASE_URL"),
+		SessionSecret:      os.Getenv("AUTH_SECRET"),
+		GitHubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
+		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+		GitHubOwner:        envOrDefault("GITHUB_OWNER", "kohei321dev"),
+		DevBypass:          os.Getenv("DEV_AUTH_BYPASS") == "1",
+		Now:                now,
+	})
+	if err != nil {
+		logger.Error("owner_auth_initialization_failed", "error", err)
+		os.Exit(1)
+	}
+	var slackStore chatbot.SlackRequestStore
+	if anyEnvironmentValue(slackConfigurationKeys) {
+		if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
+			postgresSlackStore, storeErr := chatbot.NewPostgresSlackRequestStore(databaseURL)
+			if storeErr != nil {
+				logger.Error("slack_request_store_initialization_failed", "backend", "postgres", "error", storeErr)
+				os.Exit(1)
+			}
+			slackStore = postgresSlackStore
+		} else if appEnvironment == "production" {
+			logger.Error("slack_request_store_initialization_failed", "backend", "none", "error", "DATABASE_URL is required")
+			os.Exit(1)
+		} else {
+			slackStore = chatbot.NewMemorySlackRequestStore()
+		}
+		if purgeErr := slackStore.PurgeExpired(context.Background(), now()); purgeErr != nil {
+			logger.Error("slack_request_store_purge_failed", "error", purgeErr)
+			os.Exit(1)
+		}
+		defer func() {
+			if closeErr := slackStore.Close(); closeErr != nil {
+				logger.Error("slack_request_store_close_failed", "error", closeErr)
+			}
+		}()
+		go purgeExpiredSlackRequests(retentionContext, slackStore, logger, now)
+	}
+	slackHandler, discordHandler, err := buildChatHandlers(recommender, geocoder, slackStore, now)
+	if err != nil {
+		logger.Error("chat_integration_initialization_failed", "error", err)
+		os.Exit(1)
+	}
+	if slackHandler != nil {
+		logger.Info("slack_integration_enabled")
+	}
+	if discordHandler != nil {
+		logger.Info("discord_integration_enabled")
+	}
 
 	server := &http.Server{
 		Addr: ":" + envOrDefault("PORT", "8080"),
@@ -134,6 +188,9 @@ func main() {
 			CorrectionService: correctionService,
 			Metrics:           metrics,
 			Now:               now,
+			OwnerAccess:       ownerAccess,
+			SlackHandler:      slackHandler,
+			DiscordHandler:    discordHandler,
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -157,6 +214,21 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("http_server_failed", "error", err)
 		os.Exit(1)
+	}
+}
+
+func purgeExpiredSlackRequests(ctx context.Context, store chatbot.SlackRequestStore, logger *slog.Logger, now func() time.Time) {
+	ticker := time.NewTicker(correctionPurgeInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := store.PurgeExpired(ctx, now()); err != nil {
+				logger.Error("slack_request_retention_purge_failed", "error", err)
+			}
+		}
 	}
 }
 

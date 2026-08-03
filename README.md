@@ -17,6 +17,8 @@ spot-diggzは、施設を地図で眺めるだけではなく、「今日、今�
 
 MVPは、Web UI、API、検証済み施設カタログ、決定論的な推薦を1つのGo applicationとして提供するモジュラーモノリスである。地理scopeは大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県とし、2026-07-19調査基準の公開カタログには公式情報で必須属性を確認した31施設を登録している。大阪府は24施設で、日付別の一般利用予定を確認できない施設はカタログ参照のみとし、推薦から除外する。
 
+private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致するownerだけへ制限する。Slack `/spotdiggz`は条件入力モーダルを開き、出発地・時間・交通手段・レベル・目的・気分から最大3件をephemeral responseで返す。候補は保存せず、「公式情報」と「ここに行く」の外部導線だけを表示する。SlackとDiscordはplatform署名と設定済みworkspace/guild/user IDを検証し、過去messageを参照・保存しない。
+
 推薦は目的、気分、レベル、利用可能時間、検索位置、交通手段を受け取り、鮮度、休場期間、通常営業時間、移動時間、初心者適性、設備を決定論的に評価する。動的情報は30日、安定情報は180日を鮮度期限とし、期限超過施設は推薦しない。休場期間は一回限りの `one_time` と毎年繰り返す `annual` を扱う。
 
 `GOOGLE_MAPS_API_KEY` がある場合はGoogle Routes APIのCompute Route Matrixを優先し、失敗時は直線距離の概算へ自動で縮退する。同じkeyでGoogle Geocoding APIによる地点検索も有効になる。keyがない場合、推薦は直線距離概算で動作し、任意地点検索は `503` を返す。正確な検索位置や検索文字列はapplicationで永続化せず、access logにも出力しない。ただしGoogle連携を有効にすると、推薦の起点座標はGoogle Routesへ、地点検索文字列はGoogle Geocodingへ送信される。
@@ -26,6 +28,8 @@ MVPは、Web UI、API、検証済み施設カタログ、決定論的な推薦�
 ## 実装済みと未実施の境界
 
 - [事実] Go adapter、入力検証、Google失敗時のfallback、日英表示、訂正報告、rate limit、構造化access log、Prometheus metricsはローカル実装と自動テストの対象である。
+- [事実] GitHub OAuth owner allowlist、署名済みsession、Slack HMAC署名とowner ID認可、Discord Ed25519署名とowner ID認可はローカル実装と自動テストの対象である。
+- [事実] Production正式domainでのGitHub owner loginとSlack `/spotdiggz`のmodal・候補応答を2026-08-03にownerが確認した。Discord interactionは未検証である。
 - [事実] 訂正報告は`DATABASE_URL`設定時にNeon/PostgreSQL、未設定時に `var/corrections.jsonl` へ保存する。任意の連絡先は明示同意がある場合だけ受理し、送信時に90日後の削除期限を付け、起動時と1時間ごとに期限超過分をpurgeする。
 - [未検証] 実Google APIへの接続、quota・課金・key制限、production環境からのfallbackは、資格情報がないため確認していない。
 - [事実] 既存Neon Organizationの`spotdiggz` Project、Vercel Project、migration、Productionのhealth/readiness、施設API、UIを2026-07-20に確認した。
@@ -41,6 +45,11 @@ MVPは、Web UI、API、検証済み施設カタログ、決定論的な推薦�
 - [Vercel・Neonデプロイ手順](docs/operations/vercel-neon-deployment.md)
 - [How To Use](docs/how-to-use.md)
 - [セキュリティ・プライバシー基準](docs/security/security-baseline.md)
+- [GitHub owner認証・Slack/Discord連携ADR](docs/adr/0015-owner-auth-and-chat-entrypoints.md)
+- [GitHub owner認証・Vercel Productionセットアップ](docs/operations/github-oauth-setup.md)
+- [Slack条件入力・推薦応答ADR](docs/adr/0016-slack-guided-recommendation.md)
+- [Slack初回インストール・セットアップ（Codex CLI操作用の依頼文を含む）](docs/operations/slack-setup.md)
+- [Discord初回インストール・セットアップ](docs/integrations/discord-setup.md)
 - [品質特性・アーキテクチャ指針](docs/architecture/quality-attributes.md)
 - [ADR一覧](docs/adr/)
 - [市場・需要調査](docs/market_demand_research_2026-07.md)
@@ -76,10 +85,19 @@ MVPは、Web UI、API、検証済み施設カタログ、決定論的な推薦�
 - `psql "$DATABASE_URL" -f db/migrations/0001-correction-reports.sql`: Neonへ訂正報告テーブルmigrationを適用する。接続文字列はshell履歴やGitへ残さない。
 - `go run ./cmd/dbmigrate`: `DATABASE_URL`を読み、Neonへ管理済みmigrationを適用する。接続文字列自体は出力しない。
 - `go run ./cmd/api correctioncheck -path <corrections.jsonl>`: 訂正storeを変更せず、report件数・期限切れ件数・破損行を検査する。report本文や連絡先は出力しない。
+- `powershell -File .\scripts\register-discord-command.ps1 -ApplicationId '<id>' -GuildId '<id>'`: Discordの`/spotdiggz` guild commandを登録または更新する。Bot Tokenはsecure promptへ入力し、引数やshell履歴へ含めない。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-integration-clis.ps1`: Slack CLIとVercel CLIをuser領域へ導入し、versionを確認する。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-integration-cli-prerequisites.ps1`: 外部変更をせず、CLI、user PATH、Slack Manifest、hook、Vercel project linkのlocal事前準備を検証する。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-slack-app.ps1`: Slack CLI認証済みの場合だけ、選択した既存AppへManifestを反映する任意手順。HTTP連携自体にSlack CLI認証は不要。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-slack-vercel-env.ps1 -Deploy`: Slack連携用の秘密値を非表示promptからVercel Productionへ設定し、deploy後にhealth/readinessを確認する。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-slack-vercel-env.ps1 -PreflightOnly`: 秘密値や外部状態を変更せず、Vercel認証と`spotdiggz` Project linkを確認する。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-github-vercel-env.ps1 -PreflightOnly`: GitHub OAuth用のVercel認証、Project link、callbackを外部変更なしで確認する。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-github-vercel-env.ps1 -Deploy`: GitHub OAuth credentialをpromptからVercel Productionへ登録し、`AUTH_SECRET`を生成してProduction deployとhealth/readiness確認を行う。
 
 ### 起動
 
-- `make run`: `data/facilities.json` を使い、`http://localhost:8080/` で起動する。
+- `make run`: `data/facilities.json` を使い、`http://localhost:8080/` で起動する。OAuth未設定時は認証設定案内を表示する。
+- `DEV_AUTH_BYPASS=1 make run`: ローカル画面確認だけを目的にGitHub認証を省略して起動する。Productionでは無効である。
 - `set -a; . ./.env.local; set +a; make run`: 既存Neonの`spotdiggz` DBを使ってlocal起動する。`.env.local`はGitへcommitしない。
 - `make run-dev`: `testdata/facilities.dev.json` のダミーデータで起動する。
 - `PORT=8081 make run-dev`: listen portを変更して起動する。
@@ -91,10 +109,30 @@ MVPは、Web UI、API、検証済み施設カタログ、決定論的な推薦�
 | `PORT` | no | `8080` | HTTP listen port |
 | `FACILITY_CATALOG_PATH` | no | `data/facilities.json` | 起動時に読む検証済みcatalog |
 | `CORRECTION_STORE_PATH` | no | `var/corrections.jsonl` | 訂正報告のJSON Lines file |
-| `DATABASE_URL` | no | unset | Neon/PostgreSQLの訂正報告保存先。設定時はfile storeより優先 |
-| `GOOGLE_MAPS_API_KEY` | no | unset | Google Routes / Geocodingのserver-side credential |
+| `DATABASE_URL` | Production Slack利用時yes | unset | Neon/PostgreSQLの訂正報告と短期Slack request状態。設定時はfile storeより優先 |
+| `GOOGLE_MAPS_API_KEY` | Slack利用時yes | unset | Google Routes / Geocodingのserver-side credential。Slack modalの地点解決に必要 |
 | `APP_ENV` | no | `development` | JSON logのenvironment。image既定値は `production` |
 | `APP_VERSION` | no | `unknown` | JSON logへ付けるrelease SHAまたはversion |
+| `APP_BASE_URL` | Production yes | unset | GitHub OAuth callbackを構成するpathなしの正式HTTPS origin。例: `https://spotdiggz.vercel.app` |
+| `AUTH_SECRET` | Production yes | unset | owner sessionとOAuth stateへ署名する32 bytes以上のrandom secret |
+| `GITHUB_CLIENT_ID` | Production yes | unset | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | Production yes | unset | GitHub OAuth App client secret |
+| `GITHUB_OWNER` | no | `kohei321dev` | 利用を許可するGitHub login |
+| `DEV_AUTH_BYPASS` | no | unset | local UI/E2E専用。`1`で認証を省略し、Productionでは常に無効 |
+| `SLACK_BOT_TOKEN` | Slack利用時yes | unset | `views.open`と`chat.postEphemeral`に使うBot User OAuth Token |
+| `SLACK_SIGNING_SECRET` | Slack利用時yes | unset | Slack request署名検証secret |
+| `SLACK_TEAM_ID` | Slack利用時yes | unset | 許可workspace ID |
+| `SLACK_OWNER_USER_ID` | Slack利用時yes | unset | GitHub ownerへ対応付けるSlack user ID |
+| `DISCORD_PUBLIC_KEY` | Discord利用時yes | unset | interaction Ed25519 public key（hex） |
+| `DISCORD_APPLICATION_ID` | Discord利用時yes | unset | 許可Discord application ID |
+| `DISCORD_GUILD_ID` | Discord利用時yes | unset | 許可guild ID |
+| `DISCORD_OWNER_USER_ID` | Discord利用時yes | unset | GitHub ownerへ対応付けるDiscord user ID |
+| `CHAT_DEFAULT_ORIGIN_LATITUDE` / `CHAT_DEFAULT_ORIGIN_LONGITUDE` | Discord利用時yes | unset | Discord用の公開代表起点。Slackはモーダル入力を使う |
+| `CHAT_DEFAULT_PURPOSE` | no | `basics` | Discord推薦の目的 |
+| `CHAT_DEFAULT_MOOD` | no | `focused` | Discord推薦の気分 |
+| `CHAT_DEFAULT_LEVEL` | no | `beginner` | Discord推薦のlevel |
+| `CHAT_DEFAULT_AVAILABLE_MINUTES` | no | `120` | Discord推薦の利用可能時間 |
+| `CHAT_DEFAULT_TRANSPORT` | no | `public_transit` | Discord推薦の交通手段 |
 
 ### Local smoke
 
@@ -112,7 +150,7 @@ production imageはscratchを使い、Google HTTPS通信用CA bundle、UID `6553
 
 ## API
 
-主要endpointは `GET /healthz`、`GET /readyz`、`GET /api/facilities`、`GET /api/facilities/{facilityId}`、`POST /api/locations/search`、`POST /api/recommendations`、`POST /api/corrections`、`POST /api/events`、`GET /metrics` である。request、response、制限、error codeの正本は [OpenAPI](docs/api/facility-catalog.openapi.yaml) とする。
+主要endpointは `GET /healthz`、`GET /readyz`、GitHub OAuth用`/auth/github/*`、owner sessionが必要な`/api/*`、Slack用`POST /integrations/slack/commands`、Discord用`POST /integrations/discord/interactions`、`GET /metrics` である。request、response、制限、error codeの正本は [OpenAPI](docs/api/facility-catalog.openapi.yaml) とする。
 
 ## 次の作業
 

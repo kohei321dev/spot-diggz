@@ -124,6 +124,8 @@ const messages = {
     scheduleCaution: "営業日の注意",
     availabilityCaution: "一般利用の注意",
     rulesCaution: "利用前に確認",
+    showFacilityDetails: "施設の詳細を見る",
+    hideFacilityDetails: "施設の詳細を閉じる",
     goWithPlan: "このプランで行く",
     routeLink: "経路を見る",
     officialSource: "公式情報",
@@ -292,6 +294,8 @@ const messages = {
     scheduleCaution: "Schedule notes",
     availabilityCaution: "General-use availability",
     rulesCaution: "Check before visiting",
+    showFacilityDetails: "Show facility details",
+    hideFacilityDetails: "Hide facility details",
     goWithPlan: "Navigate to this spot",
     routeLink: "View route",
     officialSource: "Official source",
@@ -1178,25 +1182,19 @@ function createPrimaryRecommendation(recommendation) {
   const availabilityNotice = createAvailabilityNotice(facility, localizedFacility);
   const rules = createNotice(t("rulesCaution"), localizedFacility.rules);
   const fallbackNotice = createTranslationFallback(localizedFacility.usesJapaneseFallback);
+  const media = createFacilityMedia(facility, false, false);
+  const supplementaryDetails = createFacilityDetailsDisclosure([
+    fallbackNotice,
+    scheduleNotes,
+    availabilityNotice,
+    rules,
+  ], media);
   const actions = createFacilityActions(facility, true);
   card.append(pickLabel, title, address, timing, meta, reasons, details);
-  if (fallbackNotice) {
-    card.append(fallbackNotice);
-  }
-  if (scheduleNotes) {
-    card.append(scheduleNotes);
-  }
-  if (availabilityNotice) {
-    card.append(availabilityNotice);
-  }
-  if (rules) {
-    card.append(rules);
-  }
-  const media = createFacilityMedia(facility);
-  if (media) {
-    card.append(media.element);
-  }
   card.append(actions);
+  if (supplementaryDetails) {
+    card.append(supplementaryDetails);
+  }
   return card;
 }
 
@@ -1342,8 +1340,34 @@ function createFacilityMedia(facility, isCompact = false, initiallyVisible = tru
   section.append(heading, title, privacy, controls, player);
   return {
     element: section,
-    showPlayer: () => setPlayerVisibility(true),
+    setPlayerVisibility,
   };
+}
+
+function createFacilityDetailsDisclosure(elements, media) {
+  const contentElements = elements.filter(Boolean);
+  if (media) {
+    contentElements.push(media.element);
+  }
+  if (contentElements.length === 0) {
+    return null;
+  }
+
+  const details = document.createElement("details");
+  details.className = "facility-detail-disclosure";
+  const summary = document.createElement("summary");
+  const content = document.createElement("div");
+  content.className = "facility-detail-content";
+  content.append(...contentElements);
+
+  const updateState = () => {
+    summary.textContent = t(details.open ? "hideFacilityDetails" : "showFacilityDetails");
+    media?.setPlayerVisibility(details.open);
+  };
+  details.addEventListener("toggle", updateState);
+  details.append(summary, content);
+  updateState();
+  return details;
 }
 
 function normalizedYouTubeVideo(video) {
@@ -1416,7 +1440,6 @@ function createAlternativeRecommendations(recommendations) {
   summary.textContent = t("alternatives", { count: recommendations.length });
   const list = document.createElement("div");
   list.className = "alternative-list";
-  const deferredMedia = [];
 
   for (const recommendation of recommendations) {
     const facility = recommendation.facility || {};
@@ -1454,19 +1477,15 @@ function createAlternativeRecommendations(recommendations) {
       copy.append(fallbackNotice);
     }
     const media = createFacilityMedia(facility, true, false);
-    if (media) {
-      copy.append(media.element);
-      deferredMedia.push(media);
+    const supplementaryDetails = createFacilityDetailsDisclosure([], media);
+    if (supplementaryDetails) {
+      supplementaryDetails.classList.add("is-compact");
+      copy.append(supplementaryDetails);
     }
     row.append(copy, createFacilityActions(facility, false));
     list.append(row);
   }
 
-  alternatives.addEventListener("toggle", () => {
-    if (alternatives.open) {
-      deferredMedia.forEach((media) => media.showPlayer());
-    }
-  });
   alternatives.append(summary, list);
   return alternatives;
 }

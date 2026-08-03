@@ -1,15 +1,16 @@
 # Quality Attributes and Architecture Guardrails
 
 - Status: Active MVP architecture
-- Date: 2026-07-20
+- Date: 2026-08-01
 - Decision authority: [Product Baseline](../product_baseline.md) and Accepted ADRs
 
 ## 1. Architecture summary
 
-spot-diggzは、Web UI、HTTP API、facility catalog、決定論的推薦、外部provider adapter、訂正store、observabilityを1つのGo applicationとしてdeployするモジュラーモノリスである。catalogには推薦の根拠とは分離した、手動選定済みの外部メディアmetadataを任意で含められる。facility catalog用のdatabase、queue、cacheは分離しないが、Productionの訂正reportだけは永続性のためmanaged Neonへ保存する。
+spot-diggzは、GitHub owner認証、Web UI、HTTP API、Slack/Discord command adapter、facility catalog、決定論的推薦、外部provider adapter、訂正store、observabilityを1つのGo applicationとしてdeployするモジュラーモノリスである。catalogには推薦の根拠とは分離した、手動選定済みの外部メディアmetadataを任意で含められる。facility catalog用のdatabase、queue、cacheは分離しないが、Productionの訂正reportだけは永続性のためmanaged Neonへ保存する。
 
 ```text
 Browser
+  -> GitHub OAuth owner authentication
   -> embedded Web UI / HTTP API
        -> session input validation
        -> facility catalog (read-only JSON snapshot)
@@ -19,6 +20,8 @@ Browser
        -> Google Geocoding adapter (optional)
        -> correction store (Neon/PostgreSQL in production, file fallback locally)
        -> rate limit / observability
+Slack `/spotdiggz` -> signed command + owner ID -> same recommendation engine -> ephemeral response
+Discord `/spotdiggz` -> signed interaction + owner ID -> same recommendation engine -> ephemeral response
   -> YouTube player (利用者が動画を選択した後だけ、browserから直接)
   -> official Instagram / X profile (利用者が外部リンクを選択した後だけ)
 ```
@@ -31,6 +34,8 @@ production成果物は `CGO_ENABLED=0` の静的な単一binaryを含むscratch 
 | --- | --- | --- |
 | `internal/webui` | 埋め込み静的asset、browser entry point、明示操作後の外部メディア表示 | 推薦rule、catalog更新、第三者コンテンツ収集 |
 | `internal/httpapi` | route、HTTP validation、response/error contract、security header | provider固有request、永続化format |
+| `internal/owneraccess` | GitHub OAuth state/PKCE、owner allowlist、署名済みsession、fail-closed middleware | recommendation rule、platform message処理、OAuth token永続化 |
+| `internal/chatbot` | Slack/Discord署名検証、platform owner ID認可、ephemeral response、共通推薦format | message history、account linking DB、推薦ranking |
 | `internal/session` | purpose、mood、level、time、transport、originのdomain validation | HTTPやGoogle型 |
 | `internal/facility` | catalog model/load/validation、freshness、営業時間・休場判定、allowlist済み外部メディアmetadata validation | user request、外部API credential、任意iframe HTML |
 | `internal/recommendation` | hard condition、score、stable ordering、reason生成 | network、AI、catalog mutation |
@@ -65,14 +70,18 @@ production成果物は `CGO_ENABLED=0` の静的な単一binaryを含むscratch 
 
 1. facility JSONを読み、schema、source、座標、translation、時刻、休場形式を検証する。
 2. correction storeを初期化し、`deleteAfter` 超過reportをpurgeする。file fallback時はfileの作成・書込・sync可否も確認する。
-3. keyがあればGoogle adapter、なければstraight-line recommendationとdisabled geocodingを構成する。
-4. catalogのfresh件数を評価し、HTTP serverと1時間ごとのretention workerを開始する。
+3. GitHub owner認証を構成する。ProductionでOAuth/session設定が欠ける場合は起動を拒否し、development bypassはProductionで無効にする。
+4. Slack/Discord設定があればplatform署名、owner ID mapping、chat既定推薦条件を検証してadapterを構成する。部分設定や不正な既定条件は起動を拒否する。
+5. keyがあればGoogle adapter、なければstraight-line recommendationとdisabled geocodingを構成する。
+6. catalogのfresh件数を評価し、HTTP serverと1時間ごとのretention workerを開始する。
 
 構造的に不正なcatalogまたはcorrection store初期化失敗はstartup failureとする。期限超過catalogはloadできるが、fresh施設が0件なら `/healthz` は200、`/readyz` は503である。
 
 ### Request path
 
 - Recommendationは候補のfreshness、休場、営業時間、時間、levelを除外し、provider結果を使って最大3件をstable orderで返す。
+- Browser UIと`/api/*`はGitHub owner sessionを要求する。Slack/Discord endpointはbrowser sessionの代わりにplatform署名とowner platform IDを検証する。
+- chat adapterはmessage historyを参照せず、server-sideの代表起点・既定条件で同じRecommendation moduleを呼び出す。受付response後の非同期処理は12秒でtimeoutする。
 - Google Routesは4秒timeoutとし、HTTP / decode / element failure時はrequest全体をstraight-lineへfallbackする。
 - GeocodingはGoogle専用で、JSON bodyのPOSTと専用rate limitを通し、key未設定またはprovider failure時に503を返す。代表地点・browser geolocationはUI側の代替経路である。
 - Correctionは32 MiBのstore上限内でappendとsyncに成功した場合だけ202を返す。reportには90日後の `deleteAfter` を付け、起動時と1時間ごとにpurgeする。
@@ -91,6 +100,10 @@ immutable image
   - CA bundle
 runtime configuration
   - PORT / catalog path / correction path / environment / version
+  - GitHub owner OAuth / session secrets / canonical base URL
+  - Slack signing secret / team and owner user ID
+  - Discord public key / application, guild and owner user ID
+  - chat default recommendation conditions and representative origin
   - GOOGLE_MAPS_API_KEY (optional secret)
 persistent state
   - correction JSON Lines volume
@@ -116,6 +129,8 @@ Current automated checks:
 - catalog schema/freshness/closure/translation validation
 - deterministic recommendationとprovider fallback tests
 - HTTP endpoint、strict JSON、body limit、rate limit、error code tests
+- GitHub OAuth state/PKCE、owner/non-owner、session改ざん、Production fail-closed tests
+- Slack HMAC/replay/owner allowlist/delayed response、Discord Ed25519/PING/owner allowlist/deferred response tests
 - correction consent、file mode、retention purge tests
 - metrics / privacy-sensitive logging tests
 - curated mediaのprovider/video ID/HTTPS host/max 1 video validationと、任意iframe HTML・任意host拒否

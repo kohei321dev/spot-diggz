@@ -21,3 +21,4 @@ var/
 .vercel
 .env*.local
 .env*
+!.env.example

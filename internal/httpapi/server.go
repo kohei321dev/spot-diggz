@@ -17,6 +17,7 @@ import (
 	"github.com/kohei321dev/spot-diggz/internal/facility"
 	"github.com/kohei321dev/spot-diggz/internal/geocoding"
 	"github.com/kohei321dev/spot-diggz/internal/observability"
+	"github.com/kohei321dev/spot-diggz/internal/owneraccess"
 	"github.com/kohei321dev/spot-diggz/internal/ratelimit"
 	"github.com/kohei321dev/spot-diggz/internal/recommendation"
 	"github.com/kohei321dev/spot-diggz/internal/session"
@@ -48,6 +49,9 @@ type Options struct {
 	CorrectionLimiter     *ratelimit.Limiter
 	EventLimiter          *ratelimit.Limiter
 	Now                   func() time.Time
+	OwnerAccess           *owneraccess.Manager
+	SlackHandler          http.Handler
+	DiscordHandler        http.Handler
 }
 
 type Server struct {
@@ -124,9 +128,22 @@ func NewServerWithOptions(catalog *facility.Catalog, logger *slog.Logger, option
 	mux.HandleFunc("POST /api/corrections", server.submitCorrection)
 	mux.HandleFunc("POST /api/events", server.recordProductEvent)
 	mux.HandleFunc("GET /metrics", server.serveMetrics)
+	if options.SlackHandler != nil {
+		mux.Handle("POST /integrations/slack/commands", options.SlackHandler)
+	}
+	if options.DiscordHandler != nil {
+		mux.Handle("POST /integrations/discord/interactions", options.DiscordHandler)
+	}
+	if options.OwnerAccess != nil {
+		options.OwnerAccess.RegisterRoutes(mux)
+	}
 	mux.Handle("GET /", webui.NewHandler())
 
-	return server.withRequestID(server.withAccessLog(server.withMetrics(server.withSecurityHeaders(mux))))
+	var applicationHandler http.Handler = mux
+	if options.OwnerAccess != nil {
+		applicationHandler = options.OwnerAccess.Middleware(applicationHandler)
+	}
+	return server.withRequestID(server.withAccessLog(server.withMetrics(server.withSecurityHeaders(applicationHandler))))
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {

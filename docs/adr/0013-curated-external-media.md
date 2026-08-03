@@ -6,6 +6,7 @@
 - Related: [ADR-0002](0002-facility-data-source-and-freshness.md)
 - Related: [ADR-0008](0008-facility-catalog-api-and-storage.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
+- Amended by: [ADR-0014](0014-progressive-facility-details.md)（Decision 4と初期iframe loadに関する判断を置換）
 - Related: [Security Baseline](../security/security-baseline.md)
 
 ## Context

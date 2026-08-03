@@ -15,6 +15,7 @@ import (
 	"github.com/kohei321dev/spot-diggz/internal/facility"
 	"github.com/kohei321dev/spot-diggz/internal/geocoding"
 	"github.com/kohei321dev/spot-diggz/internal/observability"
+	"github.com/kohei321dev/spot-diggz/internal/owneraccess"
 	"github.com/kohei321dev/spot-diggz/internal/ratelimit"
 	"github.com/kohei321dev/spot-diggz/internal/recommendation"
 )
@@ -76,6 +77,20 @@ func TestServerGetsFacilityAndReturnsNotFound(t *testing.T) {
 	}
 	if body.Error.Code != "facility_not_found" {
 		t.Fatalf("error code = %q, want facility_not_found", body.Error.Code)
+	}
+}
+
+func TestServerDoesNotExposeSavedFacilityList(t *testing.T) {
+	catalog, err := facility.NewCatalog([]facility.Facility{testFacility()})
+	if err != nil {
+		t.Fatalf("NewCatalog() error = %v", err)
+	}
+	handler := NewServer(catalog, nil)
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/lists", nil))
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusNotFound)
 	}
 }
 
@@ -760,6 +775,36 @@ func TestServerRateLimitsRecommendationRequests(t *testing.T) {
 		if response.Code != wantStatus {
 			t.Fatalf("request %d status = %d, want %d; body = %s", index, response.Code, wantStatus, response.Body.String())
 		}
+	}
+}
+
+func TestServerEnforcesOwnerAuthenticationAndKeepsHealthPublic(t *testing.T) {
+	catalog, err := facility.NewCatalog([]facility.Facility{testFacility()})
+	if err != nil {
+		t.Fatalf("NewCatalog() error = %v", err)
+	}
+	accessManager, err := owneraccess.New(owneraccess.Config{Environment: "development", GitHubOwner: "kohei321dev", Now: fixedServerTime})
+	if err != nil {
+		t.Fatalf("owneraccess.New() error = %v", err)
+	}
+	handler := NewServerWithOptions(catalog, nil, Options{OwnerAccess: accessManager, Now: fixedServerTime})
+
+	healthResponse := httptest.NewRecorder()
+	handler.ServeHTTP(healthResponse, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	if healthResponse.Code != http.StatusOK {
+		t.Fatalf("health status = %d", healthResponse.Code)
+	}
+
+	apiResponse := httptest.NewRecorder()
+	handler.ServeHTTP(apiResponse, httptest.NewRequest(http.MethodGet, "/api/facilities", nil))
+	if apiResponse.Code != http.StatusServiceUnavailable || !strings.Contains(apiResponse.Body.String(), "auth_not_configured") {
+		t.Fatalf("API response = %d %s", apiResponse.Code, apiResponse.Body.String())
+	}
+
+	pageResponse := httptest.NewRecorder()
+	handler.ServeHTTP(pageResponse, httptest.NewRequest(http.MethodGet, "/", nil))
+	if pageResponse.Code != http.StatusSeeOther || pageResponse.Header().Get("Location") != "/auth/setup" {
+		t.Fatalf("page response = %d location=%q", pageResponse.Code, pageResponse.Header().Get("Location"))
 	}
 }
 

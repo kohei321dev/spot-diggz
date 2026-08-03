@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: spot-diggz MVP API
-  version: 0.6.0
+  version: 0.7.0
   description: |-
     Verified facility catalog, deterministic recommendation, correction, and
     observability API. Every application response includes `X-Request-ID` and
@@ -14,9 +14,12 @@ info:
 
     Facility responses can include curator-reviewed YouTube metadata and official
     social-profile links. They never contain arbitrary embed URLs or iframe HTML.
+security:
+  - ownerSession: []
 paths:
   /healthz:
     get:
+      security: []
       operationId: getHealth
       summary: Check process liveness
       responses:
@@ -31,6 +34,7 @@ paths:
                 $ref: '#/components/schemas/HealthStatus'
   /readyz:
     get:
+      security: []
       operationId: getReadiness
       summary: Check application readiness
       description: |-
@@ -79,13 +83,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FacilityList'
-        '400':
-          description: The activity query is longer than 50 characters.
-          x-error-codes: [invalid_query]
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /api/facilities/{facilityId}:
     get:
       operationId: getFacility
@@ -322,8 +319,93 @@ paths:
           $ref: '#/components/responses/UnsupportedMediaType'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /integrations/slack/commands:
+    post:
+      security: []
+      operationId: receiveSlackCommand
+      summary: Receive owner-only Slack commands and interactions
+      description: |-
+        Verifies Slack's HMAC-SHA256 request signature and five-minute replay
+        window, then authorizes the configured team and user IDs. A slash command
+        opens a search modal. A modal submission is acknowledged before geocoding
+        and recommendation run in the background; candidates are returned as an
+        ephemeral message with official-information and route links. Candidates,
+        message history, and exact location input are never persisted.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Slash command fields, or a signed `payload` field for modal and link-button interactions.
+              properties:
+                team_id:
+                  type: string
+                user_id:
+                  type: string
+                command:
+                  type: string
+                  const: /spotdiggz
+                payload:
+                  type: string
+      responses:
+        '200':
+          description: Modal acknowledgement, interaction update, denial, or command error.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: The signed command payload or response URL is invalid.
+        '401':
+          description: Slack request signature or timestamp verification failed.
+        '413':
+          description: The request body exceeds 64 KiB.
+        '415':
+          description: Content-Type is not application/x-www-form-urlencoded.
+  /integrations/discord/interactions:
+    post:
+      security: []
+      operationId: receiveDiscordInteraction
+      summary: Receive the owner-only Discord interaction
+      description: |-
+        Verifies Discord's Ed25519 signature and five-minute replay window,
+        handles PING, and authorizes the configured application, guild, and user
+        IDs. An allowed /spotdiggz
+        command receives an ephemeral deferred response that is updated with
+        the recommendation. Message history is never queried or persisted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              required: [type]
+              properties:
+                type:
+                  type: integer
+      responses:
+        '200':
+          description: PONG, ephemeral message, or deferred interaction response.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: The signed interaction JSON or token is invalid.
+        '401':
+          description: Discord Ed25519 signature verification failed.
+        '413':
+          description: The request body exceeds 64 KiB.
+        '415':
+          description: Content-Type is not application/json.
   /metrics:
     get:
+      security: []
       operationId: getPrometheusMetrics
       summary: Expose Prometheus metrics
       description: |-
@@ -340,6 +422,12 @@ paths:
               schema:
                 type: string
 components:
+  securitySchemes:
+    ownerSession:
+      type: apiKey
+      in: cookie
+      name: spotdiggz_session
+      description: HMAC-signed HttpOnly session created after the allow-listed GitHub owner completes OAuth.
   headers:
     RequestID:
       description: Random request correlation ID generated by the application.
@@ -370,6 +458,16 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    ChatAcknowledgement:
+      type: object
+      additionalProperties: false
+      required: [response_type, text]
+      properties:
+        response_type:
+          type: string
+          const: ephemeral
+        text:
+          type: string
     HealthStatus:
       type: object
       additionalProperties: false
