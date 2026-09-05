@@ -1,8 +1,8 @@
 # Observability, SLI and SLO Design
 
 - Status: MVP implemented baseline; production wiring pending
-- Date: 2026-07-20
-- Scope: application JSON logs, in-process Prometheus metrics, product events, catalog freshness, curated external media interaction
+- Date: 2026-08-01
+- Scope: application JSON logs, in-process Prometheus metrics, owner authentication, chat entrypoints, product events, catalog freshness, curated external media interaction
 
 ## 1. 目的
 
@@ -32,6 +32,8 @@
 | Prometheus endpoint | implemented | unauthenticated `GET /metrics` |
 | distributed trace | not implemented | 単一processのMVPではrelease gate外 |
 | Google provider metrics | implemented | 固定provider・success/error別のrequest数とduration |
+| owner authentication | implemented | HTTP statusとroute templateで観測。OAuth token、cookie、GitHub login/IDは記録しない |
+| Slack / Discord entrypoints | implemented | 署名検証結果はHTTP statusで観測。request body、platform ID、response URL、interaction tokenは記録しない |
 | dashboard / alert delivery | [未検証] | production platform未選定 |
 | long-term telemetry retention | [未検証] | metrics backend未選定 |
 
@@ -60,6 +62,10 @@ applicationはGo `slog` のJSON handlerを使う。共通fieldは次のとおり
 - `google_routes_initialization_failed`
 - `travel_provider_initialization_failed`
 - `geocoder_initialization_failed`
+- `owner_auth_initialization_failed`: `error`。Production認証設定が不完全な場合、serverは起動しない
+- `chat_integration_initialization_failed`: `error`。有効化したplatform設定または既定推薦条件が不正な場合、serverは起動しない
+- `slack_integration_enabled`
+- `discord_integration_enabled`
 - `http_server_started`: `addr`
 - `http_server_failed`
 - `http_server_shutdown_failed`
@@ -76,6 +82,8 @@ applicationはGo `slog` のJSON handlerを使う。共通fieldは次のとおり
 
 raw URL、query string、request body、response body、client IP、User-Agentは記録しない。facility IDを含む実pathではなくroute templateを使うため、location-search queryはaccess logへ入らない。
 
+`/auth/*`、`/integrations/slack/commands`、`/integrations/discord/interactions`も同じaccess log contractを使う。OAuth `code` / `state`、session cookie、Slack `response_url`、Discord interaction token、GitHub/Slack/Discord user IDはfieldまたはroute labelへ追加しない。署名失敗、非owner拒否、platform delivery失敗の専用counterは未実装であり、MVPではroute別status classとplatform側delivery logを突き合わせる。
+
 ### Correction log
 
 `correction_received` は `request_id`、`report_id`、`facility_id`、`category` だけを記録する。`details`、`evidenceUrl`、`contact`、`contactConsent` は記録しない。
@@ -87,6 +95,10 @@ raw URL、query string、request body、response body、client IP、User-Agent�
 - correctionの自由入力、根拠URL、連絡先
 - request / response body
 - browser storage値
+- OAuth `code` / `state` / access token、owner session cookie、GitHub login/ID
+- Slack Bot Token、Signing Secret、request body、地点入力・座標、team/user ID、`response_url`
+- Discord request body、application/guild/user ID、interaction token
+- chat既定起点座標、command本文、推薦response本文
 - YouTube video ID、watch URL、embed URL、動画title、再生・視聴履歴
 - Instagram/X profile URL、post URL、handle、ハッシュタグ、表示名
 
@@ -147,7 +159,7 @@ HTTP 400のinvalid session inputもrecommendation `error` に含む。rate limit
 
 ADR-0013の実装後、`spot_diggz_product_events_total{event=...}` に次のallowlistを追加する。
 
-- `video_embed_displayed`: 動画を持つ施設cardを初めて表示する際にYouTube iframeを作成した
+- `video_embed_displayed`: 利用者が動画を含む施設詳細を開き、YouTube iframeを初めて作成した
 - `video_embed_loaded`: iframeのload eventを受けた。再生開始・再生完了・視聴時間を意味しない
 - `video_external_opened`: 埋込が利用できない場合を含め、YouTube watch URLを外部で開いた
 - `social_profile_opened`: allowlist済みInstagram/X profileを外部で開いた
@@ -239,6 +251,8 @@ straight-lineだけのlocal deterministic testはp95 500ms以下を目標にで�
 | `/healthz` 非200 | trafficを停止し直前imageへrollback |
 | `/readyz` 503かつhealth 200 | empty / all-staleを確認し、fresh catalogへ更新または直前imageへrollback |
 | Google usage / billing急増 | keyを削除してstraight-lineへ縮退 |
+| `/auth/*` またはowner保護routeの4xx急増 | OAuth callback/base URL、owner login、cookie属性を確認。secret値はlogへ出さない |
+| Slack / Discord entrypointの4xx急増 | platform request URL、署名credential、timestamp、owner ID mappingを確認。payloadを通常logへ保存しない |
 
 具体的なsmoke、縮退、rollbackは [MVP Runbook](mvp-runbook.md) を正とする。
 
@@ -262,5 +276,6 @@ telemetry backendを導入する場合は、access control、retention、削除�
 - metricsがprocess restartでresetする
 - production dashboard、alert、scrape、retentionは資格情報とplatform選定が必要で未実施
 - curated external media eventはADR-0013の実装、privacy表示、CSP、E2Eと同時に追加するまで未実装
+- Slack / Discordの遅延response delivery専用metricとdurable retryは未実装。process停止後もdeliveryを保証する必要が生じた場合は、tokenを短期暗号化保存するqueueとretentionを別途設計する
 
 production公開前に最低限、private metrics scrape、release version、5xx / stale / purge failure alert、dashboard、post-deploy observation windowを設定する。

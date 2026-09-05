@@ -888,6 +888,32 @@ select {
   flex-wrap: wrap;
 }
 
+.facility-detail-disclosure {
+  margin-top: 18px;
+  border-top: 1px solid #e0e5e1;
+}
+
+.facility-detail-disclosure > summary {
+  min-height: 44px;
+  padding: 12px 2px;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.facility-detail-disclosure[open] > summary {
+  border-bottom: 1px solid #e0e5e1;
+}
+
+.facility-detail-content {
+  padding-top: 2px;
+}
+
+.facility-detail-content > :last-child {
+  margin-bottom: 2px;
+}
+
 .navigation-link {
   min-height: 46px;
   padding: 11px 17px;
@@ -1104,6 +1130,14 @@ select {
 
 .alternative-row .facility-media {
   margin-top: 14px;
+}
+
+.alternative-row .facility-detail-disclosure {
+  margin-top: 12px;
+}
+
+.alternative-row .facility-detail-disclosure > summary {
+  font-size: 0.73rem;
 }
 
 .facility-media.is-compact {

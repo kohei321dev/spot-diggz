@@ -132,11 +132,33 @@ Non-secret:
 - `CORRECTION_STORE_PATH`
 - `APP_ENV`
 - `APP_VERSION`
+- `APP_BASE_URL`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_OWNER`
+- `DISCORD_PUBLIC_KEY`
+- `DISCORD_APPLICATION_ID`
+- `DISCORD_GUILD_ID`
+- `DISCORD_OWNER_USER_ID`
+- `CHAT_DEFAULT_ORIGIN_LATITUDE`
+- `CHAT_DEFAULT_ORIGIN_LONGITUDE`
+- `CHAT_DEFAULT_PURPOSE`
+- `CHAT_DEFAULT_MOOD`
+- `CHAT_DEFAULT_LEVEL`
+- `CHAT_DEFAULT_AVAILABLE_MINUTES`
+- `CHAT_DEFAULT_TRANSPORT`
 
 Secret:
 
 - `DATABASE_URL`
 - `GOOGLE_MAPS_API_KEY`
+- `AUTH_SECRET`
+- `GITHUB_CLIENT_SECRET`
+- `SLACK_BOT_TOKEN`
+- `SLACK_SIGNING_SECRET`
+- `SLACK_TEAM_ID`
+- `SLACK_OWNER_USER_ID`
+
+ProductionはGitHub owner認証が必須であり、`APP_BASE_URL`、`AUTH_SECRET`、`GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`の欠落時は起動しない。GitHub OAuth Appのcallbackは`APP_BASE_URL + /auth/github/callback`に完全一致させる。`DEV_AUTH_BYPASS`をProductionへ設定しない。Slackを有効にする場合は4つの`SLACK_*`、`DATABASE_URL`、地点解決用`GOOGLE_MAPS_API_KEY`を設定する。Discordを有効にする場合は対象platformの全設定と公開代表起点を設定する。部分設定は起動失敗とする。
 
 production keyはserver-side secret storeから注入し、Routes API / Geocoding APIと送信元を制限する。fork PR、E2E、image buildへproduction keyを渡さない。Googleを使わないreleaseではkeyを設定せず、straight-lineを明示的な既定modeとする。
 
@@ -159,6 +181,9 @@ correction storeは32 MiB上限のJSON Lines persistent fileである。applicat
 - location search: Google有効時200、無効時503
 - metrics: catalog、HTTP、recommendation、event
 - correction store: Neon接続とretention worker errorなし。file fallbackではvolume writable
+- GitHub owner authentication: owner login成功、非owner拒否、sign-out後のAPI 401
+- Slack `/spotdiggz`: owner commandの受付と遅延response、非owner拒否。過去message history権限は要求しない
+- Discord `/spotdiggz`: PING、owner commandのdeferred response更新、非owner拒否。Gatewayまたはmessage history権限は要求しない
 
 production write-path smokeは承認済みpreviewで行う。実利用者の訂正dataをtestに使わない。
 

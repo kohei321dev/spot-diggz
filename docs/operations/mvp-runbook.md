@@ -1,8 +1,8 @@
 # spot-diggz MVP Release and Operations Runbook
 
 - Status: Operational baseline; Vercel/Neon production smoke verified 2026-07-20
-- Date: 2026-07-20
-- Scope: single Go application, facility catalog, Neon correction store in production, local correction file fallback, optional Google providers
+- Date: 2026-08-01
+- Scope: single Go application, GitHub owner authentication, Slack/Discord entrypoints, facility catalog, Neon correction store in production, local correction file fallback, optional Google providers
 
 このRunbookは、release ownerが同一imageを起動し、smoke、監視、縮退、rollbackまで判断するための手順である。Vercel/Neonの初回構築とProduction smokeは完了しており、metrics制限、Google quota、カスタムドメインなど未設定の項目は本文で明示する。
 
@@ -63,12 +63,21 @@ GitHub Actionsは毎週月曜00:17 UTC（09:17 JST）に `make verify-catalog` �
 | `PORT` | no | `8080` | ingress targetと一致させる |
 | `FACILITY_CATALOG_PATH` | no | `data/facilities.json` | imageに含めた検証済みfileを使う |
 | `CORRECTION_STORE_PATH` | no | `var/corrections.jsonl` | local/CIのfile fallback用。productionではNeonを使う |
-| `DATABASE_URL` | production | unset | Neon/PostgreSQLのcorrection store。設定時はfile storeより優先 |
-| `GOOGLE_MAPS_API_KEY` | no | unset | secret storeから注入し、API・送信元を制限する |
+| `DATABASE_URL` | production、またはProduction Slack利用時 | unset | Neon/PostgreSQLのcorrectionと短期Slack request状態。設定時はfile storeより優先 |
+| `GOOGLE_MAPS_API_KEY` | Slack利用時yes | unset | Routes / Geocoding用。Slack modalの地点解決に必要。secret storeから注入しAPI・送信元を制限する |
 | `APP_ENV` | no | `development` | `production` 等の低cardinality値をlogへ付与する |
 | `APP_VERSION` | no | `unknown` | release SHAまたはimage versionを付与する |
+| `APP_BASE_URL` | production | unset | 正式HTTPS origin。GitHub OAuth callbackの構成に使う |
+| `AUTH_SECRET` | production | unset | 32 bytes以上のrandom値。owner sessionとOAuth stateへ使用する |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | production | unset | GitHub OAuth App credential。secretはsecret storeから注入する |
+| `GITHUB_OWNER` | no | `kohei321dev` | 許可する単一GitHub login |
+| `DEV_AUTH_BYPASS` | local only | unset | local/E2Eだけ`1`を許可。Productionでは無効 |
+| `SLACK_BOT_TOKEN` / `SLACK_SIGNING_SECRET` / `SLACK_TEAM_ID` / `SLACK_OWNER_USER_ID` | Slack利用時 | unset | modal・ephemeral送信、request署名、owner mapping。4項目を同時に設定する |
+| `DISCORD_PUBLIC_KEY` / `DISCORD_APPLICATION_ID` / `DISCORD_GUILD_ID` / `DISCORD_OWNER_USER_ID` | Discord利用時 | unset | interaction署名とowner mapping。4項目を同時に設定する |
+| `CHAT_DEFAULT_ORIGIN_LATITUDE` / `CHAT_DEFAULT_ORIGIN_LONGITUDE` | Discord利用時 | unset | 駅等の公開地点を使う。自宅等の正確な個人位置を設定しない |
+| `CHAT_DEFAULT_*` | no | README参照 | Discordで使う目的、気分、level、利用時間、交通手段 |
 
-Googleを有効にしないreleaseでは `GOOGLE_MAPS_API_KEY` を設定しない。この状態はerrorではなく、推薦を `straight_line` で継続する既定の縮退modeである。
+Slackを有効にしないreleaseでは`GOOGLE_MAPS_API_KEY`を設定しなくても、Web/Discord推薦を`straight_line`で継続できる。Slackは任意地点を解決するためGeocoding providerが必要であり、keyなしでは部分設定として起動を拒否する。
 
 Vercel Productionでは`DATABASE_URL`でNeon/PostgreSQLを使い、訂正reportをcontainer filesystemへ保存しない。`DATABASE_URL`未設定のlocal/CIではapplication userが書き込めるfile storeを使う。file storeの既定pathは `/var/lib/spotdiggz/corrections.jsonl`、実行userはUID `65532` である。scratch imageには同UIDが所有する書込directoryとGoogle HTTPS用CA bundleを含む。
 file storeを使う場合、applicationは起動時に作成・書込・sync可否を確認し、総量が32 MiBを超えるstoreでは起動しない。稼働中に上限へ達した場合は新規appendを拒否して503を返す。Neon側では`delete_after`を条件に期限切れreportを削除する。
@@ -78,19 +87,23 @@ file storeを使う場合、applicationは起動時に作成・書込・sync可�
 Local without Google:
 
 ```bash
-APP_ENV=local APP_VERSION=dev make run
+make run-dev
 ```
 
 Local with a credential supplied by an approved secret source:
 
 ```bash
-APP_ENV=local APP_VERSION=dev GOOGLE_MAPS_API_KEY='<secret>' make run
+APP_ENV=local APP_VERSION=dev DEV_AUTH_BYPASS=1 GOOGLE_MAPS_API_KEY='<secret>' make run
 ```
+
+GitHub OAuthをlocalで確認する場合は`DEV_AUTH_BYPASS`を設定せず、`APP_BASE_URL=http://localhost:8080`とGitHub OAuth App credentialを承認済みsecret sourceから注入し、callbackを`http://localhost:8080/auth/github/callback`へ設定する。
 
 起動logで次を確認する。
 
 - `facility_catalog_loaded`: 想定件数をloadした
 - `google_maps_integrations_enabled` または `google_maps_integrations_disabled`: 意図したmodeである
+- `owner_auth_initialization_failed` がない
+- 有効化時は`slack_integration_enabled`または`discord_integration_enabled`がある
 - `http_server_started`: 想定portでlistenした
 - `correction_store_initialization_failed` がない
 
@@ -101,7 +114,6 @@ APP_ENV=local APP_VERSION=dev GOOGLE_MAPS_API_KEY='<secret>' make run
 ```bash
 curl --fail --silent '<base-url>/healthz'
 curl --fail --silent '<base-url>/readyz'
-curl --fail --silent '<base-url>/api/facilities?activity=skateboard'
 curl --fail --silent '<base-url>/metrics'
 ```
 
@@ -112,6 +124,7 @@ curl --fail --silent '<base-url>/metrics'
 - facility responseに `prefecture`、`municipality`、`englishTranslation`、`dynamicVerifiedAt`、`stableVerifiedAt` がある
 - metricsに `spot_diggz_catalog_facilities`、fresh/staleの両state、Google providerのsuccess/error seriesがある
 - productionの `/metrics` はpublic Internetから到達できない
+- 未認証の`/api/facilities?activity=skateboard`は401を返し、GitHub owner login後は200を返す
 
 ### 3.5 Recommendation smoke
 
@@ -184,12 +197,14 @@ commandはstoreを変更せず、report総数、期限切れ件数、破損行�
 
 ### 3.9 Deploy and post-deploy gate
 
-1. 既存Neon OrganizationのProjectから取得した`DATABASE_URL`をVercel Productionへsecretとして注入する。
-2. `npx vercel --prod`で`Dockerfile.vercel`を使うContainerをdeployする。
-3. `/healthz`をliveness、`/readyz`をreadinessとして確認する。
-4. 3.4から3.6のread-only smokeを実行し、訂正APIは承認済みのwrite-path smoke時だけ実行する。
-5. `spot_diggz_http_requests_total`の5xx、recommendation result、catalog staleを観察する。
-6. 問題時は`npx vercel rollback`で直前Productionへ戻し、Neon schemaを巻き戻さない。
+1. 既存Neon OrganizationのProjectから取得した`DATABASE_URL`とGitHub認証secretをVercel Productionへ注入する。
+2. GitHub OAuth App callbackを`<base-url>/auth/github/callback`、Slack slash command Request URLを`<base-url>/integrations/slack/commands`、Discord Interactions Endpoint URLを`<base-url>/integrations/discord/interactions`へ設定する。使わないchat platformは環境変数もendpointも設定しない。
+3. `npx vercel --prod`で`Dockerfile.vercel`を使うContainerをdeployする。
+4. `/healthz`をliveness、`/readyz`をreadinessとして確認する。
+5. GitHub owner login、非owner拒否、sign-outを確認してから、3.4から3.6のowner認証済みread-only smokeを実行する。訂正APIは承認済みのwrite-path smoke時だけ実行する。
+6. 有効化したplatformでowner/non-ownerの`/spotdiggz`を実行し、3秒以内のephemeral受付と推薦結果更新を確認する。Slack/Discordの過去messageを削除・参照しても新規commandが応答することを確認する。
+7. `spot_diggz_http_requests_total`の5xx、認証・integration routeの4xx、recommendation result、catalog staleを観察する。request body、platform ID、OAuth/interaction tokenがlogへないことを確認する。
+8. 問題時は`npx vercel rollback`で直前Productionへ戻し、Neon schemaを巻き戻さない。認証漏れの場合はtrafficを停止し、`AUTH_SECRET`とOAuth grantをrotateする。
 
 Vercelでの初回構築、Neon Project、migration、Production smokeの詳細は [Vercel・Neonデプロイ手順](vercel-neon-deployment.md) を正とする。`/metrics`のpublic到達制限、Google quota、custom domainは未設定のため、別途release gateとする。
 

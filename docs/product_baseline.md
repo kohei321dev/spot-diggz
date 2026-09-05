@@ -1,7 +1,7 @@
 # spot-diggz Product Baseline
 
 - Status: Active baseline（MVP release readiness）
-- Date: 2026-07-21
+- Date: 2026-08-01
 - Product branch: `main`
 - Related research: [市場・需要調査レポート](market_demand_research_2026-07.md)
 
@@ -16,6 +16,8 @@
 ### Primary
 
 大阪府、兵庫県、和歌山県、奈良県、徳島県でスケートボードを始めた初心者。仕事・学校の後や限られた休日に、合法的かつ安心して練習できる施設を自力で判断しにくい利用者を対象とする。
+
+初期のprivate MVPでは、利用権限をGitHub owner allowlistの1名に限定してproduct仮説と運用を検証する。ここでの利用制限は市場上のtarget userを変更するものではなく、複数userへ公開する前のsecurity boundaryである。
 
 ### Secondary
 
@@ -68,6 +70,8 @@ MVPの地理scopeは、大阪府、兵庫県、和歌山県、奈良県、徳島
 
 ## 6. User Flow
 
+WebではGitHub OAuthで許可ownerを確認する。Slack/Discordではplatform request署名とownerへ対応付けたuser IDを確認し、認可成功後だけ同じ推薦flowへ進む。
+
 ```text
 目的・気分・レベル・時間・検索位置・交通手段を入力
     ↓
@@ -103,9 +107,13 @@ Google連携がない場合、またはGoogle Routesが失敗した場合は、�
 | R-011 | 主要flowとcatalog品質を観測できる | release後の利用者影響を判断するため | request、推薦、allowlist event、catalog freshnessをmetrics化する |
 | R-012 | 公開write endpointの濫用を制限する | 個人運用の可用性を守るため | request size、strict JSON、process内token bucketを適用する |
 | R-013 | 主要操作と外部導線を、用途を表すアイコンと短いラベルで表示する | テキストリンクだけでは現在地取得、公式情報、経路、訂正報告の用途を素早く判別しにくいため | 現在地取得、外部ナビ、公式情報、訂正報告は一貫したアイコンと表示名を持つ。アイコンだけで状態・操作を伝えず、キーボード操作、アクセス可能な名前、44 CSS px以上の操作領域を満たす |
-| R-014 | 施設ごとに手動キュレーション済みYouTube動画を最大1件、任意の補助情報として初期表示できる | 滑走環境を想像し、候補を比較しやすくするため | catalogで検証済みのYouTube動画だけを施設ごとに0または1件、YouTube privacy-enhanced playerで初期表示する。自動再生はせず、利用者は同じトグル操作で動画を閉じて再表示できる。埋込不可・削除・通信失敗時は推薦表示を継続し、通常のYouTube外部リンクへ縮退する |
+| R-014 | 施設ごとに手動キュレーション済みYouTube動画を最大1件、任意の補助情報として表示できる | 滑走環境を想像し、候補を比較しやすくするため | catalogで検証済みのYouTube動画だけを施設ごとに0または1件、施設詳細を開いた後にYouTube privacy-enhanced playerで表示する。詳細を閉じている間はiframeを生成せず、自動再生もしない。利用者は同じトグル操作で動画を閉じて再表示できる。埋込不可・削除・通信失敗時は推薦表示を継続し、通常のYouTube外部リンクへ縮退する |
 | R-015 | 公式性を確認済みのSNSプロフィールへの外部リンクを表示できる | 施設が公開する追加情報への導線を、投稿の収集なしで提供するため | 初期対象はInstagramとXとし、施設ごとにplatformごと最大1件のHTTPSプロフィールURLだけを表示する。リンクは用途を表すブランドアイコンと表示名を持ち、投稿、ハッシュタグ、フィードをapplication内へ表示しない |
 | R-016 | 動画・SNSの取得と表示を、手動確認可能な運用境界に限定する | 著作権、利用規約、第三者通信、情報鮮度のriskを管理するため | Google/Apple Maps、SKEPA等の第三者サイト、SNSから画像・動画・投稿を自動収集、保存、スクレイピング、再配信しない。任意URLをiframeへ渡さず、許可したYouTube動画IDから固定の埋込先を構成する。ownerがprovider規約、埋込可否、著作権・肖像権上の利用可否を確認し、確認日を記録する |
+| R-017 | Web UIとHTTP APIを許可したGitHub ownerだけが利用できる | 個人利用MVPの公開URLとAPIを第三者利用から守るため | GitHub OAuthのstateとPKCEを検証し、`GITHUB_OWNER`一致時だけ署名済みHttpOnly sessionを発行する。未認証APIは401、Productionの認証設定欠落は起動失敗とする |
+| R-018 | 同じownerがSlackとDiscordから推薦を要求できる | 普段使う会話画面から短い操作で行き先を決めるため | Slack署名・team/user ID、Discord Ed25519署名・application/guild/user IDを検証する。Slackはmodal条件、Discordは設定済み既定条件から既存推薦engineの最大3件をephemeral responseで返す |
+| R-019 | chat連携をmessage historyに依存させない | Slack Freeのhistory期間や過去message削除で推薦flowを壊さないため | 過去message APIを呼ばず、地点入力・座標・候補・interaction tokenを永続化しない。Slackはretry重複処理を防ぐsource event keyと処理状態だけを最大1時間保持する |
+| R-020 | Slackの推薦候補を保存しない | 単発の行き先決定に不要な永続データと保存UIを増やさないため | 候補には公式情報と経路の外部リンクだけを表示し、保存button、保存API、保存tableを持たない |
 
 R-008は外部送信を禁止する要求ではない。`GOOGLE_MAPS_API_KEY` を設定した場合、推薦の起点座標・施設座標・交通手段はGoogle Routesへ、地点検索文字列はGoogle Geocodingへ送信される。MVPは即時検索だけを扱い、Routesの `departureTime` を省略してproviderのrequest時刻を使う。UIとprivacy文書でこの境界を明示する。
 
@@ -170,7 +178,7 @@ MVPではAIを推薦処理へ使用しない。除外、順位付け、推薦理
 - 日本語・英語のUIと施設translation
 - 情報源表示と外部ナビ
 - アイコンと短いラベルによる主要操作・外部導線
-- 手動キュレーション済みYouTube動画の初期表示と開閉トグル、公式確認済みInstagram・Xプロフィールへの外部リンク
+- 手動キュレーション済みYouTube動画の施設詳細内での明示表示と開閉トグル、公式確認済みInstagram・Xプロフィールへの外部リンク
 - optionalなGoogle Routes / Google Geocoding
 - straight-line fallback
 - 90日保持metadata付き訂正報告file store
@@ -189,17 +197,17 @@ MVPではAIを推薦処理へ使用しない。除外、順位付け、推薦理
 - SNS投稿、ハッシュタグ、フィードの収集・表示
 - 利用者投稿の画像・動画、および任意URLのiframe埋込
 - 独自地図・独自turn-by-turn navigation
-- account、chat、follow、ranking、payment
+- 複数userのaccount管理、会話履歴、follow、ranking、payment
 - AIによる施設選定
 
 ### Implementation status
 
 | State | Boundary |
 | --- | --- |
-| [事実] Local implementation | Go modules、HTTP API、UI、provider adapter、fallback、file/PostgreSQL store、migration、rate limit、metrics、unit/component test |
-| [未検証] External integration | 実credentialを使うGoogle Routes / Geocoding、quota、課金、key restriction、provider側telemetry |
+| [事実] Local implementation | Go modules、HTTP API、UI、GitHub owner認証、Slack/Discord署名・owner認可adapter、provider fallback、file/PostgreSQL store、migration、rate limit、metrics、unit/component test |
+| [未検証] External integration | 実credentialを使うGitHub OAuth、Slack command、Discord interaction、Google Routes / Geocoding、quota、課金、key restriction、provider側telemetry |
 | [事実] Production operation | Vercel Project、既存Neon OrganizationのProject、migration、health/readiness、facility API、UI、correction API、desktop/mobile E2E |
-| [未検証] Production operation | metrics network restriction、alert、Google quota、custom domain/DNS、GitHub main pushからの自動deploy、rollback exercise |
+| [未検証] Production operation | GitHub owner login、Slack/Discord command、metrics network restriction、alert、Google quota、custom domain/DNS、GitHub main pushからの自動deploy、rollback exercise |
 
 Google外部APIの有効化、metrics制限、custom domain、main pushからの自動deployは、資格情報・課金設定・platform権限を持つ人間の承認後に実施する。ローカルtestだけでなく、今回確認済みのProduction smokeをrelease根拠として記録する。
 
@@ -235,7 +243,7 @@ Google外部APIの有効化、metrics制限、custom domain、main pushからの
 - Google連携時は正確な起点座標または検索文字列が外部providerへ送信される
 - process内rate limitは複数instance間で共有されず、強い濫用対策ではない
 - YouTube動画とSNSプロフィールは第三者が管理する情報であり、現在の施設状態や安全性を保証しない。動画の選定、埋込可否、権利・規約確認を継続運用できるかは未検証である
-- YouTube iframeは動画を持つ推薦結果の初期表示時に第三者通信を発生させる。providerの規約、telemetry、保持期間はowner確認が必要である
+- YouTube iframeは利用者が動画を含む施設詳細を開いた時点で第三者通信を発生させる。providerの規約、telemetry、保持期間はowner確認が必要である
 - productionのcorrection reportはNeon/PostgreSQLへ保存する。`DATABASE_URL`未設定のlocal/CIではfile storeへフォールバックするため、container置換をまたぐ永続性はproduction設定に依存する
 - correctionの期限切れpurgeは起動時と1時間ごとのため、失敗logを監視しないと90日retentionを保証できない。Neonでは`delete_after`を条件に削除する
 - metrics endpointはapplication認証を持たないため、ingressまたはnetworkで制限する必要がある

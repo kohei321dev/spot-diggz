@@ -16,7 +16,7 @@ run:
 	go run ./cmd/api
 
 run-dev:
-	FACILITY_CATALOG_PATH=testdata/facilities.dev.json go run ./cmd/api
+	DEV_AUTH_BYPASS=1 FACILITY_CATALOG_PATH=testdata/facilities.dev.json go run ./cmd/api
 
 verify-catalog:
 	go run ./cmd/catalogcheck -path data/facilities.json -minimum-validity 168h

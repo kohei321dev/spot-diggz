@@ -28,6 +28,8 @@ const expectedPaths = new Set([
   "/api/recommendations",
   "/api/corrections",
   "/api/events",
+  "/integrations/slack/commands",
+  "/integrations/discord/interactions",
   "/metrics",
 ]);
 const actualPaths = new Set(Object.keys(openAPI.paths ?? {}));

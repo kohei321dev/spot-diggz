@@ -283,7 +283,7 @@ test("全候補に推薦根拠、公式出典、外部ナビを表示する", as
   });
 });
 
-test("キュレーション済み動画を初期表示して開閉でき、集計eventに対象情報を送らない", async ({
+test("キュレーション済み動画を施設詳細から表示して開閉でき、集計eventに対象情報を送らない", async ({
   page,
   request,
 }) => {
@@ -345,11 +345,20 @@ test("キュレーション済み動画を初期表示して開閉でき、集�
   const cards = page.getByRole("article");
   await expect(cards).toHaveCount(1);
   await expect(page.locator(".facility-media")).toHaveCount(3);
+  await expect(page.locator(".facility-media:visible")).toHaveCount(0);
+  await expect(page.locator("iframe")).toHaveCount(0);
+
+  const primaryCard = cards.first();
+  await expect(primaryCard.getByRole("link", {
+    name: "このプランで行く",
+    exact: true,
+  })).toBeVisible();
+  await primaryCard.getByText("施設の詳細を見る", { exact: true }).click();
+  await expect(primaryCard.getByText("施設の詳細を閉じる", { exact: true })).toBeVisible();
   await expect(page.locator(".facility-media:visible")).toHaveCount(1);
   await expect(page.locator("iframe")).toHaveCount(1);
   await expect(page.locator("iframe:visible")).toHaveCount(1);
 
-  const primaryCard = cards.first();
   const showVideo = primaryCard.getByRole("button", {
     name: "動画を閉じる",
     exact: true,
@@ -390,6 +399,11 @@ test("キュレーション済み動画を初期表示して開閉でき、集�
   );
   await expect(iframe).toHaveAttribute("referrerpolicy", "strict-origin-when-cross-origin");
 
+  await primaryCard.getByText("施設の詳細を閉じる", { exact: true }).click();
+  await expect(iframe).toBeHidden();
+  await primaryCard.getByText("施設の詳細を見る", { exact: true }).click();
+  await expect(iframe).toBeVisible();
+
   await showVideo.click();
   await expect(primaryCard.getByRole("button", { name: "動画を表示", exact: true })).toHaveCount(1);
   await expect(iframe).toBeHidden();
@@ -407,6 +421,14 @@ test("キュレーション済み動画を初期表示して開閉でき、集�
 
   await page.getByText("ほかの候補 2件", { exact: true }).click();
   await expect(page.locator(".facility-media")).toHaveCount(3);
+  await expect(page.locator(".facility-media:visible")).toHaveCount(1);
+  await expect(page.locator("iframe:visible")).toHaveCount(1);
+
+  const alternativeRows = page.locator(".alternative-row");
+  await expect(alternativeRows).toHaveCount(2);
+  for (const alternativeRow of await alternativeRows.all()) {
+    await alternativeRow.getByText("施設の詳細を見る", { exact: true }).click();
+  }
   await expect(page.locator(".facility-media:visible")).toHaveCount(3);
   await expect(page.locator("iframe:visible")).toHaveCount(3);
   await expect(page.getByRole("button", { name: "動画を閉じる", exact: true })).toHaveCount(3);

@@ -34,6 +34,7 @@ CGO_ENABLED=0 go build -trimpath -o "${temporary_store_directory}/spotdiggz-api"
 
 FACILITY_CATALOG_PATH="${temporary_store_directory}/facilities.json" \
 CORRECTION_STORE_PATH="${temporary_store_directory}/corrections.jsonl" \
+DEV_AUTH_BYPASS=1 \
 PORT="${PORT:-18080}" \
   "${temporary_store_directory}/spotdiggz-api" &
 server_pid=$!

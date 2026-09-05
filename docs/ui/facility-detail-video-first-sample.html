@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>施設詳細ページ案 — SPOTAKA Skateboard Park</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17201c;
+        --muted: #667169;
+        --line: #d6ddd7;
+        --surface: #ffffff;
+        --surface-soft: #f3f6f3;
+        --accent: #147a50;
+        --accent-dark: #0d5f3d;
+        --blue: #1765a6;
+        --amber-bg: #fff8e7;
+        --amber-line: #e6b63b;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background: #e9ede9;
+        font-family: Inter, "Noto Sans JP", "Yu Gothic", sans-serif;
+      }
+
+      a:focus-visible {
+        outline: 3px solid var(--amber-line);
+        outline-offset: 3px;
+      }
+
+      .site-header {
+        padding: 18px max(20px, calc((100vw - 1080px) / 2));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        color: #ffffff;
+        background: #101914;
+        border-bottom: 4px solid #44c58b;
+      }
+
+      .brand { font-size: 1.25rem; font-weight: 900; }
+      .prototype { color: #9de0bf; font: 700 0.68rem/1.4 ui-monospace, monospace; letter-spacing: .08em; }
+
+      main {
+        width: min(1080px, calc(100% - 32px));
+        margin: 28px auto 64px;
+      }
+
+      .back-link {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        color: var(--accent-dark);
+        font-size: .82rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .hero {
+        padding: 28px;
+        border: 1px solid #bcc9c0;
+        border-top: 5px solid var(--accent);
+        border-radius: 10px;
+        background: var(--surface);
+        box-shadow: 0 16px 40px rgb(23 32 28 / 8%);
+      }
+
+      .hero-label {
+        margin: 0;
+        color: var(--accent);
+        font-size: .72rem;
+        font-weight: 900;
+        letter-spacing: .04em;
+      }
+
+      h1 {
+        margin: 9px 0 0;
+        font-size: clamp(1.6rem, 4vw, 2.7rem);
+        line-height: 1.25;
+      }
+
+      .address {
+        margin: 9px 0 0;
+        color: var(--muted);
+        font-size: .88rem;
+        line-height: 1.6;
+      }
+
+      .hero-grid {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+        gap: 24px;
+      }
+
+      figure { margin: 0; }
+
+      .video-frame {
+        overflow: hidden;
+        border-radius: 8px;
+        background: #0e1511;
+      }
+
+      iframe {
+        width: 100%;
+        min-height: 220px;
+        aspect-ratio: 16 / 9;
+        display: block;
+        border: 0;
+      }
+
+      figcaption {
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: .72rem;
+        line-height: 1.55;
+      }
+
+      figcaption strong { display: block; margin-bottom: 3px; color: var(--ink); }
+
+      .status-panel {
+        padding: 20px;
+        border-radius: 8px;
+        color: #ffffff;
+        background: #142019;
+      }
+
+      .status-panel h2 { margin: 0; color: #9ed6b9; font-size: .76rem; }
+      .status-panel p { margin: 8px 0 0; font-size: .86rem; font-weight: 800; line-height: 1.5; }
+
+      .status-panel dl {
+        margin: 18px 0 0;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .status-panel dt { color: #9ed6b9; font-size: .65rem; font-weight: 800; }
+      .status-panel dd { margin: 4px 0 0; font-size: .82rem; font-weight: 800; line-height: 1.45; }
+
+      .actions {
+        margin-top: 18px;
+        display: grid;
+        gap: 9px;
+      }
+
+      .actions a {
+        min-height: 46px;
+        padding: 12px 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #aabac6;
+        border-radius: 7px;
+        color: var(--blue);
+        background: #ffffff;
+        font-size: .78rem;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .actions .primary { border-color: var(--blue); color: #ffffff; background: var(--blue); }
+
+      .content-grid {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, .78fr);
+        gap: 22px;
+      }
+
+      .section {
+        padding: 24px;
+        border: 1px solid #c8d1ca;
+        border-radius: 9px;
+        background: var(--surface);
+      }
+
+      .section h2 { margin: 0; font-size: 1.08rem; }
+      .section-lead { margin: 8px 0 0; color: var(--muted); font-size: .8rem; line-height: 1.65; }
+
+      .facts {
+        margin: 18px 0 0;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .fact { padding: 16px 12px 16px 0; border-bottom: 1px solid var(--line); }
+      .fact:nth-child(even) { padding-right: 0; padding-left: 12px; border-left: 1px solid var(--line); }
+      .fact dt { color: var(--muted); font-size: .7rem; font-weight: 800; }
+      .fact dd { margin: 6px 0 0; font-size: .84rem; font-weight: 700; line-height: 1.6; }
+
+      .feature-list, .rule-list {
+        margin: 16px 0 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        list-style: none;
+      }
+
+      .feature-list li {
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: #26342c;
+        background: #e9efeb;
+        font-size: .72rem;
+        font-weight: 800;
+      }
+
+      .notice {
+        margin-top: 16px;
+        padding: 15px;
+        border-left: 3px solid var(--amber-line);
+        background: var(--amber-bg);
+      }
+
+      .notice h3 { margin: 0; color: #66470d; font-size: .78rem; }
+      .notice ul { margin: 9px 0 0; padding-left: 18px; }
+      .notice li { margin-top: 5px; color: #5d4a24; font-size: .76rem; line-height: 1.6; }
+
+      .sidebar-stack { display: grid; gap: 22px; align-content: start; }
+
+      .source {
+        margin: 15px 0 0;
+        color: var(--muted);
+        font-size: .75rem;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 780px) {
+        main { width: min(100% - 24px, 600px); margin-top: 18px; }
+        .hero, .section { padding: 18px; }
+        .hero-grid, .content-grid { grid-template-columns: minmax(0, 1fr); }
+        .hero-grid { gap: 18px; }
+      }
+
+      @media (max-width: 420px) {
+        .facts, .status-panel dl { grid-template-columns: minmax(0, 1fr); }
+        .fact:nth-child(even) { padding-left: 0; border-left: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <span class="brand">spot-diggz</span>
+      <span class="prototype">HTML PROTOTYPE / DETAIL PAGE</span>
+    </header>
+
+    <main>
+      <a class="back-link" href="facility-list-sample.html">← スポット一覧へ戻る</a>
+
+      <article class="hero" aria-labelledby="facility-name">
+        <p class="hero-label">大阪府・屋内スケートパーク</p>
+        <h1 id="facility-name" data-facility-name>SPOTAKA Skateboard Park（スポパー）</h1>
+        <p class="address" data-facility-address>大阪府大阪市中央区西心斎橋1-6-14 BIGSTEP B2F</p>
+
+        <div class="hero-grid">
+          <figure>
+            <div class="video-frame">
+              <iframe
+                id="facility-video"
+                src="https://www.youtube-nocookie.com/embed/Map-nu_zJiM?autoplay=0"
+                title="SPOPAR CUP VOL.5"
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <figcaption>
+              <strong data-video-title>参考動画：SPOPAR CUP VOL.5</strong>
+              <span data-video-note>動画はYouTubeへ接続します。撮影時点の様子であり、現在の混雑、利用可否、安全性を保証しません。</span>
+            </figcaption>
+          </figure>
+
+          <aside class="status-panel" aria-labelledby="today-title">
+            <h2 id="today-title">今日行く前に確認</h2>
+            <p data-availability>貸切・スクールにより一般利用時間が変わります。</p>
+            <dl>
+              <div><dt data-hours-one-label>平日</dt><dd data-hours-one>12:00–20:00</dd></div>
+              <div><dt data-hours-two-label>土日祝</dt><dd data-hours-two>11:00–20:00</dd></div>
+              <div><dt>料金</dt><dd data-price-summary>1時間 500円〜</dd></div>
+              <div><dt>登録</dt><dd data-reservation-summary>無料会員登録が必要</dd></div>
+            </dl>
+            <nav class="actions" aria-label="施設への外部リンク">
+              <a id="navigation-link" class="primary" href="https://www.google.com/maps/dir/?api=1&amp;destination=34.6724243%2C135.4966028" target="_blank" rel="noopener noreferrer">ここに行く</a>
+              <a id="official-source-link" href="https://spotaka-skateboardpark.com/" target="_blank" rel="noopener noreferrer">公式情報を確認</a>
+            </nav>
+          </aside>
+        </div>
+      </article>
+
+      <div class="content-grid">
+        <section class="section" aria-labelledby="overview-title">
+          <h2 id="overview-title">施設情報</h2>
+          <p class="section-lead" data-overview>屋内で滑れるため、天候を気にせず予定を立てやすい施設です。初回利用前に、公式の予定と登録方法を確認してください。</p>
+
+          <ul class="feature-list" data-features aria-label="設備と特徴">
+            <li>屋内</li><li>屋根あり</li><li>レンタル</li><li>フラット</li><li>ミニランプ</li><li>レール</li><li>バンク</li>
+          </ul>
+
+          <dl class="facts">
+            <div class="fact"><dt>料金</dt><dd data-price>1時間500円<br>3時間1,000円<br>1日2,000円</dd></div>
+            <div class="fact"><dt>受付・登録</dt><dd data-reservation>無料会員登録が必要です。事前仮登録ができます。</dd></div>
+            <div class="fact"><dt>アクセス</dt><dd data-access>心斎橋駅7番出口・四ツ橋駅5番出口から徒歩約3分</dd></div>
+            <div class="fact"><dt>駐車場</dt><dd data-parking>BIGSTEP地下B3F・B4Fに有料駐車場107台</dd></div>
+          </dl>
+        </section>
+
+        <div class="sidebar-stack">
+          <section class="section" aria-labelledby="schedule-title">
+            <h2 id="schedule-title">営業時間・一般利用</h2>
+            <div class="notice">
+              <h3>営業日の注意</h3>
+              <ul data-schedule-notes>
+                <li>祝日は11:00から営業します。</li>
+                <li>不定休です。貸切時は一般利用できません。</li>
+                <li>来場前に公式の月間予定と予約枠を確認してください。</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="section" aria-labelledby="rules-title">
+            <h2 id="rules-title">利用ルール</h2>
+            <div class="notice">
+              <h3>利用前に確認</h3>
+              <ul class="rule-list" data-rules>
+                <li>18歳以下は保護者の同意が必要です。</li>
+                <li>小学生以下は保護者同伴で来場してください。</li>
+                <li>パーク内での食事はできません（水分補給は可能です）。</li>
+              </ul>
+            </div>
+            <p class="source" data-verified>情報確認日：2026年7月19日。営業時間やルールは必ず公式情報でも確認してください。</p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const facilities = {
+        "OSK-F001": {
+          name: "SPOTAKA Skateboard Park（スポパー）",
+          address: "大阪府大阪市中央区西心斎橋1-6-14 BIGSTEP B2F",
+          videoId: "Map-nu_zJiM",
+          videoTitle: "SPOPAR CUP VOL.5",
+          availability: "貸切・スクールにより一般利用時間が変わります。",
+          hours: [["平日", "12:00–20:00"], ["土日祝", "11:00–20:00"]],
+          priceSummary: "1時間 500円〜",
+          price: "1時間500円<br>3時間1,000円<br>1日2,000円",
+          reservation: "無料会員登録が必要です。事前仮登録ができます。",
+          overview: "屋内で滑れるため、天候を気にせず予定を立てやすい施設です。初回利用前に、公式の予定と登録方法を確認してください。",
+          features: ["屋内", "屋根あり", "レンタル", "フラット", "ミニランプ", "レール", "バンク"],
+          access: "心斎橋駅7番出口・四ツ橋駅5番出口から徒歩約3分",
+          parking: "BIGSTEP地下B3F・B4Fに有料駐車場107台",
+          scheduleNotes: ["祝日は11:00から営業します。", "不定休です。貸切時は一般利用できません。", "来場前に公式の月間予定と予約枠を確認してください。"],
+          rules: ["18歳以下は保護者の同意が必要です。", "小学生以下は保護者同伴で来場してください。", "パーク内での食事はできません（水分補給は可能です）。"],
+          sourceUrl: "https://spotaka-skateboardpark.com/",
+          destination: "34.6724243,135.4966028"
+        },
+        "OSK-F002": {
+          name: "スポーツパークまつばら",
+          address: "大阪府松原市三宅西7丁目1040番1",
+          videoId: "d6WCTfFX0iI",
+          videoTitle: "スポーツパーク松原の紹介動画",
+          availability: "雨天・メンテナンス・大会などで一般利用を制限する場合があります。",
+          hours: [["毎日", "09:00–22:00"], ["案内", "終了時刻は安全側で22:00"]],
+          priceSummary: "1日 550円",
+          price: "1日550円",
+          reservation: "個人利用の詳細は施設受付へ確認してください。",
+          overview: "高架下にある施設です。照明、レンタル、フラットエリア、ミニランプなどを確認できます。",
+          features: ["屋外", "屋根あり", "照明", "レンタル", "フラット", "ミニランプ", "ハンドレール"],
+          access: "阪神高速道路大和川線の高架下",
+          parking: "有料駐車場50台、駐輪場70台",
+          scheduleNotes: ["公式情報で終了時刻が22:00と23:00に分かれるため、この画面では22:00までとして案内します。", "雨天・メンテナンス・大会等で利用を制限する場合があります。"],
+          rules: ["ヘルメットを着用していない場合は利用できません。", "スケートボードとインラインスケートを利用でき、BMXは利用できません。", "混雑、大会、講習会等により一般利用を制限する場合があります。"],
+          sourceUrl: "https://shisetsu.mizuno.jp/skatepark/sportspark-matsubara",
+          destination: "34.5928294,135.5487834"
+        },
+        "OSK-F003": {
+          name: "おくさま印スケボーパーク",
+          address: "大阪府松原市立部4丁目270番1",
+          videoId: "bwkvMPOakm4",
+          videoTitle: "おくさま印スケボーパークミューラルアート",
+          availability: "イベントや最新のお知らせを、来場前に公式情報で確認してください。",
+          hours: [["毎日", "09:00–23:00"], ["初回", "登録と身分証明書が必要"]],
+          priceSummary: "1日 550円〜",
+          price: "屋外550円<br>屋内・屋外1,100円（1日）",
+          reservation: "初回は利用登録と身分証明書の提示が必要です。",
+          overview: "屋内・屋外の両方を備え、レンタルや複数のセクションを確認できる施設です。",
+          features: ["屋内", "屋外", "屋根あり", "レンタル", "クォーター", "レール", "バンク"],
+          access: "立部5丁目停留所から徒歩約5分",
+          parking: "無料駐車場10台（9:00–23:00）",
+          scheduleNotes: ["イベントや最新のお知らせを来場前に公式情報で確認してください。"],
+          rules: ["ヘルメット着用が必須です。未着用では入場できません。", "満5歳以下は利用できず、小学生以下は終日保護者同伴が必要です。", "中学生以下が19:00以降に利用する場合は保護者同伴が必要です。"],
+          sourceUrl: "https://shisetsu.mizuno.jp/m-7288/guide",
+          destination: "34.5791945,135.5087872"
+        }
+      };
+
+      const facilityId = new URLSearchParams(window.location.search).get("facility") || "OSK-F001";
+      const facility = facilities[facilityId] || facilities["OSK-F001"];
+      const setText = (selector, value) => document.querySelector(selector).textContent = value;
+      const setList = (selector, values) => document.querySelector(selector).replaceChildren(
+        ...values.map((value) => {
+          const item = document.createElement("li");
+          item.textContent = value;
+          return item;
+        })
+      );
+
+      document.title = `${facility.name} | 施設詳細ページ案`;
+      setText("[data-facility-name]", facility.name);
+      setText("[data-facility-address]", facility.address);
+      setText("[data-video-title]", `参考動画：${facility.videoTitle}`);
+      setText("[data-availability]", facility.availability);
+      setText("[data-hours-one-label]", facility.hours[0][0]);
+      setText("[data-hours-one]", facility.hours[0][1]);
+      setText("[data-hours-two-label]", facility.hours[1][0]);
+      setText("[data-hours-two]", facility.hours[1][1]);
+      setText("[data-price-summary]", facility.priceSummary);
+      setText("[data-reservation-summary]", facility.reservation);
+      setText("[data-overview]", facility.overview);
+      document.querySelector("[data-price]").innerHTML = facility.price;
+      setText("[data-reservation]", facility.reservation);
+      setText("[data-access]", facility.access);
+      setText("[data-parking]", facility.parking);
+      setList("[data-features]", facility.features);
+      setList("[data-schedule-notes]", facility.scheduleNotes);
+      setList("[data-rules]", facility.rules);
+      setText("[data-verified]", "情報確認日：2026年7月19日。営業時間やルールは必ず公式情報でも確認してください。");
+
+      const video = document.querySelector("#facility-video");
+      video.src = `https://www.youtube-nocookie.com/embed/${facility.videoId}?autoplay=0`;
+      video.title = facility.videoTitle;
+      document.querySelector("#navigation-link").href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(facility.destination)}`;
+      document.querySelector("#official-source-link").href = facility.sourceUrl;
+    </script>
+  </body>
+</html>
