@@ -2,9 +2,13 @@
 
 - Status: Accepted
 - Date: 2026-07-20
-- Supersedes: [ADR-0002](0002-facility-data-source-and-freshness.md)の大阪都市圏scope
-- Supersedes: [ADR-0009](0009-session-recommendation-ui.md)の大阪市・堺市代表地点scope
-- Related: [Product Baseline](../product_baseline.md)
+- Type: Product
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
+- Affected Docs: `product.md`, `requirements.md`, `specifications/facility-data.md`
+- Supersedes: [ADR-0002](0002-facility-data-source-and-freshness.md)（大阪都市圏scope）、[ADR-0009](0009-session-recommendation-ui.md)（大阪市・堺市代表地点scope）
+- Superseded By: None
+- Related: [Product](../product.md)
 
 ## Context
 

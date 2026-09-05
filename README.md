@@ -11,7 +11,7 @@
 
 spot-diggzは、施設を地図で眺めるだけではなく、「今日、今の自分がどこへ滑りに行くか」を決めるためのサービスです。利用目的、気分、レベル、使える時間、出発地点、交通手段から、検証済みの施設を理由付きで比較できます。
 
-初めて使う場合は、[How To Use](docs/how-to-use.md) を参照してください。
+初めて使う場合は、[How To Use](docs/guides/how-to-use.md) を参照してください。現在の要求・仕様・設計・運用文書は[Documentation](docs/README.md)からたどれます。
 
 ## 現在の状態
 
@@ -37,26 +37,18 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 
 ## ドキュメント
 
-- [プロダクト要求基準](docs/product_baseline.md)
-- [MVP API契約](docs/api/facility-catalog.openapi.yaml)
-- [MVP運用Runbook](docs/operations/mvp-runbook.md)
-- [ログ・メトリクス・SLO設計](docs/operations/observability.md)
-- [継続的デリバリー設計](docs/operations/continuous-delivery.md)
-- [Vercel・Neonデプロイ手順](docs/operations/vercel-neon-deployment.md)
-- [How To Use](docs/how-to-use.md)
-- [セキュリティ・プライバシー基準](docs/security/security-baseline.md)
-- [GitHub owner認証・Slack/Discord連携ADR](docs/adr/0015-owner-auth-and-chat-entrypoints.md)
-- [GitHub owner認証・Vercel Productionセットアップ](docs/operations/github-oauth-setup.md)
-- [Slack条件入力・推薦応答ADR](docs/adr/0016-slack-guided-recommendation.md)
-- [Slack初回インストール・セットアップ（Codex CLI操作用の依頼文を含む）](docs/operations/slack-setup.md)
-- [Discord初回インストール・セットアップ](docs/integrations/discord-setup.md)
-- [品質特性・アーキテクチャ指針](docs/architecture/quality-attributes.md)
-- [ADR一覧](docs/adr/)
-- [市場・需要調査](docs/market_demand_research_2026-07.md)
-- [開発ワークフロー](docs/development_workflow.md)
-- [Discovery Sprint 0検証計画](docs/discovery/sprint-0-validation-plan.md)
-- [大阪都市圏の施設候補](docs/discovery/osaka-facility-candidates.md)
-- [技術書から採用した原則](docs/engineering/principles-and-sources.md)
+- [文書入口・現在の正本](docs/README.md)
+- [プロダクト](docs/product.md)
+- [要求](docs/requirements.md)
+- [仕様一覧](docs/specifications/README.md)
+- [MVP API契約](docs/specifications/facility-catalog.openapi.yaml)
+- [アーキテクチャ](docs/architecture.md)
+- [セキュリティ・プライバシー](docs/security.md)
+- [Decision Record一覧](docs/decisions/README.md)
+- [開発・文書・release process](docs/process/development.md)
+- [運用文書一覧](docs/operations/README.md)
+- [利用・設定guide一覧](docs/guides/README.md)
+- [調査資料](docs/research/README.md)
 - [エージェント運用規約](AGENTS.md)
 
 ## 使うコマンド一覧
@@ -66,6 +58,7 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - `git status --short --branch`: 現在のブランチと作業ツリーを確認する。
 - `git diff --check`: 空白エラー等を確認する。
 - `git diff -- README.md docs/`: 文書差分だけを確認する。
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1`: 必須文書、命名、内部link、compatibility stub、Decision Recordを検証する。
 
 ### Buildとtest
 
@@ -150,7 +143,7 @@ production imageはscratchを使い、Google HTTPS通信用CA bundle、UID `6553
 
 ## API
 
-主要endpointは `GET /healthz`、`GET /readyz`、GitHub OAuth用`/auth/github/*`、owner sessionが必要な`/api/*`、Slack用`POST /integrations/slack/commands`、Discord用`POST /integrations/discord/interactions`、`GET /metrics` である。request、response、制限、error codeの正本は [OpenAPI](docs/api/facility-catalog.openapi.yaml) とする。
+主要endpointは `GET /healthz`、`GET /readyz`、GitHub OAuth用`/auth/github/*`、owner sessionが必要な`/api/*`、Slack用`POST /integrations/slack/commands`、Discord用`POST /integrations/discord/interactions`、`GET /metrics` である。request、response、制限、error codeの正本は [OpenAPI](docs/specifications/facility-catalog.openapi.yaml) とする。
 
 ## 次の作業
 

@@ -2,7 +2,13 @@
 
 - Status: Accepted
 - Date: 2026-07-16
-- Related: [Product Baseline](../product_baseline.md)
+- Type: Specification
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
+- Affected Docs: `requirements.md`, `architecture.md`, `specifications/web-ui.md`, `specifications/facility-catalog.openapi.yaml`
+- Supersedes: None
+- Superseded By: [ADR-0010](0010-google-maps-provider-and-fallback.md)（origin/providerのみ）、[ADR-0011](0011-five-prefecture-mvp-scope.md)（地理scopeのみ）
+- Related: [Product](../product.md)
 - Related: [ADR-0003](0003-recommendation-engine-before-ai.md)
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)
 - Related: [ADR-0008](0008-facility-catalog-api-and-storage.md)

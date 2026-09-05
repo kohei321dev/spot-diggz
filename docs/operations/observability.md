@@ -28,7 +28,7 @@
 | recommendation metrics | implemented | `success` / `no_results` / `error` とduration |
 | product event metrics | implemented | allowlist eventの集計だけ |
 | catalog metrics | implemented | `/readyz` と `/metrics` 時点の件数とfresh / stale snapshot |
-| curated external media event | planned by [ADR-0013](../adr/0013-curated-external-media.md) | aggregate eventだけ。video ID、URL、title、Instagram/X profileは送信・保存しない |
+| curated external media event | implemented under [ADR-0013](../decisions/0013-curated-external-media.md) and [ADR-0014](../decisions/0014-progressive-facility-details.md) | aggregate eventだけ。video ID、URL、title、Instagram/X profileは送信・保存しない |
 | Prometheus endpoint | implemented | unauthenticated `GET /metrics` |
 | distributed trace | not implemented | 単一processのMVPではrelease gate外 |
 | Google provider metrics | implemented | 固定provider・success/error別のrequest数とduration |
@@ -102,7 +102,7 @@ raw URL、query string、request body、response body、client IP、User-Agent�
 - YouTube video ID、watch URL、embed URL、動画title、再生・視聴履歴
 - Instagram/X profile URL、post URL、handle、ハッシュタグ、表示名
 
-禁止情報が出た場合は収集先accessを制限し、[Security Baseline](../security/security-baseline.md) のincident手順で扱う。
+禁止情報が出た場合は収集先accessを制限し、[Security](../security.md) のincident手順で扱う。
 
 ## 4. Prometheus metrics
 
@@ -157,7 +157,7 @@ HTTP 400のinvalid session inputもrecommendation `error` に含む。rate limit
 
 ### Curated external media interaction
 
-ADR-0013の実装後、`spot_diggz_product_events_total{event=...}` に次のallowlistを追加する。
+ADR-0013とADR-0014に基づく現行実装は、`spot_diggz_product_events_total{event=...}` に次のallowlistを持つ。
 
 - `video_embed_displayed`: 利用者が動画を含む施設詳細を開き、YouTube iframeを初めて作成した
 - `video_embed_loaded`: iframeのload eventを受けた。再生開始・再生完了・視聴時間を意味しない

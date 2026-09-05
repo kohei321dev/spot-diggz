@@ -168,7 +168,7 @@ facility catalogはimage内のread-only JSON snapshotである。catalog変更�
 
 週次checkの失敗は、データを自動延命せず再調査を開始するsignalである。各施設の公式 `sourceUrl` で営業、料金、休場、予約、設備、主要ルールを確認し、確認済み属性だけの検証時刻と将来の `one_time` 休場を更新する。更新後は `make verify-catalog` と全CIを通してdata-only releaseを行う。`testdata/` やE2E用の固定fixtureでproduction checkを代替しない。
 
-correction storeは32 MiB上限のJSON Lines persistent fileである。applicationは起動時にfileの書込・sync可否を確認し、同じbinaryのread-only `correctioncheck` で破損行を本文非表示のまま診断できる。rollback時は同じvolumeをmountし、fileを旧imageへcopy、truncate、schema downgradeしない。保存形式を破壊的に変える場合はmigration、backup、forward-fixを別途設計する。
+Productionのcorrection storeはNeon/PostgreSQL、local/CI fallbackは32 MiB上限のJSON Lines fileである。file fallbackではapplication起動時に書込・sync可否を確認し、同じbinaryのread-only `correctioncheck`で破損行を本文非表示のまま診断できる。rollback時は同じNeon接続設定または同じfile volumeを使い、reportをcopy、truncate、schema downgradeしない。保存形式を破壊的に変える場合はmigration、backup、forward-fixを別途設計する。
 
 ## 9. Post-deploy smoke
 

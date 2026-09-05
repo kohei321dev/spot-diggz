@@ -142,7 +142,7 @@ Bot TokenまたはSigning Secretが漏洩した場合はSlack側でrotate/revoke
 ## Codexへ渡す依頼文
 
 ```text
-docs/operations/slack-setup.mdを最後まで読み、ローカル検査、migration、Vercel環境変数設定、redeploy、Production smokeを順に進めてください。
+docs/guides/slack-setup.mdを最後まで読み、ローカル検査、migration、Vercel環境変数設定、redeploy、Production smokeを順に進めてください。
 
 Slack Appの作成・install・reinstall、credential取得はSlack画面で本人が行います。Bot Token、Signing Secret、workspace ID、member IDはchatやcommand引数へ出さず、scripts/configure-slack-vercel-env.ps1のsecure promptへ私が直接入力します。Slack CLI認証を必須扱いしないでください。
 

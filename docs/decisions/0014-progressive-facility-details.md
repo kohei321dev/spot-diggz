@@ -2,10 +2,16 @@
 
 - Status: Accepted
 - Date: 2026-07-22
-- Related: [Product Baseline](../product_baseline.md)
+- Type: Specification
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#304](https://github.com/kohei321dev/spot-diggz/pull/304)
+- Affected Docs: `requirements.md`, `security.md`, `specifications/web-ui.md`
+- Supersedes: [ADR-0013](0013-curated-external-media.md)（Decision 4と初期iframe loadのみ）
+- Superseded By: None
+- Related: [Product](../product.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
 - Related: [ADR-0013](0013-curated-external-media.md)
-- Related: [Security Baseline](../security/security-baseline.md)
+- Related: [Security](../security.md)
 
 ## Context
 

@@ -252,9 +252,9 @@ Google-only rollback:
 
 ## 5. 関連参照
 
-- [OpenAPI contract](../api/facility-catalog.openapi.yaml)
+- [OpenAPI contract](../specifications/facility-catalog.openapi.yaml)
 - [Observability design](observability.md)
 - [Continuous delivery](continuous-delivery.md)
-- [Security and privacy baseline](../security/security-baseline.md)
-- [ADR-0010 Google provider and fallback](../adr/0010-google-maps-provider-and-fallback.md)
-- [ADR-0011 five-prefecture scope](../adr/0011-five-prefecture-mvp-scope.md)
+- [Security and privacy](../security.md)
+- [ADR-0010 Google provider and fallback](../decisions/0010-google-maps-provider-and-fallback.md)
+- [ADR-0011 five-prefecture scope](../decisions/0011-five-prefecture-mvp-scope.md)

@@ -2,7 +2,12 @@
 
 - Status: Accepted
 - Date: 2026-07-12
+- Type: Architecture
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: Incomplete — repository historyから対応Pull Requestを特定できていない
+- Affected Docs: `product.md`, `architecture.md`, `decisions/0001-repository-strategy.md`
 - Supersedes: [ADR-0001](0001-repository-strategy.md)の「旧実装を初期段階では削除しない」決定
+- Superseded By: None
 
 ## Context
 

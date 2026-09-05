@@ -2,6 +2,12 @@
 
 - Status: Accepted
 - Date: 2026-07-20
+- Type: Architecture
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
+- Affected Docs: `architecture.md`, `security.md`, `operations/continuous-delivery.md`, `operations/vercel-neon-deployment.md`
+- Supersedes: None
+- Superseded By: None
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)
 - Related: [ADR-0008](0008-facility-catalog-api-and-storage.md)
 

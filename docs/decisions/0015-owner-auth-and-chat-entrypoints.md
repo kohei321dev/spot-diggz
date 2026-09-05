@@ -4,9 +4,15 @@
 
 - Status: Accepted
 - Date: 2026-08-01
+- Type: Security
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#304](https://github.com/kohei321dev/spot-diggz/pull/304)
+- Affected Docs: `requirements.md`, `architecture.md`, `security.md`, `specifications/chat-integrations.md`
+- Supersedes: None
+- Superseded By: [ADR-0016](0016-slack-guided-recommendation.md)（Slack入力・response flowのみ）
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
-- Related: [Security Baseline](../security/security-baseline.md)
+- Related: [Security](../security.md)
 
 ## Context
 
