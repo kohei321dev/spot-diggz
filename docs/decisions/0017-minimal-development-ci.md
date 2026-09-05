@@ -4,7 +4,7 @@
 - Date: 2026-09-05
 - Type: Operation
 - Related Issues: [#307](https://github.com/kohei321dev/spot-diggz/issues/307)
-- Related Pull Requests: Incomplete — 本Issueの実装PR作成時に追記する
+- Related Pull Requests: [#308](https://github.com/kohei321dev/spot-diggz/pull/308)
 - Affected Docs: `operations/continuous-delivery.md`, `operations/mvp-runbook.md`, `process/release.md`, `requirements.md`, `security.md`
 - Supersedes: [ADR-0007](0007-go-modular-monolith-runtime.md)（container scanを通常CIで必須とする運用のみ）
 - Superseded By: None
