@@ -2,10 +2,11 @@
 
 スケートボード利用者が、その日の目的や条件に合うセッション先を決めるための日本語・英語対応Webサービス。
 
-## 本番版
+## 公開状況
 
-- [spot-diggz を開く](https://spotdiggz.vercel.app)
-- 本番URL: `https://spotdiggz.vercel.app`
+従来の公開先は2026-09-06にトップページ・health endpointともHTTP 404を確認しました。現在利用できる本番URLは未確認のため、アクセスリンクは掲載していません。[公開先と旧資料の整理状況](docs/operations/service-status.md)を参照してください。
+
+以下はリポジトリに存在する実装・運用方針です。本番で現在提供中であることを示すものではありません。
 
 常設のステージング環境は設けない。通常の変更はローカル環境とCIで検証し、外部サービス連携、データ移行、インフラ変更など本番との差分によるリスクがある変更では、必要な期間だけVercel Previewを明示的に作成して確認する。`main`への反映後は、本番環境でスモークテストを実施する。
 
@@ -47,6 +48,7 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - [Decision Record一覧](docs/decisions/README.md)
 - [開発・文書・release process](docs/process/development.md)
 - [運用文書一覧](docs/operations/README.md)
+- [公開先の確認状況](docs/operations/service-status.md)
 - [利用・設定guide一覧](docs/guides/README.md)
 - [調査資料](docs/research/README.md)
 
@@ -105,7 +107,7 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 | `GOOGLE_MAPS_API_KEY` | Slack利用時yes | unset | Google Routes / Geocodingのserver-side credential。Slack modalの地点解決に必要 |
 | `APP_ENV` | no | `development` | JSON logのenvironment。image既定値は `production` |
 | `APP_VERSION` | no | `unknown` | JSON logへ付けるrelease SHAまたはversion |
-| `APP_BASE_URL` | Production yes | unset | GitHub OAuth callbackを構成するpathなしの正式HTTPS origin。例: `https://spotdiggz.vercel.app` |
+| `APP_BASE_URL` | Production yes | unset | GitHub OAuth callbackを構成するpathなしの正式HTTPS origin。例: `https://<deployment-host>` |
 | `AUTH_SECRET` | Production yes | unset | owner sessionとOAuth stateへ署名する32 bytes以上のrandom secret |
 | `GITHUB_CLIENT_ID` | Production yes | unset | GitHub OAuth App client ID |
 | `GITHUB_CLIENT_SECRET` | Production yes | unset | GitHub OAuth App client secret |

@@ -1,8 +1,10 @@
 # Discord初回インストール・セットアップ手順
 
+> 公開先は未確認です。[公開先の確認状況](../operations/service-status.md)を先に確認してください。以下は再設定時の参考手順であり、現在の稼働を保証しません。URLの置換と既存script・manifestの固定値の確認が終わるまで、外部設定変更やdeployを実行しないでください。
+
 - Status: Initial setup guide
 - Date: 2026-08-01
-- Scope: single-guild Discord application、`/spotdiggz`、Production `https://spotdiggz.vercel.app`
+- Scope: single-guild Discord application、`/spotdiggz`、Production `https://<deployment-host>`
 
 ## 1. 完了条件
 
@@ -10,7 +12,7 @@
 
 - 許可したDiscord serverへ`spot-diggz` applicationがGuild Installされている
 - `/spotdiggz` guild commandが登録されている
-- interactionが`https://spotdiggz.vercel.app/integrations/discord/interactions`へ送信される
+- interactionが`https://<deployment-host>/integrations/discord/interactions`へ送信される
 - Ed25519署名、application ID、guild ID、owner user IDをspot-diggzが検証する
 - ownerのcommandにはephemeralなdeferred responseの後、推薦結果が返る
 - owner以外には利用拒否がephemeralで返る
@@ -94,7 +96,7 @@ CHAT_DEFAULT_TRANSPORT=public_transit
 2. `Interactions Endpoint URL`へ次を入力する。
 
 ```text
-https://spotdiggz.vercel.app/integrations/discord/interactions
+https://<deployment-host>/integrations/discord/interactions
 ```
 
 3. `Save Changes`を実行する。

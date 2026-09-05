@@ -34,7 +34,7 @@ $requiredFiles = @(
     'docs/operations/README.md',
     'docs/guides/README.md',
     'docs/research/README.md',
-    'docs/research/ui/README.md',
+    'docs/operations/service-status.md',
     'docs/archive/README.md'
 )
 

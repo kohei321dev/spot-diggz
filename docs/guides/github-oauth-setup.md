@@ -1,8 +1,10 @@
 # GitHub owner認証・Vercel Productionセットアップ
 
+> 公開先は未確認です。[公開先の確認状況](../operations/service-status.md)を先に確認してください。以下は再設定時の参考手順であり、現在の稼働を保証しません。URLの置換と既存script・manifestの固定値の確認が終わるまで、外部設定変更やdeployを実行しないでください。
+
 - Status: Initial setup guide
 - Date: 2026-08-03
-- Scope: private MVP、単一GitHub owner、`https://spotdiggz.vercel.app`
+- Scope: private MVP、単一GitHub owner、`https://<deployment-host>`
 
 ## 結論
 
@@ -20,9 +22,9 @@ GitHub OAuth Appはcallback URLを1つだけ持つため、SayDeck用Appのcallb
 | 項目 | 値 |
 | --- | --- |
 | Application name | `Spot-Diggz Production` |
-| Homepage URL | `https://spotdiggz.vercel.app` |
+| Homepage URL | `https://<deployment-host>` |
 | Application description | `Private owner access for Spot-Diggz`（任意） |
-| Authorization callback URL | `https://spotdiggz.vercel.app/auth/github/callback` |
+| Authorization callback URL | `https://<deployment-host>/auth/github/callback` |
 | Enable Device Flow | 無効 |
 
 5. `Register application`を実行する。
@@ -39,14 +41,14 @@ PowerShellでrepository rootから実行する。
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File .\scripts\configure-github-vercel-env.ps1 `
+  -File .\scripts\configure-github-vercel-env.ps1 -BaseURL 'https://<deployment-host>' `
   -PreflightOnly
 ```
 
 次が表示されれば、Vercel認証、Project link、正式callbackのlocal確認が完了している。
 
 ```text
-github-vercel-preflight=PASS project=spotdiggz callback=https://spotdiggz.vercel.app/auth/github/callback
+github-vercel-preflight=PASS project=spotdiggz callback=https://<deployment-host>/auth/github/callback
 ```
 
 このpreflightは環境変数変更やdeployを行わない。
@@ -57,7 +59,7 @@ github-vercel-preflight=PASS project=spotdiggz callback=https://spotdiggz.vercel
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File .\scripts\configure-github-vercel-env.ps1
+  -File .\scripts\configure-github-vercel-env.ps1 -BaseURL 'https://<deployment-host>'
 ```
 
 promptへ次を入力する。
@@ -69,7 +71,7 @@ scriptは次をProductionへ登録する。
 
 | 変数 | 値・扱い |
 | --- | --- |
-| `APP_BASE_URL` | `https://spotdiggz.vercel.app` |
+| `APP_BASE_URL` | `https://<deployment-host>` |
 | `GITHUB_OWNER` | `kohei321dev` |
 | `GITHUB_CLIENT_ID` | 入力したClient ID |
 | `GITHUB_CLIENT_SECRET` | Sensitive value |
@@ -83,7 +85,7 @@ scriptは次をProductionへ登録する。
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File .\scripts\configure-github-vercel-env.ps1 `
+  -File .\scripts\configure-github-vercel-env.ps1 -BaseURL 'https://<deployment-host>' `
   -Deploy
 ```
 
@@ -91,7 +93,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 ## 5. Owner認証E2E
 
-1. `https://spotdiggz.vercel.app`をprivate windowで開く。
+1. `https://<deployment-host>`をprivate windowで開く。
 2. GitHubへredirectされることを確認する。
 3. 設定済みowner GitHub accountで認可する。
 4. Spot-Diggzへ戻り、Web UIと`/api/*`を利用できることを確認する。

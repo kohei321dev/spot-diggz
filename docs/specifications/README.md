@@ -17,4 +17,4 @@
 
 - 外部から観測できるUI、API、data format、error、provider縮退、chat responseを変更するPull Requestで、該当仕様を同時に更新します。
 - OpenAPIと説明文が矛盾する場合は黙って解消せず、実装、test、Accepted Decision Record、Issueの根拠を再確認します。
-- ResearchにあるHTMLは案であり、本ディレクトリの仕様または実装を上書きしません。
+- 未承認の調査・UI案は、本ディレクトリの仕様または実装を上書きしません。
