@@ -48,7 +48,7 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - [GitHub owner認証・Slack/Discord連携ADR](docs/adr/0015-owner-auth-and-chat-entrypoints.md)
 - [GitHub owner認証・Vercel Productionセットアップ](docs/operations/github-oauth-setup.md)
 - [Slack条件入力・推薦応答ADR](docs/adr/0016-slack-guided-recommendation.md)
-- [Slack初回インストール・セットアップ（Codex CLI操作用の依頼文を含む）](docs/operations/slack-setup.md)
+- [Slack初回インストール・セットアップ](docs/operations/slack-setup.md)
 - [Discord初回インストール・セットアップ](docs/integrations/discord-setup.md)
 - [品質特性・アーキテクチャ指針](docs/architecture/quality-attributes.md)
 - [ADR一覧](docs/adr/)
@@ -57,7 +57,6 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - [Discovery Sprint 0検証計画](docs/discovery/sprint-0-validation-plan.md)
 - [大阪都市圏の施設候補](docs/discovery/osaka-facility-candidates.md)
 - [技術書から採用した原則](docs/engineering/principles-and-sources.md)
-- [エージェント運用規約](AGENTS.md)
 
 ## 使うコマンド一覧
 
