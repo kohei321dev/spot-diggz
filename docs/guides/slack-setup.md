@@ -1,8 +1,10 @@
 # Slack初回インストール・セットアップ手順
 
+> 公開先は未確認です。[公開先の確認状況](../operations/service-status.md)を先に確認してください。以下は再設定時の参考手順であり、現在の稼働を保証しません。URLの置換と既存script・manifestの固定値の確認が終わるまで、外部設定変更やdeployを実行しないでください。
+
 - Status: Initial setup guide
 - Date: 2026-08-03
-- Scope: single-workspace Slack App、`/spotdiggz`、Production `https://spotdiggz.vercel.app`
+- Scope: single-workspace Slack App、`/spotdiggz`、Production `https://<deployment-host>`
 
 ## 結論
 
@@ -47,7 +49,7 @@ Vercel CLIはProduction secret設定とdeployに使う。Slack CLIはManifestの
 | --- | --- |
 | App名 | `spot-diggz` |
 | Slash Command | `/spotdiggz` |
-| Request URL | `https://spotdiggz.vercel.app/integrations/slack/commands` |
+| Request URL | `https://<deployment-host>/integrations/slack/commands` |
 | Bot scopes | `commands`, `chat:write` |
 | Interactivity | 有効。同じRequest URL |
 | Event Subscriptions | 不要 |

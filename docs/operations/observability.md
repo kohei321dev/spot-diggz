@@ -153,7 +153,7 @@ HTTP 400のinvalid session inputもrecommendation `error` に含む。rate limit
 - `navigation_opened`
 - `correction_submitted`
 
-`POST /api/events` は上記のうち `correction_submitted` を除くevent名だけを受け付ける。`correction_submitted` は訂正APIが正常保存後にserver側でのみ加算し、clientからの同名eventは400で拒否する。利用者ID、session ID、locationを持たないため、個人単位の追跡や厳密なcohort funnelは行わない。
+`POST /api/events` は上記のうち `correction_submitted` を除くevent名と、次節のcurated external media eventを受け付ける。`correction_submitted` は訂正APIが正常保存後にserver側でのみ加算し、clientからの同名eventは400で拒否する。利用者ID、session ID、locationを持たないため、個人単位の追跡や厳密なcohort funnelは行わない。
 
 ### Curated external media interaction
 
@@ -263,7 +263,7 @@ straight-lineだけのlocal deterministic testはp95 500ms以下を目標にで�
 | application logs | [未検証] backend未選定。production目標30日、禁止情報なし |
 | metrics | in-memory。process restartでreset。backend retention未選定 |
 | traces | 収集しない |
-| correction reports | 32 MiB上限のfile store。90日後の `deleteAfter`、起動時と1時間ごとにpurge |
+| correction reports | `DATABASE_URL`設定時はPostgreSQL、未設定のlocal/CIは32 MiB上限のfile store。90日後の `deleteAfter`、起動時と1時間ごとにpurge |
 | product events | metric aggregateのみ。raw event recordなし |
 
 telemetry backendを導入する場合は、access control、retention、削除、release markerを先に定義する。
@@ -275,7 +275,6 @@ telemetry backendを導入する場合は、access control、retention、削除�
 - trace IDとdistributed tracingがない
 - metricsがprocess restartでresetする
 - production dashboard、alert、scrape、retentionは資格情報とplatform選定が必要で未実施
-- curated external media eventはADR-0013の実装、privacy表示、CSP、E2Eと同時に追加するまで未実装
 - Slack / Discordの遅延response delivery専用metricとdurable retryは未実装。process停止後もdeliveryを保証する必要が生じた場合は、tokenを短期暗号化保存するqueueとretentionを別途設計する
 
 production公開前に最低限、private metrics scrape、release version、5xx / stale / purge failure alert、dashboard、post-deploy observation windowを設定する。

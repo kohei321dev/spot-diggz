@@ -109,7 +109,7 @@ external services
   - YouTube / Instagram / X (explicit browser action only)
 ```
 
-ProductionはVercel ContainerとNeonを使用します。通常はlocalとCI、必要な変更だけ一時Preview、`main`反映後はProduction smokeを行います。permanent stagingは現scopeで設けません。
+リポジトリ内の配置設計はVercel ContainerとNeonを前提にしていますが、現在の本番稼働と公開先は未確認です。[公開先の確認状況](operations/service-status.md)を参照してください。運用再開時は通常localとCI、必要な変更だけ一時Preview、Production反映後のsmokeを行う方針です。permanent stagingは現scopeで設けません。
 
 ## Quality attributes
 

@@ -1,100 +1,31 @@
-# Vercel・Neonデプロイ手順
+# Vercel・Neon構成の再確認
 
-## 方針
+- Status: Incomplete
+- Missing evidence: 現在の公開先、Vercel ProjectとGitHub連携の有効性、Neon接続先・保持状態。
+- Required decision: ownerが提供継続・移転・廃止を確認し、再提供する場合は配置先と操作範囲を承認する。
 
-spot-diggzはVercel Servicesの単一`container` serviceとして、`Dockerfile.vercel`からGo applicationを公開する。施設カタログは`data/facilities.json`、訂正報告は`DATABASE_URL`設定時にNeonへ保存する。
+[公開先の確認状況](service-status.md)のとおり、従来hostを現在の本番URLとして使用することはできません。過去のProject作成・GitHub自動deploy接続コマンドは、現在の外部状態を確認せず再実行しないよう本書から除去しました。これはVercelやNeon自体の廃止決定ではありません。
 
-## 初回セットアップ
+## リポジトリに残る配置設計
 
-1. Vercel CLIへログインする。
+- `vercel.json`は単一container serviceと`Dockerfile.vercel`を参照します。
+- Go applicationはGit管理の`data/facilities.json`を読みます。
+- `DATABASE_URL`設定時の訂正reportと、Production Slackの重複処理防止状態はPostgreSQLへ保存します。
+- `vercel.json`のmain deployment設定だけでは、GitHub連携や本番deployが現在動作している証拠にはなりません。
 
-```bash
-npx vercel login
-npx vercel whoami
-```
+設計判断の履歴は[ADR-0012](../decisions/0012-vercel-neon-deployment.md)に保持します。
 
-2. 既存Team `uechikoheis-projects` にVercel Projectを作成してlinkする。
+## 再提供を選択した場合の確認事項
 
-```bash
-npx vercel project add spotdiggz --scope uechikoheis-projects
-npx vercel link --yes --project spotdiggz --scope uechikoheis-projects
-npx vercel project update spotdiggz --framework services --scope uechikoheis-projects
-npx vercel git connect git@github.com:kohei321dev/spot-diggz.git --scope uechikoheis-projects
-```
+1. ownerが既存Project・DBの有無と用途を確認する。同名ProjectやDBを自動作成しない。
+2. 承認済みのHTTPS originを決め、GitHub OAuth callback、Slack/Discord endpoint、manifest、scriptの固定値を一致させる。
+3. [GitHub認証](../guides/github-oauth-setup.md)、[Slack](../guides/slack-setup.md)、[Discord](../guides/discord-setup.md)の設定手順を新しい公開先と照合する。外部設定変更は承認後だけ行う。
+4. [release手順](../process/release.md)でartifact、認証設定、migration、secret、DB backup、rollback先を確認する。
+5. deploy後に[MVP runbook](mvp-runbook.md)のhealth/readinessとowner認証済みUI/APIのsmokeを行う。未認証APIの401を正常な認証境界として扱う。
+6. 確認日・環境・結果を本書と公開状況へ記録してから、利用者向けアクセスリンクを復活させる。
 
-`vercel.json`の`services.app`が`Dockerfile.vercel`を指し、catch-all rewriteが`app` serviceへ転送する。ProjectのFramework Presetは`Services`でなければContainer buildにならない。
+Google設定の有無、quota、metrics公開制限は現環境で再確認する。過去の「未設定」「確認済み」を現在の事実として引き継がない。
 
-3. 既存Neon OrganizationへProjectを作成する。Vercel Marketplaceの自動作成は使わず、Organizationを指定してNeon CLIから作成する。
+## Rollbackとデータ保護
 
-```bash
-npx neonctl auth
-npx neonctl projects create \
-  --org-id <existing-neon-org-id> \
-  --name spotdiggz \
-  --region-id aws-us-east-1
-npx neonctl env pull --project-id <spotdiggz-project-id>
-```
-
-`neonctl env pull`はlocalのignored `.env.local`へ接続情報を書き込む。接続情報を画面、shell history、Gitへ出力しない。
-
-4. Neonの接続文字列を使ってmigrationを適用する。
-
-```bash
-set -a
-. ./.env.local
-set +a
-go run ./cmd/dbmigrate
-```
-
-接続文字列はshell履歴、ログ、Gitへ保存しない。
-
-5. `DATABASE_URL`をVercel Productionへsecretとして設定する。
-
-```bash
-set -a
-. ./.env.local
-set +a
-printf '%s' "$DATABASE_URL" | npx vercel env add DATABASE_URL production --sensitive --yes --scope uechikoheis-projects --project spotdiggz
-```
-
-6. Productionへdeployする。
-
-```bash
-npx vercel --prod
-```
-
-## 確認
-
-`spotdiggz.vercel.app`のようなProduction aliasを取得したら、次を確認する。
-
-```bash
-export SPOTDIGGZ_URL='https://spotdiggz.vercel.app'
-curl --fail --silent "$SPOTDIGGZ_URL/healthz"
-curl --fail --silent "$SPOTDIGGZ_URL/readyz"
-curl --fail --silent "$SPOTDIGGZ_URL/api/facilities?activity=skateboard"
-curl --fail --silent "$SPOTDIGGZ_URL/metrics"
-```
-
-UIからワンタップ推薦、条件変更、公式情報、外部ナビ、訂正報告を確認する。Google Maps連携を有効化する場合は`GOOGLE_MAPS_API_KEY`をVercel Productionへ追加し、API keyにserver-side API制限を設定してから再deployする。
-
-## GitHub自動デプロイ
-
-`vercel.json`で`main`だけを自動デプロイ対象にしている。GitHub連携をCLIまたはDashboardで設定した後、`main`へのmergeをProduction deployのトリガーとする。Production secretをPreviewへコピーしない。
-
-## rollback
-
-```bash
-npx vercel ls
-npx vercel rollback
-```
-
-rollback時もNeonの`correction_reports`を削除、truncate、旧schemaへ戻す操作は行わない。アプリの前方互換を保ったまま、同じDBを使って直前のデプロイへ戻す。
-
-## 検証済み・残作業
-
-- [確認済み 2026-07-20] Vercel Project `spotdiggz`を作成し、GitHub repositoryへ接続した。
-- [確認済み 2026-07-20] 既存Neon Organizationへ`spotdiggz` Projectを作成し、local `.env.local`へ接続情報を設定した。
-- [確認済み 2026-07-20] `correction_reports` migrationを適用し、Vercel Productionへ`DATABASE_URL`をsecretとして設定した。
-- [確認済み 2026-07-20] Productionの`/healthz`、`/readyz`、施設検索、UI、訂正APIを確認した。
-- [残作業] Google Maps API keyを設定していないため、経路推定はstraight-line fallback、地点検索は利用不可のままである。
-- [残作業] `/metrics`の公開範囲制限、Google API quota監視、カスタムドメインのDNS設定は別途実施する。
+rollback先のdeploymentは操作前に特定し、Neonのreportやschemaを削除・truncateしない。詳細は[continuous delivery](continuous-delivery.md)と[MVP runbook](mvp-runbook.md)に従う。現在の外部状態が不明なまま古いdeploy・rollbackコマンドを実行しない。

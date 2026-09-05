@@ -112,6 +112,7 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 
 ## Current state
 
+- [公開状況] 従来の公開先は2026-09-06にHTTP 404を確認しました。現在の公開URLは未確認です。[公開先の確認状況](operations/service-status.md)を参照してください。以下のProduction確認は過去の記録であり、現在の稼働を示しません。
 - [観測した実装] Go modules、HTTP API、Web UI、GitHub owner認証、Slack/Discord adapter、provider fallback、file/PostgreSQL store、migration、rate limit、metrics、unit/component/E2E testがあります。
 - [確認済み運用] Vercel/Neon、migration、health/readiness、facility API、correction API、desktop/mobile E2Eは2026-07-20の記録があります。
 - [確認済み運用] Production正式domainのGitHub owner loginとSlack `/spotdiggz`のmodal・候補応答は2026-08-03にownerが確認し、PR #304に記録されています。

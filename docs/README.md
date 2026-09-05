@@ -4,7 +4,7 @@
 - Status: Current
 - Product: SpotDiggz
 
-このディレクトリは、SpotDiggzの現在の契約と、恒久的な判断理由を管理するSource of Truthです。調査資料とUI案は`research/`、現行ではない計画は`archive/`に分離しています。
+このディレクトリは、SpotDiggzの現在の契約と、恒久的な判断理由を管理するSource of Truthです。調査資料は`research/`、現行ではない計画は`archive/`に分離しています。公開先の確認状況は[`operations/service-status.md`](operations/service-status.md)を参照してください。
 
 ## Reading order
 
@@ -31,7 +31,7 @@
 | [`process/`](process/development.md) | Issue、Pull Request、文書、releaseの進め方 | Current | 開発・承認processの変更 |
 | [`operations/`](operations/README.md) | deploy、monitor、incident、rollback、data保守 | Current index | 運用手順または運用条件の変更 |
 | [`guides/`](guides/README.md) | 利用者・管理者向けの操作と設定 | Current index | 操作・設定手順の変更 |
-| [`research/`](research/README.md) | 調査、候補、未承認UI案 | Non-normative | 調査または実験の追加 |
+| [`research/`](research/README.md) | 調査、候補、検証計画 | Non-normative | 調査または実験の追加 |
 | [`archive/`](archive/README.md) | 現行ではないが文脈保持が必要な資料 | Historical | 現行文書からの退役 |
 
 ## Source and status rules

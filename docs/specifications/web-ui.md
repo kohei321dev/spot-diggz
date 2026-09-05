@@ -45,11 +45,11 @@
 - 同じtoggleで動画を閉じて再表示できます。埋込失敗時もcandidateを残し、通常のYouTube linkを利用できます。
 - Instagram/Xは公式確認済みprofileへの外部linkだけを表示し、post、feed、hashtag、OGPを取得・表示しません。
 
-## Facility list
+## Provided UI routes
 
+- Web画面は`/`で提供する実装です。施設詳細は推薦card内で開きます。独立した施設一覧ページや`/spots/{facilityId}`の詳細ページは提供しません。
 - 独立した保存Lists UI、保存API、保存tableはありません。
 - `GET /api/facilities`は認証済みownerへ施設catalogを返しますが、現在のWeb UIは保存済み施設一覧を提供しません。
-- [`../research/ui/facility-list-sample.html`](../research/ui/facility-list-sample.html)は非正規の検討案であり、現行機能ではありません。
 
 ## Correction report
 
