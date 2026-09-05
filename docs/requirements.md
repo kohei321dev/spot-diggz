@@ -170,6 +170,7 @@
 ## Release gates
 
 - 文書・JSON・OpenAPI、Go format/vet/test、MVP smoke、E2E、build、security scanが変更範囲に応じてPASSする。
+- [DR-0017](decisions/0017-minimal-development-ci.md)に従い、通常CIはGo・契約・文書・secret・依存検証を実行する。本番catalogの実時間鮮度、E2E、container検証はrelease前の手動確認とし、通常CIの成功だけではrelease条件を満たしたと扱わない。
 - catalogが5府県を含み、fresh施設が1件以上ある。
 - owner認証、Slack/Discord署名・owner認可、media allowlist、provider fallbackを変更範囲に応じて検証する。
 - Production変更時はpost-deploy smoke、data migration、secret、network、rollbackを確認する。

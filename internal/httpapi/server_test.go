@@ -123,7 +123,7 @@ func TestServerReturnsCuratedExternalMetadataInFacilitiesAndRecommendations(t *t
 	if err != nil {
 		t.Fatalf("NewCatalog() error = %v", err)
 	}
-	handler := NewServer(catalog, nil)
+	handler := NewServerWithOptions(catalog, nil, Options{Now: fixedServerTime})
 
 	t.Run("facility list", func(t *testing.T) {
 		response := httptest.NewRecorder()
@@ -207,7 +207,7 @@ func TestServerReadiness(t *testing.T) {
 		t.Fatalf("NewCatalog() error = %v", err)
 	}
 	response := httptest.NewRecorder()
-	NewServer(catalog, nil).ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	NewServerWithOptions(catalog, nil, Options{Now: fixedServerTime}).ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/readyz", nil))
 
 	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"status":"ready"`) {
 		t.Fatalf("response = %d %s", response.Code, response.Body.String())
@@ -283,7 +283,7 @@ func TestServerReturnsRecommendations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewCatalog() error = %v", err)
 	}
-	handler := NewServer(catalog, nil)
+	handler := NewServerWithOptions(catalog, nil, Options{Now: fixedServerTime})
 	requestBody := `{
 		"purpose":"basics",
 		"mood":"focused",
