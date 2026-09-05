@@ -2,15 +2,15 @@
 
 - Status: Current
 - Related requirements: R-004、R-006、R-008–R-010、R-014–R-016、NFR-001–NFR-003
-- Related decisions: ADR-0002、ADR-0008、ADR-0010、ADR-0011、ADR-0013
+- Related decisions: ADR-0002、ADR-0008、ADR-0010、ADR-0011、ADR-0013、[DR-0018](../decisions/0018-api-first-product-definition.md)
 
 ## Source of Truth
 
 公開facility catalogの正本は[`../../data/facilities.json`](../../data/facilities.json)です。Gitでreviewし、application起動時とCIでvalidateします。runtime external searchからcatalogへ自動追加しません。
 
-## Geographic scope
+## Current geographic coverage
 
-MVP scopeは大阪府、兵庫県、和歌山県、奈良県、徳島県です。2026-07-19調査基準の公開catalogは31施設（大阪府24施設）です。全国一括登録は対象外です。
+現行catalogの収録地域とschema・validatorの都道府県許可値は、大阪府、兵庫県、和歌山県、奈良県、徳島県です。2026-07-19調査基準の公開catalogは31施設（大阪府24施設）です。これは現在のデータと実装の制約であり、プロダクトのターゲット地域の制限ではありません。地域を限定しない定義へ訂正しても、この制約の解除や全国データの一括登録を実施したことにはなりません。収録範囲の変更時は、検証・更新できる施設データとschema・validator・testを合わせて整備します。
 
 ## Required facility fields
 

@@ -2,9 +2,19 @@
 
 - Status: Current
 - Product: [`product.md`](product.md)
-- Last reviewed: 2026-09-05
+- Last reviewed: 2026-09-06
 
 要求IDは移行前のProduct Baselineにある`R-NNN`を維持します。Issue、仕様、test、Decision RecordはこのIDを参照します。
+
+## Product direction and implementation boundary
+
+[DR-0018](decisions/0018-api-first-product-definition.md)に従い、対象は地域や経験レベルを限定しない「スケボーをしたい人」です。UI、Slack・Discordのbot・appなどから施設情報と推薦を利用できるAPIを整備します。
+
+以下のR-001〜R-020は既存の要求・受入条件です。現在のWeb向けAPIと内部serviceを呼ぶchat adapterの契約を、独立したAPI client向けの整備が完了した証拠とは扱いません。現在のowner認証、入力の許可値、推薦可能なcatalog範囲は、この方針訂正だけでは変更しません。
+
+- Status: Incomplete
+- Missing evidence: 各UI・bot・app向けAPIの呼出契約、認証・認可、互換性、エラー・応答形式、整備の優先順序と受入テスト。
+- Required decision: ownerが既存APIの再利用範囲と不足する契約を別Issueで明確にし、必要なDecision Recordを承認してから実装する。匿名公開や複数userへの開放はこの訂正に含めない。
 
 ## Functional requirements
 
@@ -112,7 +122,7 @@
 
 公開施設は、ID、日英名称・住所、市区町村・都道府県、公開座標、競技、営業時間・休業、一般利用状態と根拠、注意事項、休場期間、料金・予約・登録、初心者適性、設備・路面・照明・屋内外、安全rule、access、source、status、confidence、検証時刻を持ちます。schemaと制約の正本は[`specifications/facility-data.md`](specifications/facility-data.md)です。
 
-公開catalogは2026-07-19調査基準で5府県31施設（大阪府24施設）です。`schedule_check_required`は参照できますが、日付別予定の確認なしでは推薦しません。
+公開catalogは2026-07-19調査基準で5府県31施設（大阪府24施設）です。これは現在の収録範囲であり、ターゲットを5府県に限定する要件ではありません。現行schemaとvalidatorの地域制約は別の実装変更まで維持します。`schedule_check_required`は参照できますが、日付別予定の確認なしでは推薦しません。
 
 ## Non-functional requirements
 
@@ -171,7 +181,7 @@
 
 - 文書・JSON・OpenAPI、Go format/vet/test、MVP smoke、E2E、build、security scanが変更範囲に応じてPASSする。
 - [DR-0017](decisions/0017-minimal-development-ci.md)に従い、通常CIはGo・契約・文書・secret・依存検証を実行する。本番catalogの実時間鮮度、E2E、container検証はrelease前の手動確認とし、通常CIの成功だけではrelease条件を満たしたと扱わない。
-- catalogが5府県を含み、fresh施設が1件以上ある。
+- catalogが現在のschema・validatorの制約を満たし、fresh施設が1件以上ある。現行の5府県に関する検証は既存catalogの検証であり、恒久的なターゲット地域の制限ではない。制約を変更する際はschema・validator・関連testも別作業で整合させる。
 - owner認証、Slack/Discord署名・owner認可、media allowlist、provider fallbackを変更範囲に応じて検証する。
 - Production変更時はpost-deploy smoke、data migration、secret、network、rollbackを確認する。
 - 未確認のProduction Discord、Google、metrics制限、custom domain、自動deploy、rollback exerciseを確認済みと扱わない。

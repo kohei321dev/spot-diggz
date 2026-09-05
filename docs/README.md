@@ -8,6 +8,8 @@
 
 ## Reading order
 
+プロダクトの対象は地域を限定しない「スケボーをしたい人」です。UIやSlack・Discordのbot・appなどから利用できるAPIを整備する方針と、現時点の実装・データ範囲を区別します。定義訂正の理由は[DR-0018](decisions/0018-api-first-product-definition.md)を参照してください。
+
 1. [`product.md`](product.md): なぜ、誰のために、何を作るか
 2. [`requirements.md`](requirements.md): 何を満たす必要があるか
 3. [`specifications/`](specifications/README.md): 外部から観測できる振る舞い

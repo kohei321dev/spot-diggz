@@ -1,12 +1,16 @@
 # SpotDiggz Architecture
 
 - Status: Current
-- Last reviewed: 2026-09-05
+- Last reviewed: 2026-09-06
 - Requirements: [`requirements.md`](requirements.md)
 - Decision authority: [Accepted Decision Records](decisions/README.md)
 - Migrated from: [`architecture/quality-attributes.md`](architecture/quality-attributes.md) under Issue #305
 
-## System context
+## Product delivery direction
+
+[DR-0018](decisions/0018-api-first-product-definition.md)で、UIやSlack・Discordのbot・appなどから利用できるAPIとして施設情報と推薦を提供する方針を定義しています。以下の構成図は観測した既存実装です。chat adapterは内部の共通serviceを呼ぶため、独立したAPI client構成への整備完了を意味しません。今後のAPI契約と認証・認可は[Requirementsの未確定事項](requirements.md#product-direction-and-implementation-boundary)として管理し、今回runtime分離や新しい認証方式は採用しません。
+
+## Current system context
 
 SpotDiggzは、GitHub owner認証、Web UI、HTTP API、Slack/Discord command adapter、facility catalog、決定論的推薦、外部provider adapter、訂正store、observabilityを1つのGo applicationとしてdeployするモジュラーモノリスです。
 
@@ -146,7 +150,7 @@ external services
 - AIをMVP推薦へ追加しません。
 - Facility catalog database、distributed rate limit、queue、cache、service分割は必要性の計測と新しいDecision Recordなしに追加しません。
 - 外部media provider、複数動画、画像・投稿埋込、asset保存を追加する場合は、権利、privacy、CSP、失敗時縮退、運用ownerを新しいDecision Recordで決めます。
-- 5府県外へのscope拡大は需要証拠、catalog owner、更新工数を確認してから判断します。
+- ターゲットに地域制限は設けません。現行の5府県を収録するcatalogや地域の許可値を変更する際は、出典、更新責任、需要、更新工数を確認し、schema・validator・testを整合させます。地域制限のないProduct定義を、全国対応済みとは扱いません。
 
 ## Related decisions
 

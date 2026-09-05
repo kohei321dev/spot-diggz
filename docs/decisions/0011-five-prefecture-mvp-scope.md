@@ -7,7 +7,7 @@
 - Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
 - Affected Docs: `product.md`, `requirements.md`, `specifications/facility-data.md`
 - Supersedes: [ADR-0002](0002-facility-data-source-and-freshness.md)（大阪都市圏scope）、[ADR-0009](0009-session-recommendation-ui.md)（大阪市・堺市代表地点scope）
-- Superseded By: None
+- Superseded By: [DR-0018](0018-api-first-product-definition.md)（利用者検証・Productの地理scopeのみ。既存catalogとschema・validatorの地域制約は実装変更まで維持）
 - Related: [Product](../product.md)
 
 ## Context
