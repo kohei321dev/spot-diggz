@@ -2,10 +2,16 @@
 
 - Status: Accepted
 - Date: 2026-07-20
-- Related: [Product Baseline](../product_baseline.md)
+- Type: Architecture
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
+- Affected Docs: `requirements.md`, `architecture.md`, `security.md`, `specifications/web-ui.md`
+- Supersedes: [ADR-0009](0009-session-recommendation-ui.md)（origin/provider判断のみ）
+- Superseded By: None
+- Related: [Product](../product.md)
 - Related: [ADR-0003](0003-recommendation-engine-before-ai.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
-- Related: [Security Baseline](../security/security-baseline.md)
+- Related: [Security](../security.md)
 
 ## Context
 

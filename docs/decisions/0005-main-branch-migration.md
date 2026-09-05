@@ -2,7 +2,12 @@
 
 - Status: Accepted
 - Date: 2026-07-12
-- Supersedes: `product/session-planner`を作業ブランチとする運用
+- Type: Process
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: Incomplete — repository historyから対応Pull Requestを特定できていない
+- Affected Docs: `process/development.md`
+- Supersedes: `product/session-planner`を作業branchとする運用
+- Superseded By: None
 
 ## Context
 

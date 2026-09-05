@@ -2,8 +2,14 @@
 
 - Status: Accepted
 - Date: 2026-07-16
-- Related: [Product Baseline](../product_baseline.md)
-- Related: [Quality Attributes](../architecture/quality-attributes.md)
+- Type: Architecture
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#288](https://github.com/kohei321dev/spot-diggz/pull/288), [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
+- Affected Docs: `architecture.md`, `requirements.md`, `operations/continuous-delivery.md`
+- Supersedes: None
+- Superseded By: [DR-0017](0017-minimal-development-ci.md)（container scanを通常CIで必須とする運用のみ）
+- Related: [Product](../product.md)
+- Related: [Architecture](../architecture.md)
 - Related: [ADR-0006](0006-remove-legacy-implementation.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
 - Related: [ADR-0011](0011-five-prefecture-mvp-scope.md)

@@ -1,7 +1,7 @@
 # Continuous Delivery Pipeline Design
 
-- Status: CI and rollback artifact implemented; Vercel/Neon Production smoke verified
-- Date: 2026-07-20
+- Status: Minimal development CI; release verification is manual
+- Date: 2026-09-05
 - CI: GitHub Actions
 - Deployment platform: Vercel Container (Services single `app` service)
 - Correction store: Neon/PostgreSQL in Production, file fallback in local/CI
@@ -31,57 +31,39 @@
 - required checkを無効化せず、失敗を再実行だけで隠さない
 - `main` へのforce pushと履歴書き換えを禁止する
 
-## 4. Implemented CI
+## 4. 通常CI
+
+[DR-0017](../decisions/0017-minimal-development-ci.md)に基づき、PR、main push、手動実行で必要なsource検証を行う。短命branch pushと週次scheduleは削除し、同じrefの古いrunはcancelする。Vercelへの接続、deploy、Production credentialは使用しない。
 
 ### 4.1 Go verification
 
-Ubuntu 24.04とGo 1.25.12で次を実行する。
+Go versionはgo.modから取得する。
 
-1. `gofmt` 差分検査
+1. gofmt差分検査
 2. `go vet ./cmd/... ./internal/...`
-3. `go test -race ./...`
-4. `make verify-catalog`
-5. `make verify-mvp`
-6. `CGO_ENABLED=0 GOOS=linux go build -trimpath`
-7. `file` によるstatically linked確認
-8. `govulncheck` のsource scan
-9. `govulncheck -mode=binary` のbinary scan
+3. `go test -race ./cmd/... ./internal/...`
+4. `CGO_ENABLED=0 go build -trimpath -o bin/spotdiggz-api ./cmd/api`
+5. govulncheckのsource / binary scan
+6. `npm ci --ignore-scripts`、`npm run test:contracts`
 
-Go testはcatalog schema、production catalogの事実回帰、freshness horizon command、休場、provider fallback、geocoding、correction retention、rate limit、metrics、HTTP contractを含む。workflowは毎週月曜00:17 UTC（09:17 JST）にも起動し、production catalogが168時間後も鮮度内かを検査する。
+Go testにMVPの実HTTP検証とcatalogルールのテストを含むため、同じMVP testの追加実行はしない。対象packageはcmdとinternalに限定し、localに残るdependency directory等を走査しない。catalog schema・事実回帰・鮮度ルールは固定時刻で検証し、本番データの現在時点の再確認期限は通常CIの成否へ混ぜない。
 
-### 4.2 Browser E2E
+### 4.2 文書・supply chain
 
-Go verification後、Node.js 24とPlaywright Chromiumでdesktop / mobileの主要flowを実行する。
+- docs-check: 必須文書、Decision Record、内部リンク。
+- Gitleaks: Git履歴のsecret scan。
+- PR dependency review: moderate以上の脆弱性を含む依存変更でfail。
+- third-party ActionsはSHA固定、workflow権限はcontents: read。
 
-- `npm ci`
-- `npm run test:contracts`
-- `npx playwright install --with-deps chromium`
-- `npm run test:e2e`
+### 4.3 通常CIから削除した処理
 
-failure時のscreenshot、trace、videoとHTML reportは7日保持のCI artifactにする。E2Eは固定test catalogとlocal serverを使い、実Google APIへ接続しない。固定fixtureの時刻調整はE2E再現性のためであり、production catalogの鮮度検査とは分離する。
+- Playwright browserのinstall、desktop/mobile E2E、report upload。
+- Docker image build、smoke、Trivy image scan、SBOM、image archive upload。
+- Trivy filesystem scan（Go脆弱性とsecretは上記toolで検証する）。
+- 毎週のscheduleと`make verify-catalog`。
+- branch pushとPRの二重実行。
 
-### 4.3 Container security and smoke
-
-Go verification後に同じcommitからimageをbuildする。
-
-1. scratch imageをbuildする
-2. containerをlocalhostだけへpublishする
-3. `/healthz` が `{"status":"ok"}` になるまで待つ
-4. `/readyz` が `{"status":"ready"}` になるまで待つ
-5. 訂正APIへCI専用reportをPOSTし、同じbinaryの `correctioncheck` でstoreを検証する
-6. CycloneDX SBOMを生成し、30日保持のartifactにする
-7. imageのHIGH / CRITICAL vulnerabilityをTrivyで検査する
-8. scan済みimageをDocker archive、image ID、archive SHA-256として30日保持する
-
-readinessはcatalogにdynamic 30日・stable 180日の両方が鮮度内の施設が1件以上ある場合だけ成功する。emptyまたは全件staleのimageはsmokeを通過しない。
-
-### 4.4 Repository and supply-chain checks
-
-- Trivy filesystem scan: vulnerability、secret、misconfiguration
-- Gitleaks full-history scan
-- pull request dependency review: moderate以上でfail
-- third-party GitHub Actionsはcommit SHAへ固定
-- workflow tokenは `contents: read` を既定にする
+Playwright、Dockerfile、catalogcheck等のsource・commandは維持する。通常CI成功は、browser、container、現在の本番catalog、外部環境の検証成功を意味しない。
 
 ## 5. Local commands
 
@@ -100,28 +82,23 @@ docker build --tag spotdiggz-api:local .
 
 `make build` は `CGO_ENABLED=0` を設定する。local環境にGo、Node.js、Playwright browser、container runtimeがない場合、未実行checkを完了扱いにしない。
 
-## 6. Artifact flow
+## 6. Release verification and artifacts
 
-Target flow:
+release前にownerが同じcommitで次を実行し、結果をrelease記録へ残す。
 
-```text
-commit
-  -> Go / race / smoke / vuln checks
-  -> Playwright desktop + mobile
-  -> static binary + scratch image
-  -> image smoke + SBOM + image scan
-  -> immutable registry artifact
-  -> approved environment configuration
-  -> deployment
-  -> post-deploy smoke + observation window
-  -> promote or rollback
-```
+1. `make verify-catalog`で本番catalogの実時間鮮度を確認する。失敗した施設は公式情報を再調査する。
+2. UI変更時とrelease前に`npm run test:e2e`を実行する。固定fixtureを使い、Production credentialを渡さない。
+3. OCIを使うreleaseではimageをbuildし、Trivy等でimage脆弱性とDocker設定を検査する。
+4. container smokeは、まずダミーcatalog・developmentの認証bypassでlocal確認する。Production相当の認証・Neon接続は承認済みPreviewで確認する。Production credentialなしでProduction起動の成功を要求しない。
+5. deploy先の直前成果物とrollback方法を確認する。CIはDocker archiveやSBOMを生成・保存しない。
 
-[事実] CIはbinary、image、SBOMを検証し、scan済みDocker image archive、image ID、archive checksumをcommit SHA単位のartifactとして30日保持する。このarchiveは `sha256sum -c` と `docker load` で同一成果物をpreviewまたはrollback演習へ渡せる。
+containerの具体的な確認は[MVP Runbook](mvp-runbook.md)、Vercelの操作は[Vercel・Neon手順](vercel-neon-deployment.md)を参照する。
 
-[事実] Vercel Project `spotdiggz`へのCLI deploy、Vercel Container build、Vercel alias、既存Neon OrganizationのProject、migration、Production smokeは2026-07-20に確認した。GitHub `main` pushからの自動Production deployは、変更をmainへmergeした後に別途確認する。
+[過去の確認] Vercel CLI deploy、Container build、alias、Neon migration、Production smokeは2026-07-20に記録された。今回のCI整理では稼働環境の状態を再検証しておらず、Vercel等の接続が解除済みかどうかは未確認である。
 
-[未検証] image署名・provenance、private metrics scrape、Google API quota監視、custom domain/DNS、GitHub main pushからの自動deployは未設定である。CI artifactの保持期限を越える長期rollbackにはVercelまたは別registryのimmutable artifact運用が必要になる。
+- Status: Incomplete
+- Missing evidence: 現在の外部環境との接続状態、image署名・provenance、digest昇格運用、CI artifactを使わないrollback演習。
+- Required decision: ownerが次回release前にdeploy先と直前成果物を確認し、手動検証・復旧結果を記録する。
 
 ## 7. Configuration and secret gate
 
@@ -166,9 +143,9 @@ production keyはserver-side secret storeから注入し、Routes API / Geocodin
 
 facility catalogはimage内のread-only JSON snapshotである。catalog変更はcodeと同じCIを通し、未来時刻、未検証status、日英欠落、不正休場形式を拒否する。`make verify-catalog` は全公開施設について、実行時点から168時間後もdynamic 30日・stable 180日の両方が鮮度内であることを要求する。期限内でない施設IDと区分を出力して非0で終了する。
 
-週次checkの失敗は、データを自動延命せず再調査を開始するsignalである。各施設の公式 `sourceUrl` で営業、料金、休場、予約、設備、主要ルールを確認し、確認済み属性だけの検証時刻と将来の `one_time` 休場を更新する。更新後は `make verify-catalog` と全CIを通してdata-only releaseを行う。`testdata/` やE2E用の固定fixtureでproduction checkを代替しない。
+通常CIの週次checkは行わない。ownerはrelease前と定期保守でこのcommandを実行し、失敗した場合は再調査する。各施設の公式 `sourceUrl` で営業、料金、休場、予約、設備、主要ルールを確認し、確認済み属性だけの検証時刻と将来の `one_time` 休場を更新する。更新後は `make verify-catalog` と全CIを通してdata-only releaseを行う。`testdata/` やE2E用の固定fixtureでproduction checkを代替しない。
 
-correction storeは32 MiB上限のJSON Lines persistent fileである。applicationは起動時にfileの書込・sync可否を確認し、同じbinaryのread-only `correctioncheck` で破損行を本文非表示のまま診断できる。rollback時は同じvolumeをmountし、fileを旧imageへcopy、truncate、schema downgradeしない。保存形式を破壊的に変える場合はmigration、backup、forward-fixを別途設計する。
+Productionのcorrection storeはNeon/PostgreSQL、local/CI fallbackは32 MiB上限のJSON Lines fileである。file fallbackではapplication起動時に書込・sync可否を確認し、同じbinaryのread-only `correctioncheck`で破損行を本文非表示のまま診断できる。rollback時は同じNeon接続設定または同じfile volumeを使い、reportをcopy、truncate、schema downgradeしない。保存形式を破壊的に変える場合はmigration、backup、forward-fixを別途設計する。
 
 ## 9. Post-deploy smoke
 

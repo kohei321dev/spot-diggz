@@ -2,7 +2,13 @@
 
 - Status: Accepted
 - Date: 2026-07-16
-- Related: [Product Baseline](../product_baseline.md)
+- Type: Architecture
+- Related Issues: Incomplete — repository historyから対応Issueを特定できていない
+- Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
+- Affected Docs: `architecture.md`, `requirements.md`, `specifications/facility-data.md`, `specifications/facility-catalog.openapi.yaml`
+- Supersedes: None
+- Superseded By: None
+- Related: [Product](../product.md)
 - Related: [ADR-0002](0002-facility-data-source-and-freshness.md)
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)

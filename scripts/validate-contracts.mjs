@@ -11,7 +11,7 @@ for (const path of jsonFiles) {
   JSON.parse(await readFile(path, "utf8"));
 }
 
-const openAPIPath = "docs/api/facility-catalog.openapi.yaml";
+const openAPIPath = "docs/specifications/facility-catalog.openapi.yaml";
 const source = await readFile(openAPIPath, "utf8");
 const document = parseDocument(source, { strict: true, uniqueKeys: true });
 if (document.errors.length > 0) {

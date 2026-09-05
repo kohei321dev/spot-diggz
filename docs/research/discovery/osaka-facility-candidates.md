@@ -5,7 +5,7 @@
 - Related issue: GitHub Issue #278
 - Next issue: GitHub Issue #280
 
-> この文書はIssue #280着手前の候補発見スナップショットです。2026-07-20の再監査後の公開状態は [`docs/discovery/facility-catalog-2026-07-19.md`](facility-catalog-2026-07-19.md) と [`data/facilities.json`](../../data/facilities.json) を正とします。候補から公開へ移した施設は、一般利用時間が日付で変わる場合も含めてカタログへ反映しています。
+> この文書はIssue #280着手前の候補発見snapshotです。2026-07-20の再監査記録は[`facility-catalog-2026-07-19.md`](facility-catalog-2026-07-19.md)、現在の公開状態は[`data/facilities.json`](../../../data/facilities.json)を正とします。候補から公開へ移した施設は、一般利用時間が日付で変わる場合も含めてcatalogへ反映しています。
 
 ## 1. 目的
 
