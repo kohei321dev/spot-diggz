@@ -7,7 +7,7 @@
 - Related Pull Requests: [#288](https://github.com/kohei321dev/spot-diggz/pull/288), [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
 - Affected Docs: `architecture.md`, `requirements.md`, `operations/continuous-delivery.md`
 - Supersedes: None
-- Superseded By: None
+- Superseded By: [DR-0017](0017-minimal-development-ci.md)（container scanを通常CIで必須とする運用のみ）
 - Related: [Product](../product.md)
 - Related: [Architecture](../architecture.md)
 - Related: [ADR-0006](0006-remove-legacy-implementation.md)

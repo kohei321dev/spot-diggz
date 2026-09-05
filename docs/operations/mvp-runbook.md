@@ -9,7 +9,7 @@
 ## 1. 読者・前提
 
 - 想定読者: repositoryと実行環境を変更できるrelease owner / on-call operator
-- local前提: Go 1.25.12、Make、curl。またはOCI imageをbuild・runできるcontainer runtime
+- local前提: Go 1.25.13、Make、curl。またはOCI imageをbuild・runできるcontainer runtime
 - production前提: immutable image、HTTPS ingress、既存Neon OrganizationのProject、secret injection、private metrics scrape、直前imageの参照
 - optional権限: Google Cloud project、billing、Routes API / Geocoding API、制限済みserver-side credential
 - 禁止: key、訂正報告本文、連絡先、正確な検索位置、raw access logをcommand history、ticket、Gitへ貼らない
@@ -45,7 +45,7 @@
 
 #### Catalog freshness revalidation
 
-GitHub Actionsは毎週月曜00:17 UTC（09:17 JST）に `make verify-catalog` を実行する。このcheckは `data/facilities.json` の全施設が実行時点から168時間後もdynamic 30日・stable 180日の鮮度内であることを確認し、期限不足の施設IDと区分を表示して失敗する。
+[DR-0017](../decisions/0017-minimal-development-ci.md)によりGitHub Actionsの週次鮮度checkは終了した。ownerはrelease前と定期保守に `make verify-catalog` を実行する。このcheckは `data/facilities.json` の全施設が実行時点から168時間後もdynamic 30日・stable 180日の鮮度内であることを確認し、期限不足の施設IDと区分を表示して失敗する。通常CIの成功から現在のcatalog鮮度を推定しない。
 
 失敗時は次の順に対応する。
 
@@ -208,7 +208,7 @@ commandはstoreを変更せず、report総数、期限切れ件数、破損行�
 
 Vercelでの初回構築、Neon Project、migration、Production smokeの詳細は [Vercel・Neonデプロイ手順](vercel-neon-deployment.md) を正とする。`/metrics`のpublic到達制限、Google quota、custom domainは未設定のため、別途release gateとする。
 
-CI成功runは、Trivy scan後のDocker image archive、image ID、archive SHA-256を30日保持する。registryが未選定でも、このarchiveを検証して `docker load` すれば同じ成果物でpreviewまたはrollback演習を行える。production昇格では最終的にimmutable registry digestを記録する。
+通常CIはDocker image archive、image ID、archive SHA-256を生成・保存しない。release前にdeploy先の直前成果物とrollback方法を確認する。OCI運用ではimage digestを記録し、Vercelでは既存のdeploymentへのrollback可否を確認する。Docker build・scan・smokeの手動結果もrelease記録へ残す。
 
 ## 4. 例外・縮退・rollback
 

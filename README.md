@@ -147,6 +147,8 @@ production imageはscratchを使い、Google HTTPS通信用CA bundle、UID `6553
 
 ## 次の作業
 
-CIは毎週 `make verify-catalog` を実行し、production catalogの再確認期限が7日以内に迫ると失敗する。これは公式情報の再調査を自動化するものではないため、失敗時は施設の `sourceUrl` を確認し、事実を再検証してから検証時刻と休場情報を更新する。固定の開発・E2E fixtureはこの鮮度判定に使用しない。
+通常CIはGo format/vet/race test/build、Go source/binary脆弱性検査、JSON/OpenAPI・文書検証、secret scan、PR dependency reviewを実行する。Docker・Playwright・成果物保存・週次scheduleは含めない。運用変更の理由は[DR-0017](docs/decisions/0017-minimal-development-ci.md)を参照する。
+
+ownerはrelease前と定期保守で `make verify-catalog` を実行する。production catalogの再確認期限が7日以内に迫ると失敗するため、施設の `sourceUrl` を確認し、事実を再検証してから検証時刻と休場情報を更新する。固定の開発・E2E fixtureはこの鮮度判定に使用しない。E2Eとcontainer検証は[リリース手順](docs/process/release.md)で別途確認する。
 
 release前に、5府県catalogの公式情報再確認、制限済みGoogle credentialでの実通信、永続volumeを伴う実デプロイ、privateなmetrics収集、デプロイ後smoke、rollback演習を完了する。外部API有効化と実デプロイは資格情報・課金設定・platform権限が必要なため、このリポジトリのローカル実装完了とは分けて判定する。

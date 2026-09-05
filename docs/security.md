@@ -139,9 +139,9 @@ applicationで非保存であっても、Googleがrequestを受信する。利�
 ## 6. Build and supply chain
 
 - `CGO_ENABLED=0` で静的な単一binaryをbuildし、digest固定したbuilder、scratch / non-root UID `65532` で実行する。
-- Go test、race、vet、format、JSON/OpenAPI contract、MVP smoke、Playwright E2E、source/binary vulnerability scan、filesystem/image scan、secret scanをCI gateにする。
+- 通常CIはGo test（MVP smokeを含む）、race、vet、format、build、JSON/OpenAPI contract、文書検証、source/binary vulnerability scan、secret scan、PR dependency reviewをgateにする。[DR-0017](decisions/0017-minimal-development-ci.md)に基づきPlaywrightとcontainer検証はrelease前に行う。
 - `package-lock.json` とGo module metadataをversion管理し、third-party GitHub Actionsをcommit SHAへ固定する。
-- imageはSBOMを生成し、同一digestを環境間で昇格する。Vercel Container build・Production deployは確認済みだが、署名、provenance、digest昇格運用は未設定である。
+- 通常CIはimage、SBOM、rollback archiveを生成・保存しない。image脆弱性・Docker設定の検査と起動確認はrelease前に記録する。Vercel Container build・Production deployは過去の確認記録があるが、現在の接続状態、署名、provenance、digest昇格運用は未確認である。
 - image内catalogはread-only、local fallback時のcorrection directoryだけをwrite可能にする。Productionのcorrection reportはNeonへ保存する。
 - `.dockerignore` はallowlist方式とし、`.git`、`.env`、`var`、log、test artifactをbuild contextへ送らない。
 

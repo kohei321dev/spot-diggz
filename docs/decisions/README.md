@@ -14,7 +14,7 @@
 | [ADR-0004](0004-localization-strategy.md) | Accepted | 2026-07-12 | Product | 多言語対応の開始範囲 | Incomplete | #291 | — |
 | [ADR-0005](0005-main-branch-migration.md) | Accepted | 2026-07-12 | Process | mainブランチへの移行 | Incomplete | Incomplete | — |
 | [ADR-0006](0006-remove-legacy-implementation.md) | Accepted | 2026-07-12 | Architecture | 旧実装を現行ツリーから削除する | Incomplete | Incomplete | — |
-| [ADR-0007](0007-go-modular-monolith-runtime.md) | Accepted | 2026-07-16 | Architecture | Go製モジュラーモノリスを初期runtimeに採用 | Incomplete | #288, #291 | — |
+| [ADR-0007](0007-go-modular-monolith-runtime.md) | Accepted | 2026-07-16 | Architecture | Go製モジュラーモノリスを初期runtimeに採用 | Incomplete | #288, #291 | DR-0017（container scanの通常CI運用のみ） |
 | [ADR-0008](0008-facility-catalog-api-and-storage.md) | Accepted | 2026-07-16 | Architecture | 施設カタログの初期APIと保存方式 | Incomplete | #291 | — |
 | [ADR-0009](0009-session-recommendation-ui.md) | Accepted | 2026-07-16 | Specification | 選択式session検索とWeb UI | Incomplete | #291 | ADR-0010・0011（各一部） |
 | [ADR-0010](0010-google-maps-provider-and-fallback.md) | Accepted | 2026-07-20 | Architecture | Optional Google Mapsとfallback | Incomplete | #291 | — |
@@ -24,6 +24,7 @@
 | [ADR-0014](0014-progressive-facility-details.md) | Accepted | 2026-07-22 | Specification | 施設補助情報とYouTubeを明示操作後に表示 | Incomplete | #304 | — |
 | [ADR-0015](0015-owner-auth-and-chat-entrypoints.md) | Accepted | 2026-08-01 | Security | GitHub owner認証とSlack・Discord入口 | Incomplete | #304 | ADR-0016（Slack flowのみ） |
 | [ADR-0016](0016-slack-guided-recommendation.md) | Accepted | 2026-08-03 | Specification | Slack条件入力と推薦応答 | Incomplete | #304 | — |
+| [DR-0017](0017-minimal-development-ci.md) | Accepted | 2026-09-05 | Operation | 通常CIとリリース前検証を分ける | #307 | #308 | — |
 
 ## Supersession map
 
@@ -32,6 +33,7 @@
 - ADR-0011はADR-0002とADR-0009の地理scopeだけを置換しました。
 - ADR-0014はADR-0013のDecision 4と初期iframe load判断だけを置換しました。
 - ADR-0016はADR-0015のSlack入力・response flowだけを置換し、Discordの既定値設計は維持します。
+- DR-0017はADR-0007のcontainer scanを通常CIで必須とする運用だけを置換し、Go runtimeと基本検証を維持します。
 
 ## When to write
 

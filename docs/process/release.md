@@ -14,7 +14,8 @@
 ## Environment model
 
 - Local: 開発、unit/component test、manual UI確認。
-- CI: deterministic test、contract、catalog freshness、E2E、binary/image、security scan。
+- CI: deterministic Go test、format/vet/build、contract、docs、Go source/binary・secret・dependency scan。
+- Release前の手動検証: 本番catalog freshness、desktop/mobile E2E、container build・scan・smoke。通常CIはこれらの成功証拠を提供しない。詳細は[DR-0017](../decisions/0017-minimal-development-ci.md)と[Continuous delivery](../operations/continuous-delivery.md)を参照する。
 - Vercel Preview: 外部連携、data migration、infrastructure等で必要な期間だけ明示的に作成。
 - Production: `main`反映後の正式環境。
 
@@ -27,7 +28,7 @@
 ## Release steps
 
 1. remote `main`基準と対象commitを記録します。
-2. 同じcommitのverification結果とartifactを確認します。
+2. 同じcommitのCI結果、手動のcatalog・E2E・container検証結果、deploy先のartifactと直前版へのrollback手段を確認します。CIからDocker archiveを取得する運用は終了しています。
 3. 必要なschema migrationとenvironment設定を承認済み手順で行います。
 4. 対象artifactをdeployまたは昇格します。環境ごとに別sourceをbuildしません。
 5. `/healthz`、`/readyz`、owner login、主要API/UI、変更対象の外部連携をsmokeします。
