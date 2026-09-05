@@ -49,7 +49,6 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - [運用文書一覧](docs/operations/README.md)
 - [利用・設定guide一覧](docs/guides/README.md)
 - [調査資料](docs/research/README.md)
-- [エージェント運用規約](AGENTS.md)
 
 ## 使うコマンド一覧
 

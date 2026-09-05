@@ -16,7 +16,6 @@ function Get-RepositoryRelativePath {
 
 $requiredFiles = @(
     'README.md',
-    'AGENTS.md',
     'docs/README.md',
     'docs/product.md',
     'docs/requirements.md',
@@ -165,7 +164,6 @@ foreach ($file in $decisionFiles) {
 
 $linkFiles = @(
     @(Get-Item -LiteralPath (Join-Path $repositoryRoot 'README.md')) +
-    @(Get-Item -LiteralPath (Join-Path $repositoryRoot 'AGENTS.md')) +
     @(Get-ChildItem -LiteralPath $docsRoot -Recurse -File |
         Where-Object { $_.Extension -in @('.md', '.html') })
 )

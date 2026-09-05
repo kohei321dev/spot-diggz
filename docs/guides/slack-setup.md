@@ -139,16 +139,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-slac
 
 Bot TokenまたはSigning Secretが漏洩した場合はSlack側でrotate/revokeし、Vercel secretを更新してredeployする。漏洩値をticket、chat、logへ貼らない。
 
-## Codexへ渡す依頼文
-
-```text
-docs/guides/slack-setup.mdを最後まで読み、ローカル検査、migration、Vercel環境変数設定、redeploy、Production smokeを順に進めてください。
-
-Slack Appの作成・install・reinstall、credential取得はSlack画面で本人が行います。Bot Token、Signing Secret、workspace ID、member IDはchatやcommand引数へ出さず、scripts/configure-slack-vercel-env.ps1のsecure promptへ私が直接入力します。Slack CLI認証を必須扱いしないでください。
-
-外部状態を変更する直前に対象App、workspace、Vercel project、Production環境を表示して確認し、同名Appの新規作成やPreviewへの誤設定を避けてください。未実行または失敗したE2Eを成功扱いしないでください。
-```
-
 ## 公式資料
 
 - [App Manifests](https://docs.slack.dev/app-management/app-manifest/)

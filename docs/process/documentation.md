@@ -47,6 +47,7 @@ Decision Recordの要否も別に分類します。
 
 ## Migration and compatibility
 
+- [PR #309](https://github.com/kohei321dev/spot-diggz/pull/309)でAIエージェントの共通指示をリポジトリ外へ集約したため、標準テンプレートの`AGENTS.md`はこのリポジトリへ配置せず、文書検証の必須pathにも含めません。文書の参照・更新・レビュー手順は本書で管理します。この例外は、所有者がリポジトリ内での指示管理を再採用すると判断した場合に見直します。
 - 単純移動は`git mv`を使い、旧path参照を更新します。
 - Open Issue等が旧pathを参照している場合、必要最小限の非正規compatibility stubを期限または再検討条件付きで残せます。
 - Decision RecordのID、日付、status、本文、置換関係を保持します。番号を振り直しません。
@@ -64,7 +65,7 @@ Validatorは必須path、kebab-case、compatibility stub、内部link、Decision
 ## Prohibited patterns
 
 - `latest`、`final`、`new`、`v2`を付けた現行文書の複製
-- 同じ契約をREADME、AGENTS、Issue、複数docsへ不必要に重複記載すること
+- 同じ契約をREADME、Issue、複数docsへ不必要に重複記載すること
 - raw chat logを判断記録の代わりに保存すること
 - secret、private URL、個人情報、正確な現在地、raw response/logを証拠として貼ること
 - 古いcompatibility stubを正規文書として更新すること
