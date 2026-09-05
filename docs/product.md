@@ -1,14 +1,14 @@
 # SpotDiggz Product
 
 - Status: Current
-- Last reviewed: 2026-09-05
+- Last reviewed: 2026-09-06
 - Product branch: `main`
-- Baseline evidence: remote `main` `ed514394042d86833189637b433d21eac2fcd684`
+- Baseline evidence: remote `main` `0a8cd3ba38cd67654c2bde0c4e4d2fc0d75302f9`（実装）、2026-09-06のownerによるProduct定義の訂正（[DR-0018](decisions/0018-api-first-product-definition.md)）
 - Migrated from: [`product_baseline.md`](product_baseline.md) under Issue #305
 
 ## Product statement
 
-SpotDiggzは、気分・目的・skill・時間・検索位置・交通手段から、利用者が「今日の自分に合うskate session」を決め、実際に滑りに行けるようにする日本語・英語対応serviceです。
+SpotDiggzは、スケボーをしたい人が、その日の目的や条件に合う行き先を決めるためのサービスです。対象地域を限定せず、UIやSlack・Discordのbot・appなどから呼び出せるAPIとして、施設情報と推薦機能を提供できるように整備していきます。
 
 地図を提供すること自体を目的にせず、検証済み施設情報と説明可能な推薦で、候補を比較して行き先を決めることを支援します。
 
@@ -18,33 +18,28 @@ SpotDiggzは、気分・目的・skill・時間・検索位置・交通手段か
 
 ## Target users
 
-### Primary
-
-大阪府、兵庫県、和歌山県、奈良県、徳島県でskateboardを始めた初心者です。仕事・学校の後や限られた休日に、合法的かつ安心して練習できる施設を自力で判断しにくい利用者を対象とします。
+ターゲットは「スケボーをしたい人」です。関西や特定の府県、初心者などに限定しません。経験レベル、目的、時間、検索位置、交通手段は、利用者を対象外にする区分ではなく、候補を選ぶための条件です。
 
 private MVPではGitHub owner allowlistの1名だけへ利用を許可します。これは複数userへ公開する前のsecurity boundaryであり、市場上のtarget userを変更するものではありません。
 
-### Secondary
+現在の施設データの収録範囲と入力できる条件には実装上の制約があります。ターゲットを限定しないことは、全地域・全条件への対応済み、未検証spotの推薦、匿名公開を意味しません。
 
-- 5府県の復帰者
-- 5府県を旅行中の訪日skater
-- 施設の利用rule、交通、持ち物を日本語・英語で確認したい利用者
+## Delivery model
 
-### Initial validation exclusions
-
-- 地元の主要施設と利用条件を既に把握している上級者
-- 利用可否が確認できないstreet spotを探す利用者
-- 全国規模のuser投稿地図やskate SNSを求める利用者
-- 保護者を一次利用者とする親子向け市場
+- 施設情報と条件に合う推薦をAPIとして提供し、UI、Slack・Discordのbotやappなどが利用できるようにします。
+- 各利用側は条件の入力と結果の表示・返信を担い、施設情報と推薦の判断を共有します。
+- 特定のWeb画面やchatサービスだけをプロダクトそのものとは定義しません。
+- これは提供方針です。独立した各clientがHTTP APIを呼ぶ構成の完成や、新しいAPI認証方式の採用を宣言するものではありません。実装前の未確定事項は[Requirements](requirements.md#product-direction-and-implementation-boundary)で管理します。
 
 ## Value
 
-- 条件を一度入力し、検証済み施設から最大3件へ候補を絞れます。
-- 推薦理由、到着・滑走目安、公式情報、注意事項を比較できます。
-- 必要な場合だけ施設詳細と動画を開き、外部navigationへ進めます。
-- 情報源と検証時刻を確認し、誤りを任意で報告できます。
+- 利用するUI・bot・appから条件を伝え、検証済み施設を根拠付きで比較して行き先を決められることを目指します。
+- 施設情報と推薦の判断をAPIから利用できるようにし、入口ごとに別の施設情報や推薦ロジックを持たずに済むようにします。
+- 現行実装は最大3件の推薦理由、到着・滑走目安、公式情報、注意事項、情報源と検証時刻を提供し、誤りの任意報告も受け付けます。
 
-## Core experience
+## Current implementation flow
+
+以下は現在のコードにある入口です。Web向けHTTP APIはありますが、Slack・Discord adapterは内部の共通推薦serviceを呼びます。各bot・appが独立してAPIを利用する提供形態とは区別します。
 
 ```text
 Web: GitHub owner認証 -> 条件入力またはワンクリック推薦
@@ -66,7 +61,7 @@ Google連携がない場合、またはGoogle Routesが失敗した場合、推�
 
 条件入力から鮮度期限内の施設を理由付きで提示するserviceは、単なる施設一覧より目的地決定と実際の訪問を促進する、という仮説を検証します。この仮説は未検証です。
 
-4週間の需要検証では次を判断材料にします。
+以下は従来の4週間の需要検証計画であり、達成済みの数値ではありません。APIを利用する入口も含めた検証方法・対象者募集・計測方法の再確認が必要です。地域や経験レベルをターゲットの制限として引き継ぎません。
 
 - 対象利用者10人以上が実際の行き先決定に利用する
 - 5人以上が4週間以内に2回以上利用する
@@ -78,9 +73,17 @@ Google連携がない場合、またはGoogle Routesが失敗した場合、推�
 
 navigation利用が5人未満、到着・滑走が3人未満、既存serviceとの差がない、更新が週2時間を超える、またはprovider費用・privacy・運用負荷が上限を超える場合は、追加実装を止めて仮説かscopeを見直します。
 
-## Scope
+## Product scope
 
-- 大阪府、兵庫県、和歌山県、奈良県、徳島県の検証済み施設catalog
+- スケボーの行き先を決めるための、検証済み施設情報と条件に基づく推薦。
+- UIやSlack・Discordのbot・appなどから利用できるAPIの整備。
+- 情報源、鮮度、注意事項を伝え、根拠不足の場合は推薦できないことを明示すること。
+
+## Current implementation and data coverage
+
+以下は既存実装の範囲です。地域や技術構成そのものをプロダクトのターゲットとしません。施設の追加には出典・鮮度・更新責任の確認と、現行schema等の制約を変更する別作業が必要です。
+
+- 現在のcatalogと都道府県の許可値は大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県
 - Go製モジュラーモノリスと単一OCI image
 - smartphone対応の日本語・英語Web UI
 - ワンクリック推薦、詳細条件入力、最大3件の決定論的推薦
@@ -99,8 +102,8 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 
 ## Non-goals
 
-- iOS・Android native application
-- 全国施設の一括登録
+- 自社製iOS・Android native applicationの新規実装（APIを利用するappを対象外とする意味ではない）
+- 今回の定義訂正に伴う全国施設の一括登録や、未収録地域への対応済み宣言
 - 無審査user投稿またはcatalogへの自動反映
 - 利用可否不明のstreet spot
 - 第三者siteやSNSからの画像・動画・投稿の収集、保存、scraping、再配信
@@ -129,8 +132,8 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 ## Open questions
 
 - Status: Incomplete
-- Missing evidence: 5府県catalog更新を週2時間以内に維持できるか、実Google trafficの精度・費用・fallback率、厳密なcorrection purge、metrics基盤、英語利用者獲得、media確認工数の実測。
-- Required decision: ownerが需要検証とProduction運用の証拠を集め、scopeまたは運用を継続・変更するか判断する。
+- Missing evidence: 各UI・bot・app向けAPI契約と認証・認可方式、対応する条件・データの拡張順序、入口別の需要検証方法、catalogの更新工数、実Google trafficの精度・費用・fallback率、厳密なcorrection purge、metrics基盤、英語利用者獲得、media確認工数の実測。
+- Required decision: ownerがAPI提供に必要な契約・安全境界・実装範囲を別Issueと必要なDecision Recordで決める。地域限定ではなく、需要と検証・更新できるデータに基づいて整備の順序を決める。
 
 ## Related documents
 
