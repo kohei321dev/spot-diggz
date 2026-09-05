@@ -47,14 +47,18 @@ private MVPではGitHub owner allowlistの1名だけへ利用を許可します�
 ## Core experience
 
 ```text
-GitHub owner認証、または署名・owner認可済みSlack/Discord command
-  -> 目的・気分・level・時間・検索位置・交通手段を入力
+Web: GitHub owner認証 -> 条件入力またはワンクリック推薦
+Slack: 署名・owner認可済みcommand -> modalで6項目を入力
+Discord: 署名・owner認可済みcommand -> server-sideの公開代表起点・既定条件を使用
+  -> 各入口から目的・気分・level・時間・検索位置・交通手段を推薦engineへ渡す
   -> 鮮度超過・休場・時間外・移動超過・level不適合を除外
   -> 目的・初心者適性・設備・移動条件・滑走可能時間を評価
   -> 最大3件を理由・情報源・注意事項付きで比較
   -> 必要な施設詳細と動画だけを開く
   -> 公式情報を確認し、外部navigationで訪問
 ```
+
+6項目の利用者入力はWebの詳細条件フォームとSlack modalで提供します。Discord commandでは条件入力を受け付けず、設定済みの条件で推薦します。施設詳細と動画はWebで確認できます。
 
 Google連携がない場合、またはGoogle Routesが失敗した場合、推薦は交通手段別の固定速度による直線距離概算へ縮退します。結果は実経路か概算かを明示します。
 

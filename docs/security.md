@@ -75,7 +75,7 @@ process内rate limitはinstance間で共有されず、source単位でもない�
 - Slack Appは`commands`と`chat:write`だけを許可し、Slash Commandでmodalを開く。modal submissionへ即時ackし、推薦結果はBot Tokenを使う`chat.postEphemeral`でownerだけへ送る。button actionの`response_url`はHTTPSかつSlack/GovSlack hostの`/commands/`または`/actions/`pathだけを許可する。
 - Discordはraw JSON bodyと`X-Signature-Timestamp`をapplication public keyでEd25519検証し、timestampがserver時刻から5分以内であることを確認する。`application_id`、`guild_id`、member/user IDがすべて設定と一致したcommandだけを許可する。
 - Discordは3秒以内にephemeral deferred responseを返し、固定Discord API origin上のinteraction webhookへoriginal response更新を送る。responseではmention展開を無効にする。
-- Slack/Discord commandは過去message、channel history、DM historyを読み取らない。Slackの地点入力・座標・推薦文・interaction tokenはstore、log、metricsへ残さず、冪等性に必要なHMAC化source key、request状態、候補/選択facility IDだけを短期保持する。
+- Slack/Discord commandは過去message、channel history、DM historyを読み取らない。Slackの地点入力・座標・推薦文・interaction token・候補facility IDはstore、log、metricsへ残さない。Modal submissionの重複処理防止に必要なrequest ID、`View.ID`をHMAC化したsource key、処理状態、作成・更新・期限の時刻だけを短期保持する。保存対象は[ADR-0016](decisions/0016-slack-guided-recommendation.md)と[Chat仕様](specifications/chat-integrations.md)に従う。
 - chatの代表起点座標はserver-side設定からrequest処理中だけ利用する。自宅等の正確な個人位置を設定せず、駅等の公開地点を使用する。platformへ起点座標を返さない。
 
 ### Browser to third-party media and social services

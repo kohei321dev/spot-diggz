@@ -28,8 +28,8 @@ Slack Appの最小scopeは`commands`と`chat:write`です。Socket Mode、messag
 
 ## Slack idempotency and retention
 
-- Slash Command retryはHMAC化source event keyで重複処理を防ぎます。
-- 保存するのはsource key、処理状態、必要なfacility ID等の最小情報だけです。
+- Modal submissionのretryは、modalの`View.ID`から生成したHMAC化source event keyで重複処理を防ぎます。同じkeyのrequest状態がstoreにある間は、推薦処理を再実行しません。最初のSlash Commandのretryは、このstoreによる重複排除の対象ではありません。
+- 保存するのは`request_id`、`source_event_key`、処理状態（`generating`、`delivered`、`failed`）、作成・更新・期限の時刻だけです。候補facility IDは保存しません。
 - 状態保持は最大1時間です。
 - 入力地点、座標、候補本文、Slack interaction token、Bot Token、request bodyはstoreまたはlogへ残しません。
 - Background処理は12秒でtimeoutし、失敗時は利用者が再実行できるerrorを返します。
