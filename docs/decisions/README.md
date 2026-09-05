@@ -25,7 +25,7 @@
 | [ADR-0015](0015-owner-auth-and-chat-entrypoints.md) | Accepted | 2026-08-01 | Security | GitHub owner認証とSlack・Discord入口 | Incomplete | #304 | ADR-0016（Slack flowのみ） |
 | [ADR-0016](0016-slack-guided-recommendation.md) | Accepted | 2026-08-03 | Specification | Slack条件入力と推薦応答 | Incomplete | #304 | — |
 | [DR-0017](0017-minimal-development-ci.md) | Accepted | 2026-09-05 | Operation | 通常CIとリリース前検証を分ける | #307 | #308 | — |
-| [DR-0018](0018-api-first-product-definition.md) | Accepted | 2026-09-06 | Product | 地域を限定せずAPIを中心とするプロダクトとして定義する | owner直接依頼 | Incomplete | — |
+| [DR-0018](0018-api-first-product-definition.md) | Accepted | 2026-09-06 | Product | 地域を限定せずAPIを中心とするプロダクトとして定義する | owner直接依頼 | [#311](https://github.com/kohei321dev/spot-diggz/pull/311) | — |
 
 ## Supersession map
 

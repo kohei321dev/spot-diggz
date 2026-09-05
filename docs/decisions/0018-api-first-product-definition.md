@@ -4,7 +4,7 @@
 - Date: 2026-09-06
 - Type: Product
 - Related Issues: ownerからの直接の定義訂正依頼。対応Issueは未作成。
-- Related Pull Requests: Incomplete — この文書変更のPull Request作成後に追記する。
+- Related Pull Requests: [#311](https://github.com/kohei321dev/spot-diggz/pull/311)
 - Affected Docs: `product.md`, `requirements.md`, `architecture.md`, `README.md`, `specifications/facility-data.md`, `guides/how-to-use.md`
 - Supersedes: [ADR-0011](0011-five-prefecture-mvp-scope.md)の利用者検証・Productの地理scopeを5府県に限定する判断のみ。既存catalogとschema・validatorの地域制約は実装変更まで維持する。
 - Superseded By: None
