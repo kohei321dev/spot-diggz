@@ -12,6 +12,8 @@
 
 ## 1. MVP security posture
 
+API-first計画に伴うclient認証・owner認可境界は[DR-0019（Proposed）](decisions/0019-api-client-boundary.md)で検討中です。以下の現行境界は維持し、client利用資格の発行・失効方式を採用済みとは扱いません。
+
 - private MVPはGitHub OAuthで`GITHUB_OWNER`に一致するownerだけへWeb UIと`/api/*`を許可する。Productionの認証設定欠落は起動失敗とし、未認証APIはfail closedにする。
 - Slack/Discordはplatform request署名とownerへ対応付けたworkspace/guild/user IDを検証する。Browser session cookieや共通API keyをchat commandへ流用しない。
 - 施設選定は検証済みcatalogと決定論的ruleだけで行い、AI providerへdataを送信しない。

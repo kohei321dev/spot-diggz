@@ -16,6 +16,8 @@
 - Missing evidence: 各UI・bot・app向けAPIの呼出契約、認証・認可、互換性、エラー・応答形式、整備の優先順序と受入テスト。
 - Required decision: ownerが既存APIの再利用範囲と不足する契約を別Issueで明確にし、必要なDecision Recordを承認してから実装する。匿名公開や複数userへの開放はこの訂正に含めない。
 
+新計画[#312](https://github.com/kohei321dev/spot-diggz/issues/312)で[API契約とclient境界の案](research/api-client-contract-plan.md)を具体化しています。[DR-0019](decisions/0019-api-client-boundary.md)はProposedであり、同一アプリ内の入口整備と独立clientのHTTP API利用を区別して採用判断を待ちます。未承認の案は以下の要求や現行OpenAPIを変更しません。
+
 ## Functional requirements
 
 ### R-001: 推薦条件入力
