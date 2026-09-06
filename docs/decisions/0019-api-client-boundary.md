@@ -4,7 +4,7 @@
 - Date: 2026-09-06
 - Type: Architecture
 - Related Issues: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)、後続#313〜#318
-- Related Pull Requests: Incomplete — 設計PR作成後に追記する。
+- Related Pull Requests: [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Draft）
 - Affected Docs: `requirements.md`, `architecture.md`, `security.md`, `specifications/facility-catalog.openapi.yaml`, `specifications/chat-integrations.md`, `guides/`, `operations/`
 - Supersedes: None — 未承認。採用時にADR-0015のAPI認証境界、ADR-0016のchat呼出境界への影響を特定する。
 - Superseded By: None
