@@ -22,6 +22,8 @@
 
 ## Document map
 
+新計画の着手順・旧Issueとの対応は[#312](https://github.com/kohei321dev/spot-diggz/issues/312)、実装前の契約・安全境界の案は[`research/api-client-contract-plan.md`](research/api-client-contract-plan.md)を参照してください。設計案とDR-0019はProposedであり、現在提供する仕様ではありません。
+
 | Path | Responsibility | Status | Update trigger |
 | --- | --- | --- | --- |
 | [`product.md`](product.md) | 利用者、課題、価値、scope、non-goal、現在の状態 | Current | Product目的またはscopeの変更 |

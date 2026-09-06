@@ -8,6 +8,7 @@
 
 | Path | Role | Current use |
 | --- | --- | --- |
+| [`api-client-contract-plan.md`](api-client-contract-plan.md) | #312のAPI契約・安全境界・後続実装の設計案 | Proposed。client境界の採用承認待ち。現行仕様ではない |
 | [`market-demand-2026-07.md`](market-demand-2026-07.md) | 市場・需要調査snapshot | Product仮説の背景。現在性は再確認が必要 |
 | [`discovery/facility-catalog-2026-07-19.md`](discovery/facility-catalog-2026-07-19.md) | 公開catalog調査snapshot | 現catalogのprovenance補助 |
 | [`discovery/osaka-facility-candidates.md`](discovery/osaka-facility-candidates.md) | Issue #280前の候補 | 候補発見履歴のみ |

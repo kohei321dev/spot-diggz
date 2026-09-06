@@ -12,6 +12,8 @@
 
 ## Current system context
 
+今後のclient配置・呼出境界は[#312の設計案](research/api-client-contract-plan.md)と[DR-0019（Proposed）](decisions/0019-api-client-boundary.md)で比較しています。以下は変更前の現行構成です。
+
 SpotDiggzは、GitHub owner認証、Web UI、HTTP API、Slack/Discord command adapter、facility catalog、決定論的推薦、外部provider adapter、訂正store、observabilityを1つのGo applicationとしてdeployするモジュラーモノリスです。
 
 ```text
