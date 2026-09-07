@@ -4,10 +4,10 @@
 - Date: 2026-09-06
 - Type: Architecture
 - Related Issues: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)、後続#313〜#318
-- Related Pull Requests: [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Draft）
+- Related Pull Requests: [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Merged）
 - Affected Docs: `product.md`, `requirements.md`, `architecture.md`, `security.md`, `specifications/api-mvp.md`, `specifications/chat-integrations.md`, `operations/cloud-run-plan.md`, `guides/`, `operations/`（OpenAPIは後続実装PRで更新）
 - Supersedes: ADR-0009・0013・0014の独自Web UI提供要件、ADR-0012のVercelを今後の公開先とする判断、ADR-0015のWeb session必須API境界・Discord固定条件、ADR-0016の内部推薦service呼出境界のみ。旧本文は保持し、実装移行は後続Issueで行う。
-- Superseded By: None
+- Superseded By: [DR-0020](0020-mention-nearby-search.md)（新MVPの入力/検索の範囲のみ。API/Bot境界、認証、非保存、品質、ホスト、予算方針は維持）
 
 ## Context
 

@@ -22,6 +22,10 @@
 
 ### 移行前の実装上の対策
 
+この節以降は旧実装の説明です。新しいメンション入口の合意は[DR-0020](decisions/0020-mention-nearby-search.md)と[周辺検索仕様](specifications/nearby-search.md)を参照してください。platform別の真正性検証・最小権限・owner限定返信・Botループ/重複event対策を#312/#315/#316で再評価し、旧command署名をそのまま利用できるとはしません。メンションはchannel全体への結果公開、履歴巡回、本文/位置/tokenのapplication保存を許可するものではありません。入力messageのchat側保持とapplication非保存を区別します。
+
+R-008のresponse再掲禁止と、場所候補APIで座標を返す既存契約の差は#312で未解決として追跡します。場所確認に必要なAPI/Bot間データと人間向け表示、log/storeを分けたprivacy契約が必要であり、今回の文書更新で位置情報の保存・公開を拡張しません。
+
 - private MVPはGitHub OAuthで`GITHUB_OWNER`に一致するownerだけへWeb UIと`/api/*`を許可する。Productionの認証設定欠落は起動失敗とし、未認証APIはfail closedにする。
 - Slack/Discordはplatform request署名とownerへ対応付けたworkspace/guild/user IDを検証する。Browser session cookieや共通API keyをchat commandへ流用しない。
 - 施設選定は検証済みcatalogと決定論的ruleだけで行い、AI providerへdataを送信しない。

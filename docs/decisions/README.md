@@ -16,17 +16,18 @@
 | [ADR-0006](0006-remove-legacy-implementation.md) | Accepted | 2026-07-12 | Architecture | 旧実装を現行ツリーから削除する | Incomplete | Incomplete | — |
 | [ADR-0007](0007-go-modular-monolith-runtime.md) | Accepted | 2026-07-16 | Architecture | Go製モジュラーモノリスを初期runtimeに採用 | Incomplete | #288, #291 | DR-0017（container scanの通常CI運用のみ） |
 | [ADR-0008](0008-facility-catalog-api-and-storage.md) | Accepted | 2026-07-16 | Architecture | 施設カタログの初期APIと保存方式 | Incomplete | #291 | — |
-| [ADR-0009](0009-session-recommendation-ui.md) | Accepted | 2026-07-16 | Specification | 選択式session検索とWeb UI | Incomplete | #291 | ADR-0010・0011（各一部）、DR-0019（新MVPの提供境界のみ） |
+| [ADR-0009](0009-session-recommendation-ui.md) | Accepted | 2026-07-16 | Specification | 選択式session検索とWeb UI | Incomplete | #291 | ADR-0010・0011、DR-0019、DR-0020（各一部） |
 | [ADR-0010](0010-google-maps-provider-and-fallback.md) | Accepted | 2026-07-20 | Architecture | Optional Google Mapsとfallback | Incomplete | #291 | — |
 | [ADR-0011](0011-five-prefecture-mvp-scope.md) | Accepted | 2026-07-20 | Product | MVPの地理scopeを5府県へ拡大 | Incomplete | #291 | DR-0018（利用者・Productの地理scopeのみ） |
 | [ADR-0012](0012-vercel-neon-deployment.md) | Accepted | 2026-07-20 | Architecture | Vercel ContainerとNeonによるMVP公開 | Incomplete | #291 | DR-0019（新MVPの提供境界のみ） |
 | [ADR-0013](0013-curated-external-media.md) | Accepted | 2026-07-21 | Specification | 手動選定YouTubeと公式SNS導線 | Incomplete | #292, #293, #304 | ADR-0014（一部）、DR-0019（新MVPの提供境界のみ） |
 | [ADR-0014](0014-progressive-facility-details.md) | Accepted | 2026-07-22 | Specification | 施設補助情報とYouTubeを明示操作後に表示 | Incomplete | #304 | DR-0019（新MVPの提供境界のみ） |
 | [ADR-0015](0015-owner-auth-and-chat-entrypoints.md) | Accepted | 2026-08-01 | Security | GitHub owner認証とSlack・Discord入口 | Incomplete | #304 | ADR-0016（Slack flowのみ）、DR-0019（新MVPの提供境界のみ） |
-| [ADR-0016](0016-slack-guided-recommendation.md) | Accepted | 2026-08-03 | Specification | Slack条件入力と推薦応答 | Incomplete | #304 | DR-0019（新MVPの提供境界のみ） |
+| [ADR-0016](0016-slack-guided-recommendation.md) | Accepted | 2026-08-03 | Specification | Slack条件入力と推薦応答 | Incomplete | #304 | DR-0019（提供境界）、DR-0020（入力/候補数） |
 | [DR-0017](0017-minimal-development-ci.md) | Accepted | 2026-09-05 | Operation | 通常CIとリリース前検証を分ける | #307 | #308 | — |
 | [DR-0018](0018-api-first-product-definition.md) | Accepted | 2026-09-06 | Product | 地域を限定せずAPIを中心とするプロダクトとして定義する | owner直接依頼 | [#311](https://github.com/kohei321dev/spot-diggz/pull/311) | — |
-| [DR-0019](0019-api-client-boundary.md) | Accepted | 2026-09-06 | Architecture | API利用clientと認証境界の初期構成 | #312 | [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Draft） | — |
+| [DR-0019](0019-api-client-boundary.md) | Accepted | 2026-09-06 | Architecture | API利用clientと認証境界の初期構成 | #312 | [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Merged） | DR-0020（入力/検索の範囲のみ） |
+| [DR-0020](0020-mention-nearby-search.md) | Accepted | 2026-09-07 | Specification | メンションと場所名による周辺スポット検索をMVPにする | #312 | [#320](https://github.com/kohei321dev/spot-diggz/pull/320) | — |
 
 ## Supersession map
 
@@ -39,6 +40,8 @@
 - DR-0018はADR-0011の利用者検証・Productの地理scopeだけを置換します。既存catalogとschema・validatorの地域制約は別の実装変更まで維持します。
 
 - DR-0019は独立API、Bot入口、Cloud Run、独自Web UI不要、検索中→結果/エラー、月額目安USD 3・メール通知のみ・予算超過時停止なしを採用します。ADR-0009/0013/0014の独自Web UI提供、ADR-0012の今後のAPIホスト、ADR-0015の新APIのWeb session必須とDiscord固定条件、ADR-0016の呼出・返信境界だけを部分置換します。owner限定、非保存、施設品質、旧実装の安全性は維持し、具体的な認証・保存・非同期方式はIncompleteです。
+
+DR-0020はADR-0009の新MVPの6条件必須・即時滑走推薦/固定3件、ADR-0016のslash/modal入口・mention非対応と固定候補数、DR-0019の入力/検索の範囲を部分置換します。旧record本文とIDは維持し、認証・非保存・施設品質・Cloud Run・費用方針は変更しません。検索範囲の指定可能方針と、その構文/既定値/上限の未確定を区別します。
 
 ## When to write
 

@@ -22,6 +22,8 @@
 
 ## Document map
 
+新MVPのメンション＋場所名、genre/limit/sortと任意検索範囲は[周辺検索仕様](specifications/nearby-search.md)を正本とします。[DR-0020](decisions/0020-mention-nearby-search.md)で旧6条件必須・固定3件・slash/modal入口との部分置換を追跡し、未確定の数値/応答/transportを実装済みと扱いません。
+
 新計画の着手順・旧Issueとの対応は[#312](https://github.com/kohei321dev/spot-diggz/issues/312)、実装前の契約・安全境界の案は[`research/api-client-contract-plan.md`](research/api-client-contract-plan.md)を参照してください。DR-0019の提供・運用方針はowner承認済みです。独自Web UIは不要、独立APIとSlack/DiscordをMVPとします。[MVP API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)に採用事項と未実装・未確定を分けています。詳細案の未承認部分を実装済み仕様と扱いません。
 
 | Path | Responsibility | Status | Update trigger |
