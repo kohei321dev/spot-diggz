@@ -10,13 +10,15 @@
 
 [DR-0018](decisions/0018-api-first-product-definition.md)に従い、対象は地域や経験レベルを限定しない「スケボーをしたい人」です。UI、Slack・Discordのbot・appなどから施設情報と推薦を利用できるAPIを整備します。
 
-以下のR-001〜R-020は既存の要求・受入条件です。現在のWeb向けAPIと内部serviceを呼ぶchat adapterの契約を、独立したAPI client向けの整備が完了した証拠とは扱いません。現在のowner認証、入力の許可値、推薦可能なcatalog範囲は、この方針訂正だけでは変更しません。
+以下のR-001〜R-020は移行前の要求・受入条件をID保持のため記載しています。新MVPでは[DR-0019の要求ID適用表](specifications/api-mvp.md#要求idの適用移行)を優先し、独自Web UI・iframe・Web OAuth必須・Discord固定条件を新しい提供要件として引き継ぎません。現在のWeb向けAPIと内部serviceを呼ぶchat adapterの契約を、独立したAPI client向けの整備が完了した証拠とは扱いません。現在のowner認証、入力の許可値、推薦可能なcatalog範囲は、この方針訂正だけでは変更しません。
 
 - Status: Incomplete
-- Missing evidence: 各UI・bot・app向けAPIの呼出契約、認証・認可、互換性、エラー・応答形式、整備の優先順序と受入テスト。
+- Missing evidence: API認証・失効・owner対応付けの具体方式、入力・応答schema、互換性、受付後の実行・配送失敗対策、Gateway制限機能、Cloud Run環境と予算通知の実設定。
 - Required decision: ownerが既存APIの再利用範囲と不足する契約を別Issueで明確にし、必要なDecision Recordを承認してから実装する。匿名公開や複数userへの開放はこの訂正に含めない。
 
-## Functional requirements
+[DR-0019](decisions/0019-api-client-boundary.md)で独立HTTP API、Slack/Discord Bot、独自Web UI不要、Cloud Run、スポット追加は後続、検索中→結果/エラー、月額目安USD 3・メール通知・予算超過時停止なしを採用しました。正本は[MVP API提供契約](specifications/api-mvp.md)と[運用計画](operations/cloud-run-plan.md)。#312と[詳細案](research/api-client-contract-plan.md)で残る技術判断を追跡します。以下の旧Web条件や現行OpenAPIを実装完了の証拠にはしません。
+
+## Functional requirements (migration baseline)
 
 ### R-001: 推薦条件入力
 
@@ -170,11 +172,12 @@
 
 ## Constraints
 
-- 単一deploy可能単位のGoモジュラーモノリスを維持します。
-- facility catalogはGit管理のread-only JSON snapshot、Production correctionはNeon/PostgreSQLです。
+- APIのGoモジュラーモノリスと共通推薦engineを基本にします。独立clientからAPIを呼べることを必須とし、Botの物理配置・deploy単位の詳細は#312/#318で評価します。
+- facility catalogはGit管理のread-only JSON snapshotです。Neon/PostgreSQLは移行前の訂正・短期状態storeであり、新MVPでの必要範囲・費用を#312/#318で確認します。既存データを今回削除しません。
 - MVP推薦にAIを使用しません。
 - external provider、queue、cache、service分割、catalog databaseは必要性の計測とDecision Recordなしに追加しません。
-- permanent stagingは現在のscopeでは設けず、必要な変更だけ一時Vercel Previewを使います。
+- permanent stagingは設けません。Cloud Run向け一時検証環境の要否は#318で確認し、旧Vercel Previewを既定としません。
+- 費用は全体で月額USD 3を目安とし、予算アラートメールのみを使います。超過を理由とした自動停止・課金無効化・推薦拒否は行いません。
 - secret、個人情報、正確な現在地をsource、artifact、logへ保存しません。
 
 ## Release gates
@@ -187,6 +190,8 @@
 - 未確認のProduction Discord、Google、metrics制限、custom domain、自動deploy、rollback exerciseを確認済みと扱わない。
 
 ## Traceability
+
+次表は移行前の追跡情報です。新MVPの適用範囲と後続testは[API契約](specifications/api-mvp.md#要求idの適用移行)を参照します。旧UI testを新MVPの恒久gateとせず、変更は#313の差分評価で必要なAPI回帰検証へ整合させます。
 
 | Requirements | Specification | Primary tests or checks | Decisions |
 | --- | --- | --- | --- |

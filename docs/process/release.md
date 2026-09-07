@@ -1,5 +1,7 @@
 # SpotDiggz Release Process
 
+> 移行中: [DR-0019](../decisions/0019-api-client-boundary.md)で独立API・Slack/Discord・Cloud Run・独自Web UI不要を採用しました。本書のWeb/OAuth/Vercelに関する記載は移行前実装の参照であり、新構成の提供・設定済みを示しません。新方針は[API契約](../specifications/api-mvp.md)と[Cloud Run運用計画](../operations/cloud-run-plan.md)を参照し、旧設定手順を新環境へ流用しないでください。
+
 - Status: Current
 - Operational details: [`../operations/continuous-delivery.md`](../operations/continuous-delivery.md)
 
@@ -16,7 +18,7 @@
 - Local: 開発、unit/component test、manual UI確認。
 - CI: deterministic Go test、format/vet/build、contract、docs、Go source/binary・secret・dependency scan。
 - Release前の手動検証: 本番catalog freshness、desktop/mobile E2E、container build・scan・smoke。通常CIはこれらの成功証拠を提供しない。詳細は[DR-0017](../decisions/0017-minimal-development-ci.md)と[Continuous delivery](../operations/continuous-delivery.md)を参照する。
-- Vercel Preview: 外部連携、data migration、infrastructure等で必要な期間だけ明示的に作成。
+- 一時検証環境: Cloud Runの外部連携・data migration等で必要な範囲を#318で決め、明示承認後に作成する。旧Vercel Previewを新構成の既定にしない。
 - Production: `main`反映後の正式環境。
 
 ### Permanent staging

@@ -8,9 +8,13 @@
 
 ## Product delivery direction
 
-[DR-0018](decisions/0018-api-first-product-definition.md)で、UIやSlack・Discordのbot・appなどから利用できるAPIとして施設情報と推薦を提供する方針を定義しています。以下の構成図は観測した既存実装です。chat adapterは内部の共通serviceを呼ぶため、独立したAPI client構成への整備完了を意味しません。今後のAPI契約と認証・認可は[Requirementsの未確定事項](requirements.md#product-direction-and-implementation-boundary)として管理し、今回runtime分離や新しい認証方式は採用しません。
+[DR-0019](decisions/0019-api-client-boundary.md)により、Slack/Discord → 自分のBotサーバー → 認証付きSpotDiggz HTTP APIをMVPの経路とし、APIのホストにCloud Runを採用します。独自Web UIは提供しません。API内部は既存Goモジュールと決定論的engineを再利用します。Bot/APIの物理配置・credential・非同期実行方式は未確定です。[API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)を正本とします。
+
+以下の構成・component・データ所有・起動条件・配置図は移行前の観測した実装です。Web/Vercel/GitHub OAuthを新MVPの採用要件とせず、旧実装と新方針の差分は#312/#313/#318で扱います。
 
 ## Current system context
+
+clientのHTTP API利用方針は採用済みです。[#312の詳細案](research/api-client-contract-plan.md)で未確定の安全境界・実行方式を比較しています。以下は変更前の現行構成です。
 
 SpotDiggzは、GitHub owner認証、Web UI、HTTP API、Slack/Discord command adapter、facility catalog、決定論的推薦、外部provider adapter、訂正store、observabilityを1つのGo applicationとしてdeployするモジュラーモノリスです。
 
@@ -113,7 +117,7 @@ external services
   - YouTube / Instagram / X (explicit browser action only)
 ```
 
-リポジトリ内の配置設計はVercel ContainerとNeonを前提にしていますが、現在の本番稼働と公開先は未確認です。[公開先の確認状況](operations/service-status.md)を参照してください。運用再開時は通常localとCI、必要な変更だけ一時Preview、Production反映後のsmokeを行う方針です。permanent stagingは現scopeで設けません。
+上の配置図は旧Vercel/Neon実装の説明です。新APIの配置先はCloud Run、月額目安USD 3・メール通知のみ・予算超過時停止なしです。Gateway正式選定・制限機能、状態store、課金方式、公開URLは[運用計画](operations/cloud-run-plan.md)で未確定として管理します。現時点の稼働は[公開状況](operations/service-status.md)を参照し、常設stagingは設けません。
 
 ## Quality attributes
 

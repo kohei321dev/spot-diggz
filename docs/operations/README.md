@@ -10,6 +10,7 @@ Production、local、CIのdeploy、monitoring、incident、rollback、data maint
 
 | Runbook | Trigger | Owner | Status / last evidence |
 | --- | --- | --- | --- |
+| [`cloud-run-plan.md`](cloud-run-plan.md) | API/Bot移行、費用・メール通知設定の事前評価 | owner | 方針Accepted、設定Incomplete |
 | [`mvp-runbook.md`](mvp-runbook.md) | 起動、smoke、incident、fallback、rollback | release owner / on-call operator | Current。Vercel/Neon smoke 2026-07-20 |
 | [`continuous-delivery.md`](continuous-delivery.md) | CI、artifact、deploy、rollback設計 | release owner | Current。CI implemented、Production smoke記録あり |
 | [`observability.md`](observability.md) | log、metrics、SLI/SLO、privacy | operator | Application実装済み。Production wiringはIncomplete |
@@ -17,7 +18,11 @@ Production、local、CIのdeploy、monitoring、incident、rollback、data maint
 
 管理画面を使う初回認証・chat設定は[`../guides/`](../guides/README.md)、release承認flowは[`../process/release.md`](../process/release.md)を参照します。
 
-## Minimum operational contract
+## 新MVPの運用方針
+
+[Cloud Run運用計画](cloud-run-plan.md)が新構成の正本です。Cloud Runをホストとし、月額目安USD 3・Google Cloud予算アラートメールのみ・超過時停止なしを採用しています。Gateway正式選定・制限、課金・状態store・実公開・通知設定はIncompleteです。下記は移行前実装の運用契約であり、Vercelの再開手順ではありません。
+
+## Minimum operational contract (migration baseline)
 
 - `/healthz`と`/readyz`でlivenessとcatalog freshnessを分離する。
 - request、recommendation、external provider、catalog、retentionを秘密情報なしで観測する。

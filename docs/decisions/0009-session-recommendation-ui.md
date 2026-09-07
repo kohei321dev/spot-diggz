@@ -7,7 +7,7 @@
 - Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
 - Affected Docs: `requirements.md`, `architecture.md`, `specifications/web-ui.md`, `specifications/facility-catalog.openapi.yaml`
 - Supersedes: None
-- Superseded By: [ADR-0010](0010-google-maps-provider-and-fallback.md)（origin/providerのみ）、[ADR-0011](0011-five-prefecture-mvp-scope.md)（地理scopeのみ）
+- Superseded By: [ADR-0010](0010-google-maps-provider-and-fallback.md)（origin/providerのみ）、[ADR-0011](0011-five-prefecture-mvp-scope.md)（地理scopeのみ）、[DR-0019](0019-api-client-boundary.md)（独自Web UIの提供要件のみ）
 - Related: [Product](../product.md)
 - Related: [ADR-0003](0003-recommendation-engine-before-ai.md)
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)

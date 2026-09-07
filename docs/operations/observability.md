@@ -1,8 +1,16 @@
 # Observability, SLI and SLO Design
 
+> 移行中: [DR-0019](../decisions/0019-api-client-boundary.md)で独立API・Slack/Discord・Cloud Run・独自Web UI不要を採用しました。本書のWeb/OAuth/Vercelに関する記載は移行前実装の参照であり、新構成の提供・設定済みを示しません。新方針は[API契約](../specifications/api-mvp.md)と[Cloud Run運用計画](../operations/cloud-run-plan.md)を参照し、旧設定手順を新環境へ流用しないでください。
+
 - Status: MVP implemented baseline; production wiring pending
 - Date: 2026-08-01
 - Scope: application JSON logs, in-process Prometheus metrics, owner authentication, chat entrypoints, product events, catalog freshness, curated external media interaction
+
+## 新MVPの追加観測要件
+
+- 条件受付・検索中表示・API完了・結果/エラー配送を別の結果として計測する。API成功だけで返信成功とは扱わない。
+- 配送失敗、timeout、retry上限、重複抑止、受付後のprocess停止を秘密情報なしで観測する。詳細実装は#312/#315/#316で設計する。
+- 月額目安USD 3のGoogle Cloud予算アラートはメール通知のみ。予算超過時の自動停止を行わない。budget scope、受信者、threshold、通知確認は#318で設定・検証する。現時点は未設定。
 
 ## 1. 目的
 

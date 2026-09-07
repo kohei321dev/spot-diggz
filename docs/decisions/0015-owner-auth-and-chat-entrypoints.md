@@ -9,7 +9,7 @@
 - Related Pull Requests: [#304](https://github.com/kohei321dev/spot-diggz/pull/304)
 - Affected Docs: `requirements.md`, `architecture.md`, `security.md`, `specifications/chat-integrations.md`
 - Supersedes: None
-- Superseded By: [ADR-0016](0016-slack-guided-recommendation.md)（Slack入力・response flowのみ）
+- Superseded By: [ADR-0016](0016-slack-guided-recommendation.md)（Slack入力・response flowのみ）、[DR-0019](0019-api-client-boundary.md)（新APIでのWeb session必須とDiscord固定条件のみ。owner限定・署名検証を保持）
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
 - Related: [Security](../security.md)

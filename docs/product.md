@@ -20,16 +20,16 @@ SpotDiggzは、スケボーをしたい人が、その日の目的や条件に�
 
 ターゲットは「スケボーをしたい人」です。関西や特定の府県、初心者などに限定しません。経験レベル、目的、時間、検索位置、交通手段は、利用者を対象外にする区分ではなく、候補を選ぶための条件です。
 
-private MVPではGitHub owner allowlistの1名だけへ利用を許可します。これは複数userへ公開する前のsecurity boundaryであり、市場上のtarget userを変更するものではありません。
+private MVPでは同じ許可済みownerの1名だけへ利用を許可します。新APIのclient認証とBot側のplatform ID認可を分け、旧WebのGitHub OAuth cookieをAPI利用の必須方式とはしません。これは複数userへ公開する前のsecurity boundaryであり、市場上のtarget userを変更するものではありません。
 
 現在の施設データの収録範囲と入力できる条件には実装上の制約があります。ターゲットを限定しないことは、全地域・全条件への対応済み、未検証spotの推薦、匿名公開を意味しません。
 
 ## Delivery model
 
-- 施設情報と条件に合う推薦をAPIとして提供し、UI、Slack・Discordのbotやappなどが利用できるようにします。
+- 施設情報と条件に合う推薦を独立clientから呼べるAPIとして提供します。MVPはSlack/Discord → 自分のBotサーバー → SpotDiggz APIとし、独自Web UIは提供しません。
 - 各利用側は条件の入力と結果の表示・返信を担い、施設情報と推薦の判断を共有します。
 - 特定のWeb画面やchatサービスだけをプロダクトそのものとは定義しません。
-- これは提供方針です。独立した各clientがHTTP APIを呼ぶ構成の完成や、新しいAPI認証方式の採用を宣言するものではありません。実装前の未確定事項は[Requirements](requirements.md#product-direction-and-implementation-boundary)で管理します。
+- [DR-0019](decisions/0019-api-client-boundary.md)でCloud Run、位置・条件入力、検索中→結果/エラー、スポット追加は後続、月額目安USD 3・予算メール通知のみ・超過時停止なしを採用しました。方針承認と実装・公開完了を区別し、[MVP API提供契約](specifications/api-mvp.md)で未確定の技術詳細を管理します。
 
 ## Value
 
@@ -37,7 +37,7 @@ private MVPではGitHub owner allowlistの1名だけへ利用を許可します�
 - 施設情報と推薦の判断をAPIから利用できるようにし、入口ごとに別の施設情報や推薦ロジックを持たずに済むようにします。
 - 現行実装は最大3件の推薦理由、到着・滑走目安、公式情報、注意事項、情報源と検証時刻を提供し、誤りの任意報告も受け付けます。
 
-## Current implementation flow
+## Current implementation flow (before DR-0019 migration)
 
 以下は現在のコードにある入口です。Web向けHTTP APIはありますが、Slack・Discord adapterは内部の共通推薦serviceを呼びます。各bot・appが独立してAPIを利用する提供形態とは区別します。
 
@@ -76,7 +76,7 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 ## Product scope
 
 - スケボーの行き先を決めるための、検証済み施設情報と条件に基づく推薦。
-- UIやSlack・Discordのbot・appなどから利用できるAPIの整備。
+- 独立client向けAPIとSlack/DiscordのBot入口の整備。実スポットデータの追加は後続作業。
 - 情報源、鮮度、注意事項を伝え、根拠不足の場合は推薦できないことを明示すること。
 
 ## Current implementation and data coverage
@@ -97,10 +97,12 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 ### Permanent staging environment
 
 - Status: Not applicable
-- Reason: 現在は単一ownerの小規模private MVPであり、通常変更はlocalとCI、外部連携等は必要期間だけVercel Preview、本番反映後はProduction smokeで検証する運用がREADMEに明記されています。
+- Reason: 単一ownerの小規模private MVPとして通常はlocalとCIで確認します。Cloud Run移行に伴う一時検証環境は#318で必要性を評価し、常設stagingは新設しません。旧Vercel Preview手順は新構成へ流用しません。
 - Revisit when: 複数人の継続的検証、長期間の外部受入、Productionと異なるdata・credential境界が必要になったとき。
 
 ## Non-goals
+
+- 独自Web UIの提供・追加改善（#317は対象外。既存実装の廃止範囲は#312/#313で確認）
 
 - 自社製iOS・Android native applicationの新規実装（APIを利用するappを対象外とする意味ではない）
 - 今回の定義訂正に伴う全国施設の一括登録や、未収録地域への対応済み宣言
@@ -132,7 +134,7 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 ## Open questions
 
 - Status: Incomplete
-- Missing evidence: 各UI・bot・app向けAPI契約と認証・認可方式、対応する条件・データの拡張順序、入口別の需要検証方法、catalogの更新工数、実Google trafficの精度・費用・fallback率、厳密なcorrection purge、metrics基盤、英語利用者獲得、media確認工数の実測。
+- Missing evidence: 独立API clientの具体的認証・認可・失効方式、入力と応答schema、非同期実行方式、API Gatewayの正式選定と制限機能、Cloud Run環境・総費用・メール通知の実設定、入口別需要検証とデータ更新工数の実測。方針承認済みと実装未完了を区別します。
 - Required decision: ownerがAPI提供に必要な契約・安全境界・実装範囲を別Issueと必要なDecision Recordで決める。地域限定ではなく、需要と検証・更新できるデータに基づいて整備の順序を決める。
 
 ## Related documents

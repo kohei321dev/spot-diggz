@@ -1,6 +1,8 @@
 # Web UI Specification
 
-- Status: Current
+> 移行中: [DR-0019](../decisions/0019-api-client-boundary.md)で独立API・Slack/Discord・Cloud Run・独自Web UI不要を採用しました。本書のWeb/OAuth/Vercelに関する記載は移行前実装の参照であり、新構成の提供・設定済みを示しません。新方針は[API契約](../specifications/api-mvp.md)と[Cloud Run運用計画](../operations/cloud-run-plan.md)を参照し、旧設定手順を新環境へ流用しないでください。
+
+- Status: Legacy implementation reference; not an MVP deliverable
 - Related requirements: R-001–R-005、R-007、R-013–R-017
 - Related decisions: ADR-0004、ADR-0009、ADR-0013、ADR-0014、ADR-0015
 
