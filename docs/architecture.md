@@ -1,7 +1,7 @@
 # SpotDiggz Architecture
 
 - Status: Current
-- Last reviewed: 2026-09-07
+- Last reviewed: 2026-09-08
 - Requirements: [`requirements.md`](requirements.md)
 - Decision authority: [Accepted Decision Records](decisions/README.md)
 - Migrated from: [`architecture/quality-attributes.md`](architecture/quality-attributes.md) under Issue #305
@@ -23,6 +23,12 @@
 [DR-0022](decisions/0022-domestic-catalog-quality.md)では`internal/facility`が国内47都道府県・営業時間の確認状態を検証し、`IsNearbySearchable`を検索・API readiness・`catalogcheck -require-searchable`で共有する。`internal/recommendation`の旧旅程計算は非knownを移動providerの呼出し前に除外する。新しい外部呼出し・保存先・data mutationは追加しない。code/schema/catalogを互換な組で配置・rollbackし、実データの確認責任は[保守手順](guides/catalog-maintenance.md)に従う。
 
 詳細は[読み取りAPI](specifications/read-api.md)。以下のsystem context以降は保持したlegacy modeの説明であり、API modeの依存条件ではない。
+
+## Bot共通クライアント部品（DR-0023）
+
+`internal/botsearch`は`nearby.Input`をJSONとして認証付きHTTP APIへ送り、型/必須field/候補整合を検証した`nearby.Response`を返す。入力型とcatalog validatorを共有するが、`nearby.Service`や旧内部推薦engineを直接呼ばない。固定HTTPS送信先・redirect拒否・timeout・応答サイズ上限・固定errorを集約する。
+
+呼出元adapterが先にplatform真正性とownerを認可する。parser、表示/配送、queue、store、runtime設定は追加せず、旧handlerや`cmd/api`へ未接続のまま独立testする。API側の鮮度/地点/順位判定をBot側で複製しない。API/schema/clientの互換性を同じ変更で検証し、未知fieldを黙って受理しない。詳細・残る運用gateは[共通client仕様](specifications/bot-api-client.md)、判断理由は[DR-0023](decisions/0023-bot-api-client.md)。
 
 ## Current system context
 

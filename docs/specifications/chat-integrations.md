@@ -12,7 +12,13 @@
 
 Slack無料プランの通常Appという方針は維持します。platform別のメンション受信transport・必要scope/intent・owner限定返信、受付後処理・配送失敗・retry・冪等性は#312/#315/#316で詳細化します。API接続は[読み取りAPI](read-api.md)のclient別Bearer/JSON/構造化statusを使います。Bot側のowner本人確認は省略できず、資格情報の実登録は後続です。旧Discord HTTP Interaction専用という制約との適合も再評価し、別transportの採用や環境変更を今回承認したとはしません。既存署名・ephemeral方式の流用可否やgoroutineによる完了保証を検証なしで宣言しません。
 
-以下の全節は移行前実装の説明です。「Discordの固定起点」「内部engine呼出し」「mention非対応」「最大3件」を新MVPの受入条件にしません。実装変更時にAPI契約・本書・setup guide・manifestを同じPRで更新します。メンションはまだ実行できる新機能ではありません。
+次節は新MVPの共通部品、その後のShared boundary以降は移行前実装の説明です。「Discordの固定起点」「内部engine呼出し」「mention非対応」「最大3件」を新MVPの受入条件にしません。入口の実装変更時にAPI契約・本書・setup guide・manifestを同じPRで更新します。メンションはまだ実行できる新機能ではありません。
+
+## 共通API接続部品（新MVPのソース実装）
+
+[DR-0023](../decisions/0023-bot-api-client.md)に基づく`internal/botsearch`は、構造化条件をBearer付き読み取りAPIへ送り、検証した5statusまたは固定errorを返す。[共通client仕様](bot-api-client.md)に通信上限・redirect拒否・不正応答・privacy・testを記載する。
+
+これは#315の第一単位であり、メンションの受信・文法・表示・owner限定配送は未接続。旧Slack/Discord handlerやmanifest、scope/intent、設定値は変更しない。共通部品を使う前にplatform真正性・owner認可を行い、結果はplatform向けに安全に表示する必要がある。以降は引き続き旧実装の説明である。
 
 ## Shared boundary
 

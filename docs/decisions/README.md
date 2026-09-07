@@ -30,6 +30,7 @@
 | [DR-0020](0020-mention-nearby-search.md) | Accepted | 2026-09-07 | Specification | メンションと場所名による周辺スポット検索をMVPにする | #312 | [#320](https://github.com/kohei321dev/spot-diggz/pull/320) | DR-0021（API数値/応答等のみ） |
 | [DR-0021](0021-read-api-contract.md) | Accepted | 2026-09-07 | Architecture | 読み取りAPIのBearer認証と周辺検索の最小契約 | #313、#312、#314 | [#321](https://github.com/kohei321dev/spot-diggz/pull/321) | DR-0022（地域・営業時間状態の具体化） |
 | [DR-0022](0022-domestic-catalog-quality.md) | Accepted | 2026-09-07 | Specification | 国内の地域表現と営業時間の確認状態を分離する | #314、#312、#313、#318 | [#322](https://github.com/kohei321dev/spot-diggz/pull/322) | — |
+| [DR-0023](0023-bot-api-client.md) | Accepted | 2026-09-08 | Architecture | Bot共通の認証付き検索APIクライアントを先行実装する | #315、#312、#316 | Incomplete（PR作成時に追記） | — |
 
 ## Supersession map
 
@@ -48,6 +49,8 @@ DR-0020はADR-0009の新MVPの6条件必須・即時滑走推薦/固定3件、AD
 DR-0021はDR-0019の読み取りAPI認証方式、DR-0020のAPI数値/応答/場所解決/品質filterを具体化します。旧record本文は維持し、Bot/公開/旧コード退役を実装完了としません。
 
 DR-0022はADR-0011の5府県validator制約と、DR-0021の後続事項である地域表現・streetの営業時間未定義表現を具体化します。47都道府県の受理と実収録範囲、営業時間非該当と不明、周辺検索と即時滑走判定を分離し、確認責任と公開前gateを定めます。実施設の追加・確認日時の変更・公開は含めません。
+
+DR-0023は既存判断を置換せず、DR-0019/DR-0021のBot→HTTP API利用を共通部品として具体化します。メンション文法・受信・owner限定配送・非同期実行・外部設定は含めません。
 
 ## When to write
 

@@ -41,6 +41,13 @@
 - NFR-001、NFR-004: 検索・API readiness・公開前の検索掲載gateを同じ適格性判定にする。全件168時間先までの鮮度と検索掲載候補1件以上を検証し、code/schema/catalogの互換な組でrollbackする。実施設の追加・再確認は今回の成果に含めず、公開前gateとして維持する。
 - 検証: `internal/facility/catalog-quality_test.go`、`internal/httpapi/read_api_test.go`、`internal/recommendation/engine_test.go`、`cmd/catalogcheck/main_test.go`、`npm run test:contracts`。手順は[カタログ保守](guides/catalog-maintenance.md)。
 
+## Bot共通APIクライアントの受入条件（DR-0023）
+
+- R-017〜R-018: `internal/botsearch`が構造化入力をBearer付きHTTP APIへ渡す。Web sessionや内部推薦の直接呼出しで代用しない。platform本人確認・owner認可・新メンション/配送は別の未完了境界として残す。
+- R-004、R-008: 施設の根拠/営業時間状態を保持し、欠落を0座標・false・架空営業時間へ補完しない。曖昧地点を先頭自動採用せず、入力・token・upstream診断をlog/store/errorへ残さない。
+- R-011〜R-012: HTTPS固定送信先、redirect拒否、通信/応答上限、入力と応答の契約検証、正常5statusと認証/制限/通信失敗の区別をtestする。失敗を正常0件へ変換せず、自動retryしない。
+- 検証正本: [共通client仕様](specifications/bot-api-client.md)。TLS loopbackと実API handlerによる統合testはplatform本人認可・実Bot/Cloud Run E2Eの代替ではない。
+
 ## Functional requirements (migration baseline)
 
 ### R-001: 推薦条件入力
