@@ -1,7 +1,7 @@
 # 独立読み取りAPI
 
 - Status: Implemented in source; production not deployed
-- Decision: [DR-0021](../decisions/0021-read-api-contract.md)
+- Decision: [DR-0021](../decisions/0021-read-api-contract.md)、[DR-0022](../decisions/0022-domestic-catalog-quality.md)
 - Tracking: [#313](https://github.com/kohei321dev/spot-diggz/issues/313)の第一実装単位。全MVP完了ではない。
 - Contract: [OpenAPI](facility-catalog.openapi.yaml)
 
@@ -46,7 +46,9 @@
 
 APIがGoogle Geocodingで場所を解決し、曖昧ならラベル候補を最大5件返す。検索中心の座標・元queryは返さない。clientは住所/市区町村などでqueryを具体化して再送し、先頭候補を自動採用しない。opaqueな選択tokenや会話stateは作らない。Botの選択UIは後続。
 
-検索対象は`status=verified`、genre・HTTPSの滑走根拠あり、dynamic 30日/stable 180日以内、一般利用が`schedule_check_required`でないスケートボードrecord。未分類/期限超過は除外する。営業時間・休場期間の現時点判定はしない。返却する利用条件/休場/出典と`availabilityNote`により、「今滑れる」を保証しない。
+検索対象は`status=verified`、genre・HTTPSの滑走根拠あり、dynamic 30日/stable 180日以内、hoursStatusがunknownでなく、一般利用が`schedule_check_required`でないスケートボードrecord。未分類/期限超過は除外する。根拠のあるstreetの`not_applicable`は検索できるが、営業時間・休場期間の現時点判定はしない。返却する利用条件/休場/出典と`availabilityNote`により、「今滑れる」を保証しない。
+
+施設の地域は国内47都道府県の正式名称。`hoursStatus`省略は従来のknown相当で有効な時刻を持つ。非該当/不明のresponseは`hours`と`hoursBasis`を省略し、状態・日英availabilityNoteを返す。非該当には`hoursSourceUrl`も必須。clientは欠落を24時間利用可や無料に変換しない。条件は[施設データ仕様](facility-data.md#営業時間の確認状態dr-0022)を参照。詳細取得では不明のrecordも参照できるが検索候補ではない。
 
 Haversineによる直線距離kmを丸めず、`distanceKm <= radiusKm`で絞る。距離昇順、同値はfacilityId昇順、最後にlimitを適用。genre/radiusの自動緩和なし。移動/到着/滑走時間を生成しない。
 
@@ -72,8 +74,8 @@ Haversineによる直線距離kmを丸めず、`distanceKm <= radiusKm`で絞る
 - X-Request-ID、Cache-Control: no-storeを返す。HTTP件数/所要時間とGoogle境界の結果/所要時間を既存registryで計測。request ID/status/countだけの検索完了logを追加し、本文、header、検索座標、provider生responseを記録しない。
 - API modeに公開metrics routeを設けない。privateなexport/収集、分散trace、アラート、Cloud Run/Gateway logのマスキングは#318の公開gate。application内計測を実運用監視の完了としない。
 - provider設定の存在だけで外部疎通成功としない。readinessは実Googleへprobeせず、資格情報/データ/API呼出しのsmokeが別途必要。
-- 本番catalogのgenre・根拠・検証日をこの実装で変更していない。#314で既存分類・地域制約・streetの営業時間未定義表現を扱う。架空fixtureを本番へ入れない。
+- 本番catalogのgenre・根拠・検証日は変更していない。#314/DR-0022で地域制約・営業時間状態・品質検証と[保守手順](../guides/catalog-maintenance.md)を整えた。実データの分類・再調査は後続で、公開前には`catalogcheck -require-searchable`を実行する。架空fixtureを本番へ入れない。
 
 ## 検証根拠
 
-`internal/apiauth/credentials_test.go`、`internal/nearby/*_test.go`、`internal/httpapi/read_api_test.go`、`cmd/api/read_api_test.go`、`internal/facility/genre_test.go`で正常/境界/権限/外部障害/非漏えいを固定時刻と合成データで確認する。実Bot・実Google・Cloud RunのE2Eは未実施。
+`internal/apiauth/credentials_test.go`、`internal/nearby/*_test.go`、`internal/httpapi/read_api_test.go`、`cmd/api/read_api_test.go`、`internal/facility/genre_test.go`、`internal/facility/catalog-quality_test.go`、`cmd/catalogcheck/main_test.go`で正常/境界/権限/外部障害/非漏えい、地域、営業時間状態と検索/詳細/readinessの整合を固定時刻と合成データで確認する。実Bot・実Google・Cloud RunのE2Eは未実施。

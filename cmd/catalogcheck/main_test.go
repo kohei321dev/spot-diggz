@@ -70,7 +70,71 @@ func TestRunRejectsNonPositiveMinimumValidity(t *testing.T) {
 	}
 }
 
-func writeTestCatalog(t *testing.T, dynamicVerifiedAt, stableVerifiedAt time.Time) string {
+func TestRunRequiresSearchableEvidenceWithoutChangingCatalog(t *testing.T) {
+	asOf := time.Date(2026, time.July, 20, 0, 0, 0, 0, time.UTC)
+	for _, test := range []struct {
+		name   string
+		change func(*facility.Facility)
+		want   int
+	}{
+		{"known classified park", func(*facility.Facility) {}, 0},
+		{"other activity", func(s *facility.Facility) { s.Activities = []string{"BMX"} }, 1},
+		{"unclassified", func(s *facility.Facility) { s.Genre = ""; s.SkatingPermissionSourceURL = "" }, 1},
+		{"schedule check required", func(s *facility.Facility) { s.GeneralUseStatus = facility.GeneralUseScheduleCheckRequired }, 1},
+		{"non-applicable street", func(s *facility.Facility) {
+			s.Genre = facility.GenreStreet
+			s.HoursStatus = facility.HoursNotApplicable
+			s.HoursSourceURL = "https://example.com/hours-policy"
+			s.GeneralUseStatus = facility.GeneralUseLimited
+			s.Hours = nil
+		}, 0},
+		{"unknown street", func(s *facility.Facility) {
+			s.Genre = facility.GenreStreet
+			s.HoursStatus = facility.HoursUnknown
+			s.GeneralUseStatus = facility.GeneralUseScheduleCheckRequired
+			s.Hours = nil
+		}, 1},
+		{"expires at validity boundary", func(s *facility.Facility) {
+			s.DynamicVerifiedAt = asOf.Add(defaultMinimumValidity - facility.DynamicInformationFreshnessWindow)
+			s.VerifiedAt = s.DynamicVerifiedAt
+		}, 0},
+		{"expires before validity boundary", func(s *facility.Facility) {
+			s.DynamicVerifiedAt = asOf.Add(defaultMinimumValidity - facility.DynamicInformationFreshnessWindow - time.Second)
+			s.VerifiedAt = s.DynamicVerifiedAt
+		}, 1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			path := writeTestCatalog(t, asOf.Add(-time.Hour), asOf.Add(-time.Hour), func(s *facility.Facility) {
+				s.Genre = facility.GenreSkatepark
+				s.SkatingPermissionSourceURL = "https://example.com/permission"
+				s.AvailabilityNote = "公式の利用条件を確認してください。"
+				s.EnglishTranslation.AvailabilityNote = "Check the official conditions."
+				test.change(s)
+			})
+			before, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var stdout, stderr bytes.Buffer
+			got := run([]string{"-path", path, "-require-searchable"}, func() time.Time { return asOf }, &stdout, &stderr)
+			if got != test.want {
+				t.Fatalf("exit=%d want=%d stderr=%s", got, test.want, stderr.String())
+			}
+			if got == 0 && !strings.Contains(stdout.String(), "1 searchable spots") {
+				t.Fatal("missing searchable count")
+			}
+			after, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(before, after) {
+				t.Fatal("catalogcheck changed catalog evidence")
+			}
+		})
+	}
+}
+
+func writeTestCatalog(t *testing.T, dynamicVerifiedAt, stableVerifiedAt time.Time, changes ...func(*facility.Facility)) string {
 	t.Helper()
 	item := facility.Facility{
 		ID:           "CATALOGCHECK-TEST",
@@ -106,6 +170,9 @@ func writeTestCatalog(t *testing.T, dynamicVerifiedAt, stableVerifiedAt time.Tim
 		VerifiedAt:        dynamicVerifiedAt,
 		DynamicVerifiedAt: dynamicVerifiedAt,
 		StableVerifiedAt:  stableVerifiedAt,
+	}
+	for _, change := range changes {
+		change(&item)
 	}
 	payload, err := json.Marshal(struct {
 		Facilities []facility.Facility `json:"facilities"`

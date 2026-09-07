@@ -25,6 +25,7 @@ func run(args []string, now func() time.Time, stdout, stderr io.Writer) int {
 	flags.SetOutput(stderr)
 	catalogPath := flags.String("path", defaultCatalogPath, "path to the production facility catalog")
 	minimumValidity := flags.Duration("minimum-validity", defaultMinimumValidity, "required freshness duration from the current time")
+	requireSearchable := flags.Bool("require-searchable", false, "also require at least one verified nearby-search candidate through the validity window")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -71,6 +72,19 @@ func run(args []string, now func() time.Time, stdout, stderr io.Writer) int {
 	if len(staleFields) > 0 {
 		fmt.Fprintf(stderr, "catalogcheck: catalog is not fresh through %s: %s\n", checkAt.Format(time.RFC3339), strings.Join(staleFields, ", "))
 		return 1
+	}
+	if *requireSearchable {
+		searchableCount := 0
+		for _, spot := range items {
+			if facility.IsNearbySearchable(spot, checkAt) {
+				searchableCount++
+			}
+		}
+		if searchableCount == 0 {
+			fmt.Fprintln(stderr, "catalogcheck: no verified searchable spots through the validity window; review classification, hours and general-use evidence")
+			return 1
+		}
+		fmt.Fprintf(stdout, "catalogcheck: %d searchable spots through %s\n", searchableCount, checkAt.Format(time.RFC3339))
 	}
 
 	fmt.Fprintf(stdout, "catalogcheck: %d facilities are fresh through %s\n", len(items), checkAt.Format(time.RFC3339))

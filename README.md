@@ -26,7 +26,7 @@ spot-diggzは、施設を地図で眺めるだけではなく、「今日、今�
 
 現在の実装は、Web UI、API、検証済み施設カタログ、決定論的な推薦を1つのGo applicationに含むモジュラーモノリスです。Slack・Discord adapterは内部の共通推薦serviceを呼び出しており、独立した各bot・appがHTTP APIを利用する構成への整備は今後の作業です。
 
-現在のcatalogと都道府県の許可値は大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県です。これは既存データと実装の制約であり、ターゲットの地域制限ではありません。2026-07-19調査基準の公開カタログには31施設（大阪府24施設）を登録しています。日付別の一般利用予定を確認できない施設はカタログ参照のみとし、推薦から除外します。
+都道府県の許可値は日本の47都道府県の正式名称です。実catalogは大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県、2026-07-19調査基準の31施設（大阪府24施設）のままで、全国データ収録や現在の鮮度を保証しません。[DR-0022](docs/decisions/0022-domestic-catalog-quality.md)で営業時間のknown・非該当・不明を分離し、根拠のあるstreetの非該当だけを検索対象にできます。不明な営業時間・日付別一般利用や未分類・期限超過は検索から除外します。更新は[カタログ保守手順](docs/guides/catalog-maintenance.md)に従います。
 
 private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致するownerだけへ制限する。Slack `/spotdiggz`は条件入力モーダルを開き、出発地・時間・交通手段・レベル・目的・気分から最大3件をephemeral responseで返す。候補は保存せず、「公式情報」と「ここに行く」の外部導線だけを表示する。SlackとDiscordはplatform署名と設定済みworkspace/guild/user IDを検証し、過去messageを参照・保存しない。
 
@@ -80,6 +80,7 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - `make vet`: Go静的検査を実行する。
 - `make build`: `CGO_ENABLED=0` で静的な単一binary `bin/spotdiggz-api` をビルドする。
 - `make verify-catalog`: production catalogが実行時点から168時間後もdynamic 30日・stable 180日の鮮度内であることを検査する。
+- `go run ./cmd/catalogcheck -require-searchable`: 上記の全件鮮度に加え、168時間先でも周辺検索の掲載条件を満たすrecordが1件以上あることを検査する。新API公開前のgateであり、実データの確認日は変更しない。
 - `make verify-mvp`: ダミーデータでUI配信と推薦APIの主要flowを実HTTP検証する。
 - `npm ci`: lockfileどおりにPlaywright E2E依存をinstallする。
 - `npm run test:contracts`: JSON dataとOpenAPIの構文・path・local referenceを検証する。

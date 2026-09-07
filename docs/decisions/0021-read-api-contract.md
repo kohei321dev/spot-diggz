@@ -7,7 +7,7 @@
 - Related Pull Requests: [#321](https://github.com/kohei321dev/spot-diggz/pull/321)
 - Affected Docs: `specifications/read-api.md`, `specifications/nearby-search.md`, `specifications/facility-catalog.openapi.yaml`, `security.md`, `architecture.md`, `requirements.md`, `guides/read-api-setup.md`
 - Supersedes: DR-0019のAPI認証方式未確定、DR-0020の検索APIの数値・応答未確定のみ。Bot受信/返信・外部運用は別途。
-- Superseded By: None
+- Superseded By: [DR-0022](0022-domestic-catalog-quality.md)（後続事項としていた地域表現・streetの営業時間未定義表現の具体化のみ）
 
 ## Context
 

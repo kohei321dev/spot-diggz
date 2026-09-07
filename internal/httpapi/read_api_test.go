@@ -20,11 +20,14 @@ import (
 	"github.com/kohei321dev/spot-diggz/internal/nearby"
 )
 
-func readAPIFixture(t *testing.T, provider geocoding.Provider, logs *bytes.Buffer) (http.Handler, string) {
+func readAPIFixture(t *testing.T, provider geocoding.Provider, logs *bytes.Buffer, changes ...func(*facility.Facility)) (http.Handler, string) {
 	t.Helper()
 	spot := testFacility()
 	spot.Genre = facility.GenreSkatepark
 	spot.SkatingPermissionSourceURL = "https://example.com/permission"
+	for _, change := range changes {
+		change(&spot)
+	}
 	catalog, err := facility.NewCatalog([]facility.Facility{spot})
 	if err != nil {
 		t.Fatal(err)
@@ -111,6 +114,75 @@ func TestReadAPISearchHTTPContractAndPrivacy(t *testing.T) {
 	handler.ServeHTTP(w, r)
 	if w.Code != http.StatusOK {
 		t.Fatal("authenticated detail unavailable")
+	}
+}
+
+func TestReadAPINonTimetabledStreetSearchDetailAndReadiness(t *testing.T) {
+	for _, test := range []struct {
+		status                 facility.HoursStatus
+		wantStatus             string
+		wantMatches, wantReady int
+	}{
+		{facility.HoursNotApplicable, nearby.StatusOK, 1, http.StatusOK},
+		{facility.HoursUnknown, nearby.StatusDataUnavailable, 0, http.StatusServiceUnavailable},
+	} {
+		t.Run(string(test.status), func(t *testing.T) {
+			var logs bytes.Buffer
+			location := facility.Location{Latitude: 35.0116, Longitude: 135.7681}
+			provider := &stubGeocoder{results: []geocoding.Result{{Label: "Test place", Location: location}}}
+			handler, token := readAPIFixture(t, provider, &logs, func(s *facility.Facility) {
+				s.Prefecture, s.Municipality = "京都府", "京都市"
+				s.Address, s.EnglishTranslation.Address = "京都府京都市のテスト住所", "Test address, Kyoto"
+				s.Location, s.Genre, s.HoursStatus = location, facility.GenreStreet, test.status
+				s.Hours, s.HoursBasis = nil, ""
+				s.HoursSourceURL = "https://example.com/hours-policy"
+				s.GeneralUseStatus = facility.GeneralUseLimited
+				s.AvailabilityNote = "営業時間制の対象外です。利用ルールを確認してください。"
+				s.EnglishTranslation.AvailabilityNote = "No opening-hours system applies. Check the rules."
+				if test.status == facility.HoursUnknown {
+					s.GeneralUseStatus = facility.GeneralUseScheduleCheckRequired
+					s.AvailabilityNote = "利用時間は未確認です。予定の確認が必要です。"
+					s.EnglishTranslation.AvailabilityNote = "Hours are unknown. Check the schedule."
+				}
+			})
+			request := httptest.NewRequest(http.MethodPost, "/api/facilities/search", strings.NewReader(`{"query":"Test place","genre":"street"}`))
+			request.Header.Set("Authorization", "Bearer "+token)
+			request.Header.Set("Content-Type", "application/json")
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			var result nearby.Response
+			if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			if response.Code != http.StatusOK || result.Status != test.wantStatus || len(result.Matches) != test.wantMatches {
+				t.Fatalf("search status=%d result=%s matches=%d", response.Code, result.Status, len(result.Matches))
+			}
+			if len(result.Matches) == 1 && (result.Matches[0].Facility.HoursStatus != test.status || result.Matches[0].Facility.HoursSourceURL == "" || result.Matches[0].Facility.AvailabilityNote == "") {
+				t.Fatal("search lost hours evidence")
+			}
+			request = httptest.NewRequest(http.MethodGet, "/api/facilities/facility-a", nil)
+			request.Header.Set("Authorization", "Bearer "+token)
+			response = httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			if response.Code != http.StatusOK {
+				t.Fatalf("detail status=%d", response.Code)
+			}
+			var detail facility.Facility
+			if err := json.Unmarshal(response.Body.Bytes(), &detail); err != nil {
+				t.Fatal(err)
+			}
+			if detail.HoursStatus != test.status || detail.AvailabilityNote == "" || detail.EnglishTranslation.AvailabilityNote == "" {
+				t.Fatal("detail lost hours state or explanation")
+			}
+			if strings.Contains(response.Body.String(), `"hours":`) || strings.Contains(response.Body.String(), `"hoursBasis":`) {
+				t.Fatal("detail fabricated timetable")
+			}
+			response = httptest.NewRecorder()
+			handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+			if response.Code != test.wantReady {
+				t.Fatalf("ready=%d want=%d", response.Code, test.wantReady)
+			}
+		})
 	}
 }
 

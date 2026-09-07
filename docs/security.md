@@ -2,7 +2,7 @@
 
 - Status: Current
 - Date: 2026-08-01
-- Last reviewed: 2026-09-05
+- Last reviewed: 2026-09-07
 - Scope: GitHub owner認証、Web UI、HTTP API、Slack/Discord command、verified facility catalog、検索位置、訂正報告、手動キュレーションmedia、公式SNS外部リンク、optional Google連携、CI/CD
 - Related: [Product](product.md)
 - Related: [Architecture](architecture.md)
@@ -28,6 +28,13 @@
 - API modeにWeb/OAuth/書き込み/公開metricsを登録しない。JSON未知field/重複/null/型/範囲/sizeを検証し、認証後にprocess-local rate limitとprovider timeoutを適用する。全体quota/IP制限・未認証flood対策はGateway/Cloud Runで別途検証。
 - queryはGoogle Geocodingへ送信するが、API responseへ元query/検索中心を返さずlog/storeにも残さない。曖昧地点の確認ラベルだけを認証済みclientへ返す。公開施設住所/座標は検索中心と区別する。R-008の新API適用をこの範囲で明確化し、旧地点APIの退役は後続とする。
 - provider障害は汎用503とし、raw response/secretを診断へ含めない。履歴・queue・候補・位置・返信tokenの保存は追加しない。実運用のtrace/export/通知は未構築。
+
+### カタログ品質境界（DR-0022）
+
+- 国内の正式地域名、有限座標、genreと滑走許可の根拠、営業時間のknown/非該当/不明を起動時検証する。HTTPS URLの存在だけで実際の許可や行政区域一致を証明せず、ownerが公開出典で確認する。
+- 営業時間非該当は根拠・日英説明・明示的な一般利用状態のあるstreetのみ。24時間営業を補完せず、不明や日付別確認必須は検索から除外する。詳細参照可能と今滑走可能を混同しない。
+- 検索・API readiness・公開前の検索掲載gateは同じ品質判定を使う。従来の全件鮮度gateを弱めず、実recordの確認日時やgenreを自動更新しない。新しい外部API・log field・永続保存は追加しない。
+- [カタログ保守](guides/catalog-maintenance.md)に従い、公開情報だけで更新・reviewする。変更理由は[DR-0022](decisions/0022-domestic-catalog-quality.md)。code/schema/catalogの互換な組でrollbackし、旧validatorに合わせたデータ削除を行わない。
 
 ### 移行前の実装上の対策
 

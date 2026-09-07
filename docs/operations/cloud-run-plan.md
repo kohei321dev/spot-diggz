@@ -1,8 +1,8 @@
 # Cloud Run運用・費用計画
 
 - Status: Accepted direction; configuration incomplete
-- Last reviewed: 2026-09-06
-- Decision: [DR-0019](../decisions/0019-api-client-boundary.md)
+- Last reviewed: 2026-09-07
+- Decision: [DR-0019](../decisions/0019-api-client-boundary.md)、[DR-0022](../decisions/0022-domestic-catalog-quality.md)
 - Issues: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)、[#318](https://github.com/kohei321dev/spot-diggz/issues/318)
 
 ## 決定済み事項
@@ -42,8 +42,12 @@ Gatewayの[API key制限](https://docs.cloud.google.com/api-gateway/docs/authent
 
 ## 設定・公開のゲート
 
+API公開前は配備対象catalogに`go run ./cmd/catalogcheck -path data/facilities.json -require-searchable`を実行する。既存の全recordの168時間先までの鮮度検査に加え、その終端でも検索掲載候補が1件以上あることが必要。実catalogの再調査・genre分類は#314では行っておらず、通常CIやschema対応だけでgate完了とはしない。出典・営業時間状態・更新担当は[catalog保守手順](../guides/catalog-maintenance.md)を参照する。
+
+APIの`/readyz`は認証構成・地点provider・現時点の掲載候補を確認するが、外部providerへの実通信や将来の鮮度を保証しない。配備後の認証済み検索も別に検証する。rollbackは認証を維持する設定と互換なschema・binary・catalog snapshotの組で行い、旧binaryに新field/旧5府県外recordだけを渡さない。漏えい済みcredentialは復活させず、現在時刻でgateを再確認する。
+
 - Status: Incomplete
-- Missing evidence: 実project・請求先・URL・region、Gateway正式選定、予算メール受信設定、見積もり、非同期処理とIAMの検証、外部設定変更の承認。
+- Missing evidence: 実project・請求先・URL・region、Gateway正式選定、予算メール受信設定、見積もり、非同期処理とIAMの検証、実catalog再確認と公開gate、外部設定変更の承認。
 - Required decision: #312の設計と#318のread-only環境評価を経て、ownerが実際の外部設定・課金・secret登録・deployを別途承認する。
 
 このPRは方針を記録するだけで、budgetや通知を作成していない。旧Vercel向けscript・guideはCloud Runのセットアップに流用しない。公開状態は[service-status.md](service-status.md)を参照する。

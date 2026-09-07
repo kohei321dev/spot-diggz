@@ -16,6 +16,10 @@
 
 [DR-0021](../decisions/0021-read-api-contract.md)の読み取りAPIはHTTP件数/所要時間、Google Geocoding結果/所要時間を既存registryへ記録し、`nearby_search_completed`にrequest_id/result/countのみをlog出力する。query・検索中心・Authorizationを記録しない。API modeに公開`/metrics`は登録しないため、以下のPrometheus endpoint手順はlegacy mode用である。private export/収集、分散trace、実アラートの要否/設定は#318の公開前検証とし、局所的な計測を運用監視の完成としない。
 
+[DR-0022](../decisions/0022-domestic-catalog-quality.md)では検索・API readiness・catalog公開gateで同じ掲載条件を使う。freshでも未分類、営業時間不明、日付確認必須のrecordは検索候補にならず、APIの`/readyz`は認証構成・地点provider・掲載候補が揃わなければ503となる。readinessは実Google疎通や現在の滑走可否を保証しない。検索の`data_unavailable`とprovider障害503も区別して扱い、旧fresh/stale gaugeだけからAPI利用可能と判断しない。
+
+公開前の`go run ./cmd/catalogcheck -require-searchable`は全recordの既定168時間先までの鮮度と、同時点の掲載候補1件以上を検査する。追加gateはCLIに集計件数/検査時刻を出力するだけで、自動実行・新しいmetric/alertを追加しない。query、施設の根拠URL、営業時間説明を新たにlog/labelへ含めない。実catalogの再調査・分類は未実施であり、通常CIの成功やschema対応から鮮度・有効候補増加を推定しない。失敗時は[catalog保守手順](../guides/catalog-maintenance.md)で再確認する。
+
 ## 1. 目的
 
 利用者が「今日どこで滑るか」を決める主要flowを、HTTP成功だけでなく、推薦結果、catalog鮮度、訂正受付まで観測する。MVP runtimeに実装したsignalと、production基盤が必要な未実装signalを分ける。

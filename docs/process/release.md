@@ -13,6 +13,12 @@
 - migration、data compatibility、secret、external provider、rollbackを確認している。
 - 未確認のProduction条件を成功扱いしていない。
 
+### API modeのcatalog gate
+
+[DR-0022](../decisions/0022-domestic-catalog-quality.md)に従い、配備するcatalogに`go run ./cmd/catalogcheck -path data/facilities.json -require-searchable`を実行する。既存の全recordが既定168時間後も鮮度内である条件を維持し、同時点の検索掲載候補を1件以上要求する。#314では実catalogの再調査・分類を行っていないため、schema対応や通常CIを公開gateの完了証拠にしない。出典の確認を伴わない日時更新やfixture配備は禁止し、[catalog保守手順](../guides/catalog-maintenance.md)に従う。
+
+APIの`/readyz`では認証構成・地点provider・現時点の掲載候補を確認する。freshだけで未分類/営業時間不明/日付確認必須のrecordは候補にならない。readinessは実Google疎通や168時間先の鮮度を保証しないので、公開前gateと認証済み検索smokeを別に実施する。
+
 ## Environment model
 
 - Local: 開発、unit/component test、manual UI確認。
@@ -37,7 +43,13 @@
 6. metrics/logでerror、latency、retention、provider fallbackを観察します。
 7. 結果、時刻、commit/artifact、未解決事項をsecretなしで記録します。
 
+上記のUI、OAuth login、retention、Routes fallbackはlegacy modeの確認対象である。API modeは[読み取りAPIの公開前確認項目](../guides/read-api-setup.md)でBearer認証・検索/詳細・旧route非公開を確認し、Cloud Runの具体的な配備/運用検証は#318の承認範囲で行う。
+
 ## Rollback
+
+API modeでは、認証を維持する設定と互換なschema・binary・catalog snapshotの組へ戻す。新fieldや旧5府県外recordは旧binaryで読み込めない可能性があるため、binaryだけを戻さない。現在時刻でcatalog gateとAPI smokeを再実行し、失効済みtokenを復活させず、catalogや訂正DBを削除しない。API modeのprovider障害は503であり、以下の旧straight-line縮退手順を流用しない。
+
+移行前legacy modeのrollback記録:
 
 - health/readiness failure、継続する5xx/latency悪化、store failure、秘密情報・位置・contactのlog混入、重大catalog誤りをrollback条件とします。
 - 直前の検証済みartifactを同じNeon接続設定で起動し、reportやschemaをtruncate・downgradeしません。

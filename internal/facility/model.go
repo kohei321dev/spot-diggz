@@ -87,6 +87,8 @@ type Facility struct {
 	Location                   Location                   `json:"location"`
 	Activities                 []string                   `json:"activities"`
 	Hours                      []OperatingHours           `json:"hours,omitempty"`
+	HoursStatus                HoursStatus                `json:"hoursStatus,omitempty"`
+	HoursSourceURL             string                     `json:"hoursSourceUrl,omitempty"`
 	GeneralUseStatus           string                     `json:"generalUseStatus,omitempty"`
 	HoursBasis                 string                     `json:"hoursBasis,omitempty"`
 	AvailabilityNote           string                     `json:"availabilityNote,omitempty"`

@@ -85,6 +85,36 @@ func TestEngineExcludesFacilityRequiringScheduleCheck(t *testing.T) {
 	}
 }
 
+func TestEngineExcludesNonKnownHoursBeforeTravelProvider(t *testing.T) {
+	for _, status := range []facility.HoursStatus{facility.HoursNotApplicable, facility.HoursUnknown} {
+		t.Run(string(status), func(t *testing.T) {
+			spot := recommendationFacility("non-timetabled", 34.7020, 135.4970, true, []string{"flat-area"})
+			spot.Genre, spot.HoursStatus, spot.Hours = facility.GenreStreet, status, nil
+			spot.SkatingPermissionSourceURL = "https://example.com/permission"
+			spot.HoursSourceURL = "https://example.com/hours-policy"
+			spot.AvailabilityNote = "利用条件を確認してください。"
+			spot.EnglishTranslation.AvailabilityNote = "Check the access conditions."
+			spot.GeneralUseStatus = facility.GeneralUseLimited
+			if status == facility.HoursUnknown {
+				spot.GeneralUseStatus = facility.GeneralUseScheduleCheckRequired
+			}
+			provider := &countingTravelProvider{}
+			engine := NewEngineWithTravelProvider(newTestCatalog(t, []facility.Facility{spot}), fixedTestTime, provider)
+			response, err := engine.Recommend(validInput())
+			if err != nil || len(response.Recommendations) != 0 || provider.calls != 0 {
+				t.Fatalf("unknown timing used: error=%v count=%d provider calls=%d", err, len(response.Recommendations), provider.calls)
+			}
+		})
+	}
+}
+
+type countingTravelProvider struct{ calls int }
+
+func (provider *countingTravelProvider) Matrix(context.Context, travel.Request) ([]travel.Estimate, error) {
+	provider.calls++
+	return nil, nil
+}
+
 func TestIsOpenAtSupportsDailyAndOvernightHours(t *testing.T) {
 	tests := []struct {
 		name  string

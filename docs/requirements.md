@@ -32,6 +32,15 @@
 - R-017: per-client Bearer、owner mapping、facilities:read、期限・個別失効、設定欠落fail closedを検証する。Botでの人間の認可は別境界。API modeはWeb/OAuth/DBなしで起動する。
 - 検証正本: [読み取りAPI](specifications/read-api.md#検証根拠)。HTTP provider stubと固定clockによるtestは実Google/Bot/Cloud Run E2Eの代替ではない。
 
+## カタログ品質の受入条件（DR-0022）
+
+以下の旧ID本文に加え、現行の施設データには[DR-0022](decisions/0022-domestic-catalog-quality.md)の受入条件を適用します。
+
+- R-004、R-007、R-009、NFR-001: 国内47都道府県の正式名称を受理し、略称・不正値を拒否する。旧5府県recordの互換性と範囲外だった国内地域をtestする。名称の許可を全国データ収録と同一視しない。
+- R-004、R-009: known/非該当/不明を分離する。根拠・一般利用状態・日英説明のない非該当、parkの非該当、非knownと時刻の矛盾を拒否する。不明・未分類・根拠不足・期限超過は検索対象にせず、根拠のあるstreetの非該当は周辺検索と詳細で扱う。旧即時滑走推薦では非knownを移動provider呼出し前に除外する。
+- NFR-001、NFR-004: 検索・API readiness・公開前の検索掲載gateを同じ適格性判定にする。全件168時間先までの鮮度と検索掲載候補1件以上を検証し、code/schema/catalogの互換な組でrollbackする。実施設の追加・再確認は今回の成果に含めず、公開前gateとして維持する。
+- 検証: `internal/facility/catalog-quality_test.go`、`internal/httpapi/read_api_test.go`、`internal/recommendation/engine_test.go`、`cmd/catalogcheck/main_test.go`、`npm run test:contracts`。手順は[カタログ保守](guides/catalog-maintenance.md)。
+
 ## Functional requirements (migration baseline)
 
 ### R-001: 推薦条件入力
@@ -138,7 +147,7 @@
 
 公開施設は、ID、日英名称・住所、市区町村・都道府県、公開座標、競技、営業時間・休業、一般利用状態と根拠、注意事項、休場期間、料金・予約・登録、初心者適性、設備・路面・照明・屋内外、安全rule、access、source、status、confidence、検証時刻を持ちます。schemaと制約の正本は[`specifications/facility-data.md`](specifications/facility-data.md)です。
 
-公開catalogは2026-07-19調査基準で5府県31施設（大阪府24施設）です。これは現在の収録範囲であり、ターゲットを5府県に限定する要件ではありません。現行schemaとvalidatorの地域制約は別の実装変更まで維持します。`schedule_check_required`は参照できますが、日付別予定の確認なしでは推薦しません。
+公開catalogは2026-07-19調査基準で5府県31施設（大阪府24施設）です。これは現在の収録範囲であり、ターゲットを5府県に限定する要件ではありません。DR-0022のschemaとvalidatorは国内47都道府県を受理し、実catalogは変更しません。`hoursStatus=unknown`や`schedule_check_required`は詳細参照できますが、確認不足のまま検索・即時滑走推薦には含めません。
 
 ## Non-functional requirements
 
@@ -198,7 +207,7 @@
 
 - 文書・JSON・OpenAPI、Go format/vet/test、MVP smoke、E2E、build、security scanが変更範囲に応じてPASSする。
 - [DR-0017](decisions/0017-minimal-development-ci.md)に従い、通常CIはGo・契約・文書・secret・依存検証を実行する。本番catalogの実時間鮮度、E2E、container検証はrelease前の手動確認とし、通常CIの成功だけではrelease条件を満たしたと扱わない。
-- catalogが現在のschema・validatorの制約を満たし、fresh施設が1件以上ある。現行の5府県に関する検証は既存catalogの検証であり、恒久的なターゲット地域の制限ではない。制約を変更する際はschema・validator・関連testも別作業で整合させる。
+- catalogが現在のschema・validatorの制約を満たす。新APIの公開前には`go run ./cmd/catalogcheck -require-searchable`で全件が168時間先までfreshであり、その終端にも検索掲載可能なrecordが1件以上あることを確認する。既存5府県fixtureの検証や通常CIを現在の実データ検証の代替にしない。
 - owner認証、Slack/Discord署名・owner認可、media allowlist、provider fallbackを変更範囲に応じて検証する。
 - Production変更時はpost-deploy smoke、data migration、secret、network、rollbackを確認する。
 - 未確認のProduction Discord、Google、metrics制限、custom domain、自動deploy、rollback exerciseを確認済みと扱わない。

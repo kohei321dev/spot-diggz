@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -17,14 +19,6 @@ var (
 	ErrInvalidData = errors.New("invalid facility data")
 	ErrNotFound    = errors.New("facility not found")
 )
-
-var supportedPrefectures = map[string]struct{}{
-	"大阪府":  {},
-	"兵庫県":  {},
-	"和歌山県": {},
-	"奈良県":  {},
-	"徳島県":  {},
-}
 
 const (
 	youTubeProvider      = "youtube"
@@ -154,19 +148,16 @@ func validateFacility(item Facility) error {
 	if strings.TrimSpace(item.Prefecture) == "" || strings.TrimSpace(item.Municipality) == "" {
 		return fmt.Errorf("%w: prefecture and municipality are required for %s", ErrInvalidData, item.ID)
 	}
-	if _, supported := supportedPrefectures[item.Prefecture]; !supported {
-		return fmt.Errorf("%w: prefecture is outside the MVP scope for %s", ErrInvalidData, item.ID)
+	if !slices.Contains(strings.Fields(JapanesePrefectures), item.Prefecture) {
+		return fmt.Errorf("%w: prefecture must be a canonical Japanese prefecture for %s", ErrInvalidData, item.ID)
 	}
-	if item.Location.Latitude < -90 || item.Location.Latitude > 90 || item.Location.Longitude < -180 || item.Location.Longitude > 180 {
+	if math.IsNaN(item.Location.Latitude) || math.IsNaN(item.Location.Longitude) || item.Location.Latitude < -90 || item.Location.Latitude > 90 || item.Location.Longitude < -180 || item.Location.Longitude > 180 {
 		return fmt.Errorf("%w: location is out of range for %s", ErrInvalidData, item.ID)
 	}
 	if len(item.Activities) == 0 {
 		return fmt.Errorf("%w: activities are required for %s", ErrInvalidData, item.ID)
 	}
-	if len(item.Hours) == 0 {
-		return fmt.Errorf("%w: operating hours are required for %s", ErrInvalidData, item.ID)
-	}
-	if err := validateOperatingHours(item.ID, item.Hours); err != nil {
+	if err := validateHoursStatus(item); err != nil {
 		return err
 	}
 	if err := validateAvailability(item); err != nil {
@@ -178,7 +169,7 @@ func validateFacility(item Facility) error {
 	if strings.TrimSpace(item.Price) == "" || strings.TrimSpace(item.Reservation) == "" {
 		return fmt.Errorf("%w: price and reservation guidance are required for %s", ErrInvalidData, item.ID)
 	}
-	if len(item.Features) == 0 || len(item.Rules) == 0 {
+	if len(item.Features) == 0 || len(item.Rules) == 0 || containsBlank(item.Features) || containsBlank(item.Rules) {
 		return fmt.Errorf("%w: features and rules are required for %s", ErrInvalidData, item.ID)
 	}
 	if err := validateEnglishTranslation(item); err != nil {
@@ -325,7 +316,9 @@ func isCanonicalSocialProfileURL(platform SocialPlatform, value string) bool {
 
 func parseCanonicalHTTPSURL(value string) (*url.URL, bool) {
 	parsedURL, err := url.ParseRequestURI(value)
-	if err != nil || parsedURL.Scheme != "https" || parsedURL.Host == "" || parsedURL.User != nil || parsedURL.Port() != "" {
+	// Port() alone cannot distinguish an absent port from an explicit empty port.
+	if err != nil || parsedURL.Scheme != "https" || parsedURL.Hostname() == "" || parsedURL.User != nil ||
+		parsedURL.Port() != "" || strings.HasSuffix(parsedURL.Host, ":") {
 		return nil, false
 	}
 	return parsedURL, true

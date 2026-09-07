@@ -92,6 +92,10 @@ func (engine *Engine) RecommendContext(ctx context.Context, input session.Input)
 	eligibleFacilities := make([]facility.Facility, 0)
 	destinations := make([]travel.Destination, 0)
 	for _, item := range engine.catalog.List("skateboard") {
+		// Trip timing requires confirmed hours; no timetable is not 24-hour access.
+		if !facility.HasKnownOperatingHours(item) {
+			continue
+		}
 		if item.GeneralUseStatus == facility.GeneralUseScheduleCheckRequired {
 			continue
 		}

@@ -2,7 +2,7 @@
 
 - Status: Implemented source setup; external provisioning incomplete
 - Specification: [読み取りAPI](../specifications/read-api.md)
-- Decision: [DR-0021](../decisions/0021-read-api-contract.md)
+- Decision: [DR-0021](../decisions/0021-read-api-contract.md)、[DR-0022](../decisions/0022-domestic-catalog-quality.md)
 
 ## 前提
 
@@ -50,7 +50,7 @@ go run ./cmd/api
 起動terminalを止めるときはCtrl+C。token変数は終了時に破棄する。別terminalへ秘密値をコピーする代わりに、通常の回帰確認には次を使う。provider/clock/catalog/credentialをテスト内で閉じ、実Google接続や課金を行わない。
 
 ```powershell
-go test ./internal/apiauth ./internal/nearby ./internal/httpapi ./cmd/api
+go test ./internal/apiauth ./internal/facility ./internal/nearby ./internal/httpapi ./cmd/api ./cmd/catalogcheck
 ```
 
 別terminalで認証不要のlivenessのみ確認する:
@@ -60,6 +60,18 @@ Invoke-RestMethod http://localhost:8080/healthz
 ```
 
 既存本番catalogはgenre未分類かつ鮮度再確認が必要なので、`/readyz`の503や検索の`data_unavailable`を隠すために確認日だけ更新しない。fixtureはテスト用であり本番配備しない。
+
+## Catalogの公開前確認
+
+配備対象のcatalogに対して実行する。既定のfile以外を使う場合は`-path`をその公開catalogのpathへ変更する。このcommandはcatalogや外部設定を変更しない。
+
+```powershell
+go run ./cmd/catalogcheck -path data/facilities.json -require-searchable
+```
+
+全recordが実行時点から既定168時間後もdynamic 30日・stable 180日の鮮度内であり、同時点の検索掲載候補が1件以上ある場合だけ成功する。候補にはgenre・滑走根拠・一般利用状態も必要。`hoursStatus=unknown`は除外し、根拠のある`not_applicable`のstreetは含められるが、hours欠落を24時間利用可とは表示しない。[catalog保守手順](catalog-maintenance.md)で出典・日英説明・確認時刻を揃える。
+
+APIの`/readyz`は認証構成・地点provider・現時点の候補を確認するだけで、実Google通信、168時間先の鮮度、現在の滑走可否を保証しない。#314では本番catalogの再調査・分類は未実施であり、通常CIや新schemaの成功を公開gateの成功と扱わない。
 
 ## 実接続の確認項目（公開前gate）
 
@@ -73,4 +85,4 @@ Invoke-RestMethod http://localhost:8080/healthz
 
 ## Rollback
 
-新modeへ切り替えていない既存環境は変更不要。切替済みなら認証を保つcode/configの組で前revisionへ戻す。漏えい済みtokenを復活させるrollbackは行わない。catalogや訂正DBを削除しない。予算超過による自動停止は追加しない。
+新modeへ切り替えていない既存環境は変更不要。切替済みなら認証を保つ設定と、互換なschema・binary・catalog snapshotの組で前revisionへ戻す。新fieldや旧5府県外recordを旧binaryが拒否し得るため、binaryだけを戻さず、現在時刻でcatalog gateとAPI smokeを再実行する。漏えい済みtokenを復活させるrollbackは行わない。catalogや訂正DBを削除しない。予算超過による自動停止は追加しない。

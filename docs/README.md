@@ -22,6 +22,8 @@
 
 ## Document map
 
+国内地域表現・営業時間の確認状態・検索掲載条件は[施設データ仕様](specifications/facility-data.md)、担当・出典・日英説明・確認日時・公開前gateは[カタログ保守](guides/catalog-maintenance.md)を参照してください。[DR-0022](decisions/0022-domestic-catalog-quality.md)で判断と旧仕様の部分置換を記録し、実データ再調査・本番公開とは分けています。
+
 新MVPのメンション＋場所名、genre/limit/sortと任意検索範囲は[周辺検索仕様](specifications/nearby-search.md)を正本とします。[DR-0020](decisions/0020-mention-nearby-search.md)で旧6条件必須・固定3件・slash/modal入口との部分置換を追跡します。[DR-0021](decisions/0021-read-api-contract.md)でAPI側の数値/応答/認証を具体化し、[読み取りAPI](specifications/read-api.md)と[設定手順](guides/read-api-setup.md)を整備しました。Bot transport/返信と本番公開は未完了です。
 
 新計画の着手順・旧Issueとの対応は[#312](https://github.com/kohei321dev/spot-diggz/issues/312)、実装前の契約・安全境界の案は[`research/api-client-contract-plan.md`](research/api-client-contract-plan.md)を参照してください。DR-0019の提供・運用方針はowner承認済みです。独自Web UIは不要、独立APIとSlack/DiscordをMVPとします。[MVP API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)に採用事項と未実装・未確定を分けています。詳細案の未承認部分を実装済み仕様と扱いません。

@@ -105,7 +105,7 @@ func (service *Service) Search(ctx context.Context, input Input) (Response, erro
 			continue
 		}
 		nearbyRecords++
-		if !isSearchable(spot, now) {
+		if !facility.IsNearbySearchable(spot, now) {
 			insufficientEvidence = true
 			continue
 		}
@@ -134,20 +134,12 @@ func (service *Service) Search(ctx context.Context, input Input) (Response, erro
 	return response, nil
 }
 
-func isSearchable(spot facility.Facility, now time.Time) bool {
-	return (spot.Genre == facility.GenreSkatepark || spot.Genre == facility.GenreStreet) &&
-		spot.SkatingPermissionSourceURL != "" && spot.Status == "verified" &&
-		spot.GeneralUseStatus != facility.GeneralUseScheduleCheckRequired &&
-		facility.IsDynamicInformationFresh(spot.DynamicVerifiedAt, now) &&
-		facility.IsStableInformationFresh(spot.StableVerifiedAt, now)
-}
-
 func (service *Service) Ready() bool {
 	if service == nil || service.catalog == nil || service.geocoder == nil {
 		return false
 	}
 	for _, spot := range service.catalog.List("skateboard") {
-		if isSearchable(spot, service.now()) {
+		if facility.IsNearbySearchable(spot, service.now()) {
 			return true
 		}
 	}

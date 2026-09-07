@@ -10,6 +10,8 @@
 
 `APP_MODE=api`でBearer認証付き周辺検索・詳細取得を独立起動できる。旧Web/OAuth/DB/Bot入口はこのmodeで起動せず、互換用legacy modeに保持する。既存データのgenre・確認日は推測更新せず、未分類・期限超過は候補から除外する。APIの実装と、利用者がSlack/Discordから実際に使えるMVP全体の完成は別である。以降の旧構成の記述はlegacy modeの観測として読む。
 
+[DR-0022](decisions/0022-domestic-catalog-quality.md)で国内47都道府県の正式名称と営業時間のknown/非該当/不明を実装する。これは国内のデータ表現の拡張であり、ターゲット地域の限定でも、全国の実スポット収録完了でもない。実データの分類・鮮度再確認は後続とし、[施設データ仕様](specifications/facility-data.md)と[保守手順](guides/catalog-maintenance.md)で確認責任を定める。
+
 ## Product statement
 
 SpotDiggzは、スケボーをしたい人が、その日の目的や条件に合う行き先を決めるためのサービスです。対象地域を限定せず、UIやSlack・Discordのbot・appなどから呼び出せるAPIとして、施設情報と推薦機能を提供できるように整備していきます。
@@ -95,9 +97,9 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 
 ## Current implementation and data coverage
 
-以下は既存実装の範囲です。地域や技術構成そのものをプロダクトのターゲットとしません。施設の追加には出典・鮮度・更新責任の確認と、現行schema等の制約を変更する別作業が必要です。
+以下は既存実装の範囲です。地域や技術構成そのものをプロダクトのターゲットとしません。施設の追加には出典・鮮度・更新責任の確認が必要です。現行schemaを超える表現は別の契約変更として扱います。
 
-- 現在のcatalogと都道府県の許可値は大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県
+- 許可値は国内47都道府県。現在のcatalogは大阪府、兵庫県、和歌山県、奈良県、徳島県の5府県を維持し、実施設の追加・再調査は未実施
 - Go製モジュラーモノリスと単一OCI image
 - smartphone対応の日本語・英語Web UI
 - ワンクリック推薦、詳細条件入力、最大3件の決定論的推薦
@@ -148,7 +150,7 @@ navigation利用が5人未満、到着・滑走が3人未満、既存serviceと�
 ## Open questions
 
 - Status: Incomplete
-- Missing evidence: 独立API clientの具体的認証・認可・失効方式、入力と応答schema、非同期実行方式、API Gatewayの正式選定と制限機能、Cloud Run環境・総費用・メール通知の実設定、入口別需要検証とデータ更新工数の実測。方針承認済みと実装未完了を区別します。
+- Missing evidence: Botの構文・受信/返信・非同期実行方式、API Gatewayの正式選定と制限機能、Cloud Run環境・総費用・メール通知の実設定、実データの分類と鮮度、入口別需要検証とデータ更新工数の実測。API認証・失効・JSONはDR-0021、地域と営業時間状態はDR-0022で具体化済みですが、実装・方針と本番提供を区別します。
 - Required decision: ownerがAPI提供に必要な契約・安全境界・実装範囲を別Issueと必要なDecision Recordで決める。地域限定ではなく、需要と検証・更新できるデータに基づいて整備の順序を決める。
 
 ## Related documents
