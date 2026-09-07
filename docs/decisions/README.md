@@ -27,7 +27,7 @@
 | [DR-0017](0017-minimal-development-ci.md) | Accepted | 2026-09-05 | Operation | 通常CIとリリース前検証を分ける | #307 | #308 | — |
 | [DR-0018](0018-api-first-product-definition.md) | Accepted | 2026-09-06 | Product | 地域を限定せずAPIを中心とするプロダクトとして定義する | owner直接依頼 | [#311](https://github.com/kohei321dev/spot-diggz/pull/311) | — |
 | [DR-0019](0019-api-client-boundary.md) | Accepted | 2026-09-06 | Architecture | API利用clientと認証境界の初期構成 | #312 | [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Merged） | DR-0020（入力/検索の範囲のみ） |
-| [DR-0020](0020-mention-nearby-search.md) | Accepted | 2026-09-07 | Specification | メンションと場所名による周辺スポット検索をMVPにする | #312 | Incomplete（今回の文書PR作成後に追記） | — |
+| [DR-0020](0020-mention-nearby-search.md) | Accepted | 2026-09-07 | Specification | メンションと場所名による周辺スポット検索をMVPにする | #312 | [#320](https://github.com/kohei321dev/spot-diggz/pull/320) | — |
 
 ## Supersession map
 

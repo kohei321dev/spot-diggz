@@ -3,7 +3,7 @@
 - Status: Proposed details; product direction accepted
 - Date: 2026-09-06
 - Issue: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)
-- Pull Request: [#319](https://github.com/kohei321dev/spot-diggz/pull/319)
+- Pull Request: [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（提供/予算方針）、[#320](https://github.com/kohei321dev/spot-diggz/pull/320)（周辺検索入力の合意）
 - Baseline: remote `main` `1b4797ce488961bf02572573999f71d0b1d7e9d1`
 - Related decision: [DR-0019](../decisions/0019-api-client-boundary.md)、[DR-0020](../decisions/0020-mention-nearby-search.md)（方針Accepted、技術詳細Incomplete）
 - Implementation authority: ownerは新計画の実装着手とdocs更新を依頼し、今回検討内容のdocs/Issue整合を指示した。未提示のcredential・保存方式、外部設定・merge・deployの承認とは分ける。
