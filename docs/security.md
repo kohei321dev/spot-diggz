@@ -12,7 +12,15 @@
 
 ## 1. MVP security posture
 
-API-first計画に伴うclient認証・owner認可境界は[DR-0019（Proposed）](decisions/0019-api-client-boundary.md)で検討中です。以下の現行境界は維持し、client利用資格の発行・失効方式を採用済みとは扱いません。
+[DR-0019](decisions/0019-api-client-boundary.md)で独立HTTP APIとBot側のplatform本人確認を分ける方針を採用しました。[MVP API契約](specifications/api-mvp.md)が新しい提供境界の正本です。API clientの資格情報・失効・owner対応付けはIncompleteです。旧Web OAuthを外すだけでAPIを匿名公開してはいけません。
+
+新MVPでは独自Web UIは提供しません。以下は移行前の実装・保持契約・過去の検証記録です。Web操作・OAuth・Vercelの条件を新MVPへ自動適用せず、必要なAPI保護、既存データの保持、最小権限を#312/#313で移行します。
+
+- Bot→APIの認証と、Slack/Discord署名・owner ID認可を別々に検証します。IP制限を本人確認の代わりにしません。
+- API Gatewayの制限機能、Cloud Runへの直接アクセス迂回、非同期処理と短期状態storeを[運用計画](operations/cloud-run-plan.md)に沿って検証します。位置・返信tokenをqueueへ保存する変更は未承認です。
+- 月額USD 3は目安です。予算メールのみで超過による自動停止をしません。濫用防止と認可拒否は維持します。通知に位置・本文・secret・個人IDを含めません。
+
+### 移行前の実装上の対策
 
 - private MVPはGitHub OAuthで`GITHUB_OWNER`に一致するownerだけへWeb UIと`/api/*`を許可する。Productionの認証設定欠落は起動失敗とし、未認証APIはfail closedにする。
 - Slack/Discordはplatform request署名とownerへ対応付けたworkspace/guild/user IDを検証する。Browser session cookieや共通API keyをchat commandへ流用しない。

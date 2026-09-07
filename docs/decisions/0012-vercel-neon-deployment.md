@@ -7,7 +7,7 @@
 - Related Pull Requests: [#291](https://github.com/kohei321dev/spot-diggz/pull/291)
 - Affected Docs: `architecture.md`, `security.md`, `operations/continuous-delivery.md`, `operations/vercel-neon-deployment.md`
 - Supersedes: None
-- Superseded By: None
+- Superseded By: [DR-0019](0019-api-client-boundary.md)（今後のAPIホストをVercelとする判断のみ。Neonの保存契約は移行判断まで保持）
 - Related: [ADR-0007](0007-go-modular-monolith-runtime.md)
 - Related: [ADR-0008](0008-facility-catalog-api-and-storage.md)
 

@@ -2,17 +2,19 @@
 
 スケボーをしたい人が、その日の目的や条件に合う行き先を決めるためのサービス。対象地域を限定せず、UIやSlack・Discordのbot・appなどから利用できるAPIとして、施設情報と推薦機能を提供できるように整備していきます。
 
+新MVPは **Slack/Discord → 自分のBotサーバー → SpotDiggz API** とし、独自Web UIは提供しません。APIホストはCloud Run。月額目安は全体でUSD 3、Google Cloudの予算アラートメールのみを使い、超過しても自動停止しません。条件送信後は「検索中」、完了後に結果またはエラーを返します。方針の正本は[API契約](docs/specifications/api-mvp.md)と[Cloud Run運用計画](docs/operations/cloud-run-plan.md)です。実装・公開・通知設定は未完了です。
+
 ## 公開状況
 
 従来の公開先は2026-09-06にトップページ・health endpointともHTTP 404を確認しました。現在利用できる本番URLは未確認のため、アクセスリンクは掲載していません。[公開先と旧資料の整理状況](docs/operations/service-status.md)を参照してください。
 
 以下はリポジトリに存在する実装・運用方針です。本番で現在提供中であることを示すものではありません。
 
-常設のステージング環境は設けない。通常の変更はローカル環境とCIで検証し、外部サービス連携、データ移行、インフラ変更など本番との差分によるリスクがある変更では、必要な期間だけVercel Previewを明示的に作成して確認する。`main`への反映後は、本番環境でスモークテストを実施する。
+常設のステージング環境は設けない。通常はローカルとCIで検証し、Cloud Run移行時に必要な一時検証環境は#318で評価する。旧Vercel Previewを新構成の既定にはしない。実際の公開変更は別途承認後に行い、本番環境でスモークテストを実施する。
 
 spot-diggzは、施設を地図で眺めるだけではなく、「今日、今の自分がどこへ滑りに行くか」を決めるためのサービスです。利用目的、気分、レベル、使える時間、出発地点、交通手段から、検証済みの施設を理由付きで比較できます。
 
-初めて使う場合は、[How To Use](docs/guides/how-to-use.md) を参照してください。現在の要求・仕様・設計・運用文書は[Documentation](docs/README.md)からたどれます。
+新MVPの利用の流れは[API契約](docs/specifications/api-mvp.md)を参照してください。[How To Use](docs/guides/how-to-use.md)は移行前Web実装の参照です。現在の要求・仕様・設計・運用文書は[Documentation](docs/README.md)からたどれます。
 
 ## 現在の状態
 
@@ -55,6 +57,8 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 - [調査資料](docs/research/README.md)
 
 ## 使うコマンド一覧
+
+以下は現在残っている移行前実装のコマンドです。特にWeb UI・GitHub OAuth・Vercel設定/deploy用のものは新MVPのセットアップではありません。Cloud Run用手順は#318で整備し、旧公開先・secret登録・外部設定を確認なく実行しません。
 
 ### Git
 

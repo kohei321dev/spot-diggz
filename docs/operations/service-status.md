@@ -3,8 +3,12 @@
 - Status: Incomplete
 - Last checked: 2026-09-06 (JST)
 - Baseline: remote main `c30e73df1875ae0048b3949c6ab2da527393130b`
-- Missing evidence: 現在提供中の公開URL、Web/APIの提供継続・廃止・移転の判断、外部連携の稼働状態。
-- Required decision: ownerが現在の公開先と提供範囲を確認し、再提供する場合は認証・連携設定とsmoke結果を記録する。
+- Missing evidence: Cloud Runの実project・公開URL・API認証/Gateway・Bot連携・予算メール設定と稼働確認。
+- Required decision: Cloud Run・独自Web UI不要・API/Bot提供方針はDR-0019で採用済み。#318で実際の環境・費用・認証・通知設定を確認し、外部変更とdeployの明示承認後にsmoke結果を記録する。
+
+## 新構成の設定状況
+
+[Cloud Run運用計画](cloud-run-plan.md)に月額目安USD 3・Google Cloud予算メール通知・超過時停止なしを記録しました。通知設定、Gateway、Cloud Runへの移行・公開はいずれも未実施です。以下のHTTP確認は過去の調査記録であり、今回再測定したものではありません。
 
 ## 確認した事実
 

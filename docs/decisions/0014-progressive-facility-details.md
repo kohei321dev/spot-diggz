@@ -7,7 +7,7 @@
 - Related Pull Requests: [#304](https://github.com/kohei321dev/spot-diggz/pull/304)
 - Affected Docs: `requirements.md`, `security.md`, `specifications/web-ui.md`
 - Supersedes: [ADR-0013](0013-curated-external-media.md)（Decision 4と初期iframe loadのみ）
-- Superseded By: None
+- Superseded By: [DR-0019](0019-api-client-boundary.md)（独自Web UIの詳細・iframe表示要件のみ。既存コードの移行は後続）
 - Related: [Product](../product.md)
 - Related: [ADR-0009](0009-session-recommendation-ui.md)
 - Related: [ADR-0013](0013-curated-external-media.md)

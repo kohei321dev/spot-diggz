@@ -8,10 +8,11 @@
 
 | Specification | Related requirements | Status |
 | --- | --- | --- |
-| [`web-ui.md`](web-ui.md) | R-001–R-005、R-007、R-013–R-017 | Current |
+| [`api-mvp.md`](api-mvp.md) | DR-0019による新MVPと既存要求IDの移行 | 方針Accepted、実装Incomplete |
+| [`web-ui.md`](web-ui.md) | R-001–R-005、R-007、R-013–R-017 | 旧Web実装の参照。新MVP対象外 |
 | [`facility-data.md`](facility-data.md) | R-004、R-006、R-008–R-010、R-014–R-016、NFR-001–NFR-003 | Current |
-| [`chat-integrations.md`](chat-integrations.md) | R-002–R-005、R-008、R-017–R-020 | Current |
-| [`facility-catalog.openapi.yaml`](facility-catalog.openapi.yaml) | HTTP APIに関係する全要求 | Current contract |
+| [`chat-integrations.md`](chat-integrations.md) | R-002–R-005、R-008、R-017–R-020 | 新返信方針と移行前実装を区別 |
+| [`facility-catalog.openapi.yaml`](facility-catalog.openapi.yaml) | HTTP APIに関係する全要求 | 移行前実装の契約。新API認証は未反映 |
 
 ## Update rule
 

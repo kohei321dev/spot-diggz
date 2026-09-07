@@ -22,7 +22,7 @@
 
 ## Document map
 
-新計画の着手順・旧Issueとの対応は[#312](https://github.com/kohei321dev/spot-diggz/issues/312)、実装前の契約・安全境界の案は[`research/api-client-contract-plan.md`](research/api-client-contract-plan.md)を参照してください。設計案とDR-0019はProposedであり、現在提供する仕様ではありません。
+新計画の着手順・旧Issueとの対応は[#312](https://github.com/kohei321dev/spot-diggz/issues/312)、実装前の契約・安全境界の案は[`research/api-client-contract-plan.md`](research/api-client-contract-plan.md)を参照してください。DR-0019の提供・運用方針はowner承認済みです。独自Web UIは不要、独立APIとSlack/DiscordをMVPとします。[MVP API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)に採用事項と未実装・未確定を分けています。詳細案の未承認部分を実装済み仕様と扱いません。
 
 | Path | Responsibility | Status | Update trigger |
 | --- | --- | --- | --- |

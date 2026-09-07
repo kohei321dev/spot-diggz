@@ -2,7 +2,15 @@
 
 - Status: Current
 - Related requirements: R-002–R-005、R-008、R-017–R-020
-- Related decisions: ADR-0015、ADR-0016
+- Related decisions: ADR-0015、ADR-0016、DR-0019
+
+## 新MVPの採用済み方針
+
+[API契約](api-mvp.md)に従い、Slack/Discord → 自分のBotサーバー → 認証付きSpotDiggz APIへ移行します。独自Web UIは使いません。位置・条件の送信後に「検索中」を表示し、完了後に結果、失敗時にもエラーと次の行動をownerへ返します。API呼出し・platform署名/ID認可・非保存を別々に検証します。
+
+Slackは無料プランの通常AppをHTTPトリガーとして利用し、modalを基本にします。Discordの具体的入力方式、API資格情報、受付後の実行・配送失敗・retry・冪等性は#312/#315/#316で詳細化します。既存goroutineだけでCloud Run上の完了保証を宣言しません。
+
+以下は移行前実装の説明です。「Discordの固定起点」「内部engine呼出し」を新MVPの受入条件にしません。実装変更時にAPI契約・本書・setup guideを同じPRで更新します。
 
 ## Shared boundary
 

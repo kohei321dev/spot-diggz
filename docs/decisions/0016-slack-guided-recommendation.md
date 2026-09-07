@@ -7,7 +7,7 @@
 - Related Pull Requests: [#304](https://github.com/kohei321dev/spot-diggz/pull/304)
 - Affected Docs: `requirements.md`, `architecture.md`, `security.md`, `specifications/chat-integrations.md`, `guides/slack-setup.md`
 - Supersedes: [ADR-0015](0015-owner-auth-and-chat-entrypoints.md)（Slack入力・response flowのみ）
-- Superseded By: None
+- Superseded By: [DR-0019](0019-api-client-boundary.md)（内部serviceから認証付きAPIへの呼出境界と検索中/結果/エラー通知。既存の保存制約を保持）
 
 ## Context
 
