@@ -19,14 +19,14 @@ func TestNewCatalogRejectsUnverifiedFacility(t *testing.T) {
 	}
 }
 
-func TestNewCatalogRejectsFacilityOutsideMVPPrefectures(t *testing.T) {
+func TestNewCatalogAcceptsDomesticFacilityOutsideOriginalFivePrefectures(t *testing.T) {
 	item := validFacility()
 	item.Prefecture = "京都府"
 	item.Municipality = "京都市"
 
 	_, err := NewCatalog([]Facility{item})
-	if !errors.Is(err, ErrInvalidData) {
-		t.Fatalf("NewCatalog() error = %v, want ErrInvalidData", err)
+	if err != nil {
+		t.Fatalf("NewCatalog() rejected a Japanese prefecture: %v", err)
 	}
 }
 

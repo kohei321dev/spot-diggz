@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: spot-diggz MVP API
-  version: 0.8.0
+  version: 0.9.0
   description: |-
     Verified facility catalog, deterministic recommendation, correction, and
     observability API. Every application response includes `X-Request-ID` and
@@ -52,6 +52,8 @@ paths:
         store writability.
         In API mode, configured credentials, a location provider, and at least
         one fresh, classified spot with permission evidence are required.
+        API modeではhoursStatus=unknown、日付別の利用確認が必要なrecordを除外する。
+        根拠付きのstreetのhoursStatus=not_applicableは掲載可能だが、現在滑走可能な保証ではない。
       responses:
         '200':
           description: At least one loaded facility is fresh for both freshness windows.
@@ -88,6 +90,8 @@ paths:
         Process-local authenticated search bucket: 30/minute, burst 5 (not a
         global/client/IP quota). Current opening/closure status is not filtered;
         consult returned rules and source information before visiting.
+        hoursStatus=unknownは候補に含めない。not_applicableは営業時間制度がないことの
+        確認済み状態であり、24時間利用可を表さない。availabilityNoteとルールを確認する。
       requestBody:
         required: true
         content:
@@ -179,6 +183,7 @@ paths:
         API mode rejects URL query parameters and limits authenticated reads to
         60/minute with a burst of 10 per process. Detail can include stale or
         unclassified records excluded from nearby search; check evidence dates.
+        hoursStatus=unknownの参照情報も返り得る。hoursの省略を無制限利用と解釈しない。
       parameters:
         - name: facilityId
           in: path
@@ -290,7 +295,8 @@ paths:
         refills at 60 requests per minute with a burst of 10. Origin coordinates
         are not returned or persisted. With Google enabled they are sent to
         Compute Route Matrix; any Google Routes failure falls back to the
-        straight-line provider.
+        straight-line provider. hoursStatusがknownまたは旧recordの省略状態の施設だけを
+        時間計算に使い、not_applicable/unknownは外部provider呼出し前に除外する。
       requestBody:
         required: true
         content:
@@ -858,8 +864,72 @@ components:
     Facility:
       type: object
       additionalProperties: false
+      description: |-
+        公開catalogを読み取ったレスポンス。prefectureは国内47都道府県の正式名称であり、
+        収録済み地域やプロダクト全体の対象地域を表さない。
+        旧recordのhoursStatus省略はknown相当で、有効なhoursを必須とする。
+        not_applicable/unknownではhoursとhoursBasisは返さない。catalog入力では空配列の
+        hoursと空文字のhoursBasisも受理するが、レスポンスではomitemptyにより省略する。
+        営業時間がないことと、営業時間を確認できていないことは別の状態として扱う。
       dependentRequired:
         genre: [skatingPermissionSourceUrl]
+      allOf:
+        - if:
+            required: [generalUseStatus]
+            properties:
+              generalUseStatus:
+                const: schedule_check_required
+          then:
+            required: [availabilityNote]
+            properties:
+              availabilityNote:
+                pattern: '\S'
+      oneOf:
+        - title: 確認済み営業時間または旧record互換
+          required: [hours]
+          properties:
+            hoursStatus:
+              const: known
+            hours:
+              minItems: 1
+        - title: 営業時間制度のない確認済みstreet
+          required: [hoursStatus, genre, hoursSourceUrl, generalUseStatus, availabilityNote, englishTranslation]
+          properties:
+            hoursStatus:
+              const: not_applicable
+            genre:
+              const: street
+            generalUseStatus:
+              enum: [regular, limited]
+            availabilityNote:
+              pattern: '\S'
+            englishTranslation:
+              required: [availabilityNote]
+              properties:
+                availabilityNote:
+                  pattern: '\S'
+          not:
+            anyOf:
+              - required: [hours]
+              - required: [hoursBasis]
+        - title: 営業時間を未確認の参照情報
+          required: [hoursStatus, genre, generalUseStatus, availabilityNote, englishTranslation]
+          properties:
+            hoursStatus:
+              const: unknown
+            generalUseStatus:
+              const: schedule_check_required
+            availabilityNote:
+              pattern: '\S'
+            englishTranslation:
+              required: [availabilityNote]
+              properties:
+                availabilityNote:
+                  pattern: '\S'
+          not:
+            anyOf:
+              - required: [hours]
+              - required: [hoursBasis]
       required:
         - facilityId
         - name
@@ -868,7 +938,6 @@ components:
         - municipality
         - location
         - activities
-        - hours
         - scheduleNotes
         - price
         - reservation
@@ -905,7 +974,8 @@ components:
           minLength: 1
         prefecture:
           type: string
-          enum: [大阪府, 兵庫県, 和歌山県, 奈良県, 徳島県]
+          description: 国内の住所表現として受理する正式名称。実施設の収録・確認済み範囲とは別で、略称や前後の空白は受理しない。
+          enum: [北海道, 青森県, 岩手県, 宮城県, 秋田県, 山形県, 福島県, 茨城県, 栃木県, 群馬県, 埼玉県, 千葉県, 東京都, 神奈川県, 新潟県, 富山県, 石川県, 福井県, 山梨県, 長野県, 岐阜県, 静岡県, 愛知県, 三重県, 滋賀県, 京都府, 大阪府, 兵庫県, 奈良県, 和歌山県, 鳥取県, 島根県, 岡山県, 広島県, 山口県, 徳島県, 香川県, 愛媛県, 高知県, 福岡県, 佐賀県, 長崎県, 熊本県, 大分県, 宮崎県, 鹿児島県, 沖縄県]
         municipality:
           type: string
           minLength: 1
@@ -919,9 +989,18 @@ components:
             minLength: 1
         hours:
           type: array
-          minItems: 1
+          description: known（hoursStatus省略を含む）でのみ返す。1件以上の有効な営業枠が必要。非knownではこのproperty自体を省略する。
           items:
             $ref: '#/components/schemas/OperatingHours'
+        hoursStatus:
+          type: string
+          enum: [known, not_applicable, unknown]
+          description: knownは確認済み時刻、not_applicableはstreetの営業時間制度なし、unknownは営業時間未確認。旧recordの省略はknown相当だが、明示的なknownへ書き換えて返さない。
+        hoursSourceUrl:
+          type: string
+          format: uri
+          pattern: '^https://(?:\[[^\]@\s]+\]|[^/?#:@\s\[\]]+)(?:[/?#]|$)'
+          description: 営業時間または制度非該当を確認したHTTPS出典。認証情報・明示的portを含めない。not_applicableでは必須、それ以外では任意。
         generalUseStatus:
           type: string
           enum: [regular, limited, schedule_check_required]
@@ -929,11 +1008,11 @@ components:
         hoursBasis:
           type: string
           enum: [official, conservative]
-          description: Whether the recommendation hours are directly published or a conservative interpretation of official information.
+          description: knownでのみ返せる営業時間の根拠。公式公表値または公式情報の保守的解釈。not_applicable/unknownでは省略する。
         availabilityNote:
           type: string
           minLength: 1
-          description: User-facing explanation of limits on ordinary general use or the hours interpretation.
+          description: 一般利用や営業時間の制約・不足説明。not_applicable/unknownでは日英両方が必須。schedule_check_requiredでは日本語が必須。非該当を24時間利用可、未確認を無料や予約不要と解釈しない。
         scheduleNotes:
           type: array
           minItems: 1
@@ -1167,6 +1246,7 @@ components:
         availabilityNote:
           type: string
           minLength: 1
+          description: hoursStatus=not_applicable/unknownでは日本語availabilityNoteと対応する英語説明が必須。旧known recordでは省略可能。
         scheduleNotes:
           type: array
           minItems: 1

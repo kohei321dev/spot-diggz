@@ -1,7 +1,7 @@
 # SpotDiggz Architecture
 
 - Status: Current
-- Last reviewed: 2026-09-06
+- Last reviewed: 2026-09-07
 - Requirements: [`requirements.md`](requirements.md)
 - Decision authority: [Accepted Decision Records](decisions/README.md)
 - Migrated from: [`architecture/quality-attributes.md`](architecture/quality-attributes.md) under Issue #305
@@ -19,6 +19,8 @@
 `cmd/api`は明示的`APP_MODE=api`で別handlerを構築する。`internal/apiauth`がimmutableなdigest/期限/失効設定を所有し、`internal/httpapi/read_api.go`がroute allowlist・認証・入力size・rate limitを担当する。`internal/nearby`は地点providerで場所を解決し、catalogの品質/genre/半径/距離順/limitを適用する。施設モデル・Google Geocoding・HTTP観測middlewareを再利用し、旧session/旅程engineには依存しない。
 
 同一Go binary内のmodule分離であり、新しいDB・queue・cache・常駐Botは導入しない。config/canonical catalogは起動時snapshot、queryと検索中心はrequest内のメモリのみ。API modeはGitHub OAuth、訂正store/保持worker、旧chatを初期化せず、Web/旧API/公開metricsも登録しない。HTTPのtimeout/shutdownを旧modeと共用する。認証後のprocess-local rate limitは全体quotaではない。公開時のTLS・Gateway・監視とBotの配置は#318等の残項目。
+
+[DR-0022](decisions/0022-domestic-catalog-quality.md)では`internal/facility`が国内47都道府県・営業時間の確認状態を検証し、`IsNearbySearchable`を検索・API readiness・`catalogcheck -require-searchable`で共有する。`internal/recommendation`の旧旅程計算は非knownを移動providerの呼出し前に除外する。新しい外部呼出し・保存先・data mutationは追加しない。code/schema/catalogを互換な組で配置・rollbackし、実データの確認責任は[保守手順](guides/catalog-maintenance.md)に従う。
 
 詳細は[読み取りAPI](specifications/read-api.md)。以下のsystem context以降は保持したlegacy modeの説明であり、API modeの依存条件ではない。
 

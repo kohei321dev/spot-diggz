@@ -12,7 +12,7 @@
 
 PR #320はremote main `2f3982ea40ddade04770139d02b3ba26549448ac`へマージ済み。ownerの実装再開依頼に基づき[DR-0021](../decisions/0021-read-api-contract.md)で読み取りAPIのBearer/期限/失効/owner mapping、JSONの数値・応答・場所解決・品質filter、明示的API modeを具体化した。[読み取りAPI](../specifications/read-api.md)とOpenAPIがこの部分の正本であり、以下の「文書のみ」「認証/数値未確定」はその時点の調査記録として読む。
 
-#312全体を閉じず、#313の第一実装単位だけを先行する。Bot文法/受信/owner限定返信/配送保証、旧コード退役、streetの欠落属性表現、実catalog分類、Cloud Run/Gatewayの実設定は未完了。新規保存・外部変更の権限は拡大しない。
+PR #321はremote main `40b2157422446c909210c7ebe42117917fead930`へマージ済み。次の#314の実装単位は[DR-0022](../decisions/0022-domestic-catalog-quality.md)の国内地域表現・営業時間状態・品質gate・保守手順とする。この部分は[施設データ仕様](../specifications/facility-data.md)が正本。#312全体を閉じず、Bot文法/受信/owner限定返信/配送保証、旧コード退役、実catalog分類と鮮度再確認、Cloud Run/Gatewayの実設定は後続。新規保存・外部変更の権限は拡大しない。以下の未確定表は調査時点の履歴であり、採用済みのDR-0021/0022を未決定へ戻さない。
 
 ## 決定済み方針と本書の役割
 

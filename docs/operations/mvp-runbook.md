@@ -8,6 +8,20 @@
 
 このRunbookは、release ownerが同一imageを起動し、smoke、監視、縮退、rollbackまで判断するための手順である。Vercel/Neonの初回構築とProduction smokeは完了しており、metrics制限、Google quota、カスタムドメインなど未設定の項目は本文で明示する。
 
+## API modeの公開前gate
+
+以下の1〜5節は移行前のlegacy modeの運用記録である。`APP_MODE=api`では[読み取りAPI起動手順](../guides/read-api-setup.md)と[Cloud Run運用計画](cloud-run-plan.md)を使い、[DR-0022](../decisions/0022-domestic-catalog-quality.md)に従って次を追加確認する。
+
+```bash
+go run ./cmd/catalogcheck -path data/facilities.json -require-searchable
+```
+
+- 既存の全recordの鮮度検査（実行時点から既定168時間後もdynamic 30日・stable 180日以内）に加え、その終端で検索掲載可能なスケートボードrecordが1件以上必要。`-path`は配備するcatalogと一致させる。
+- APIの`/readyz`は認証構成・地点provider・現時点の検索掲載候補を確認する。単なるfresh件数ではなく、genre、滑走根拠、営業時間の確認状態、一般利用状態も必要。readiness成功は実Google通信、168時間先の鮮度、現在の滑走可否の保証ではない。
+- `hoursStatus=unknown`、未分類、日付確認必須、鮮度不足は掲載対象外。根拠のある`not_applicable`のstreetは周辺検索へ含められるが、24時間利用可とは表示せず、旧到着・滑走時間計算へ混入させない。
+- #314では実catalogの再調査・分類・確認日更新は行っていない。失敗時は[catalog保守手順](../guides/catalog-maintenance.md)で出典を再確認し、fixtureへの置換や確認日のみの更新でgateを通さない。
+- rollbackは認証を維持する設定と、互換なschema・binary・catalog snapshotの組を使う。新fieldや旧5府県外recordを旧binaryが拒否し得るため、binaryだけを戻さない。現在時刻で再度gateとAPI smokeを行い、漏えい済みtokenを復活させず、訂正DBやcatalogを削除しない。
+
 ## 1. 読者・前提
 
 - 想定読者: repositoryと実行環境を変更できるrelease owner / on-call operator
