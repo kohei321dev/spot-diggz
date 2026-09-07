@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: spot-diggz MVP API
-  version: 0.7.0
+  version: 0.8.0
   description: |-
     Verified facility catalog, deterministic recommendation, correction, and
     observability API. Every application response includes `X-Request-ID` and
@@ -14,6 +14,14 @@ info:
 
     Facility responses can include curator-reviewed YouTube metadata and official
     social-profile links. They never contain arbitrary embed URLs or iframe HTML.
+
+    APP_MODE=api exposes only healthz, readyz, POST /api/facilities/search, and
+    GET /api/facilities/{facilityId}. Business endpoints require apiBearer;
+    cookies do not authorize API mode. Other paths document retained legacy mode.
+    API mode uses Geocoding only, never Routes, and returns no search-center
+    coordinates or original query. Ambiguous place labels are returned only to
+    the authenticated client for refinement. Public facility coordinates remain
+    part of Facility. No new mode is deployed by this contract change.
 security:
   - ownerSession: []
 paths:
@@ -42,6 +50,8 @@ paths:
         whose dynamic and stable verification timestamps are both within their
         freshness windows. This handler does not probe Google APIs or correction-
         store writability.
+        In API mode, configured credentials, a location provider, and at least
+        one fresh, classified spot with permission evidence are required.
       responses:
         '200':
           description: At least one loaded facility is fresh for both freshness windows.
@@ -60,7 +70,80 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotReadyStatus'
+                oneOf:
+                  - $ref: '#/components/schemas/NotReadyStatus'
+                  - $ref: '#/components/schemas/ErrorResponse'
+  /api/facilities/search:
+    post:
+      operationId: searchNearbyFacilities
+      security:
+        - apiBearer: []
+      summary: Search verified spots around a place (API mode only)
+      description: |-
+        JSON body only, at most 4096 bytes. Rejects unknown/duplicate keys, nulls,
+        control characters, URL query parameters and out-of-range inputs.
+        Uses straight-line kilometers before rounding; ties sort by facilityId.
+        No automatic radius expansion or genre relaxation. Search is synchronous
+        with a five-second location-provider timeout, no retries or persistence.
+        Process-local authenticated search bucket: 30/minute, burst 5 (not a
+        global/client/IP quota). Current opening/closure status is not filtered;
+        consult returned rules and source information before visiting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NearbySearchInput'
+      responses:
+        '200':
+          description: Structured result, including ambiguous location or insufficient catalog evidence.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbySearchResponse'
+        '400':
+          description: Invalid JSON/search input or unexpected URL query parameters.
+          x-error-codes: [invalid_json, invalid_search_input, unexpected_query]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/InvalidAPIToken'
+        '413':
+          description: Request exceeds 4096 bytes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          description: Process-local rate limit exceeded; Retry-After is 60 seconds.
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Missing authentication configuration or location provider failure/timeout.
+          x-error-codes: [api_auth_unavailable, location_search_unavailable]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected search failure.
+          x-error-codes: [search_failed]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/facilities:
     get:
       operationId: listFacilities
@@ -86,7 +169,16 @@ paths:
   /api/facilities/{facilityId}:
     get:
       operationId: getFacility
+      security:
+        - apiBearer: []
+        - ownerSession: []
       summary: Get one verified facility
+      description: |-
+        API mode accepts apiBearer only; legacy mode accepts ownerSession only.
+        These are deployment-mode alternatives, not interchangeable credentials.
+        API mode rejects URL query parameters and limits authenticated reads to
+        60/minute with a burst of 10 per process. Detail can include stale or
+        unclassified records excluded from nearby search; check evidence dates.
       parameters:
         - name: facilityId
           in: path
@@ -107,6 +199,26 @@ paths:
         '404':
           description: The facility does not exist in the loaded catalog.
           x-error-codes: [facility_not_found]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/InvalidAPIToken'
+        '400':
+          description: API mode does not accept URL query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: API-mode process-local read limit exceeded (Retry-After 60 seconds).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: API-mode authentication configuration is unavailable.
           content:
             application/json:
               schema:
@@ -423,6 +535,10 @@ paths:
                 type: string
 components:
   securitySchemes:
+    apiBearer:
+      type: http
+      scheme: bearer
+      description: Dedicated 32-byte random token encoded as 64 lowercase hex characters; scope facilities:read, configured owner mapping, expiry and revocation. HTTPS required outside loopback testing.
     ownerSession:
       type: apiKey
       in: cookie
@@ -440,6 +556,12 @@ components:
         type: integer
         const: 60
   responses:
+    InvalidAPIToken:
+      description: Missing, malformed, unknown, expired or revoked API credential. WWW-Authenticate is Bearer.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     UnsupportedMediaType:
       description: "`Content-Type` is missing, invalid, or not `application/json`."
       x-error-codes: [unsupported_media_type]
@@ -458,6 +580,89 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    NearbySearchInput:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Place name; surrounding whitespace trimmed, control characters rejected. Never a required current location.
+        genre:
+          type: string
+          enum: [skatepark, street]
+          description: Omit for both. Street requires verified permission outside a skatepark.
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        radiusKm:
+          type: number
+          minimum: 0.1
+          maximum: 50
+          default: 10
+        sort:
+          type: string
+          enum: [distance]
+          default: distance
+    NearbySearchResponse:
+      type: object
+      additionalProperties: false
+      required: [status, matches, distanceKind, limit, radiusKm, sort, availabilityNote]
+      properties:
+        status:
+          type: string
+          enum: [ok, no_matches, data_unavailable, location_not_found, location_ambiguous]
+          description: No matches means verified nearby data exists but genre does not match. Data unavailable means no nearby catalog coverage or insufficient evidence with zero matches; never asserts no real spots exist.
+        matches:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            additionalProperties: false
+            required: [facility, distanceKm]
+            properties:
+              facility:
+                $ref: '#/components/schemas/Facility'
+              distanceKm:
+                type: number
+                minimum: 0
+                maximum: 50
+                description: Unrounded straight-line distance, not travel distance/time.
+        locationCandidates:
+          type: array
+          minItems: 2
+          maxItems: 5
+          description: Only for location_ambiguous; refine the query using labels. No coordinates or persisted selection token.
+          items:
+            type: object
+            additionalProperties: false
+            required: [label]
+            properties:
+              label:
+                type: string
+                minLength: 1
+                maxLength: 300
+        distanceKind:
+          type: string
+          const: straight_line
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+        radiusKm:
+          type: number
+          minimum: 0.1
+          maximum: 50
+        sort:
+          type: string
+          const: distance
+        availabilityNote:
+          type: string
+          minLength: 1
     ChatAcknowledgement:
       type: object
       additionalProperties: false
@@ -653,6 +858,8 @@ components:
     Facility:
       type: object
       additionalProperties: false
+      dependentRequired:
+        genre: [skatingPermissionSourceUrl]
       required:
         - facilityId
         - name
@@ -681,6 +888,15 @@ components:
         facilityId:
           type: string
           minLength: 1
+        genre:
+          type: string
+          enum: [skatepark, street]
+          description: Optional for legacy records; unclassified records are excluded from nearby search.
+        skatingPermissionSourceUrl:
+          type: string
+          format: uri
+          pattern: '^https://'
+          description: Curator-verified source of skating permission/rules; no embedded credentials or explicit port.
         name:
           type: string
           minLength: 1

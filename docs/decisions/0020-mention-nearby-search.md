@@ -7,7 +7,7 @@
 - Related Pull Requests: [#320](https://github.com/kohei321dev/spot-diggz/pull/320)
 - Affected Docs: `product.md`, `requirements.md`, `specifications/nearby-search.md`, `specifications/api-mvp.md`, `specifications/chat-integrations.md`, `specifications/facility-data.md`, `architecture.md`, `security.md`, `guides/how-to-use.md`, `research/api-client-contract-plan.md`
 - Supersedes: ADR-0009の6条件必須・即時滑走推薦/最大3件を新MVPの基本とする範囲、ADR-0016のslash/modal入口・mention非対応と固定候補数、DR-0019の入力/検索の範囲のみ。認証・保存・品質・ホスト・予算方針は維持。
-- Superseded By: None
+- Superseded By: [DR-0021](0021-read-api-contract.md)（APIの数値/応答/場所解決/品質filterの未確定部分のみ。Bot構文/接続は後続）
 
 ## Context
 

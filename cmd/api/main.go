@@ -63,6 +63,20 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("facility_catalog_loaded", "count", len(catalog.List("")))
+	mode := envOrDefault("APP_MODE", "legacy")
+	if mode == "api" {
+		handler, apiErr := buildReadAPI(catalog, logger, now)
+		if apiErr != nil {
+			logger.Error("read_api_initialization_failed", "error", apiErr)
+			os.Exit(1)
+		}
+		serveHTTP(handler, logger, func() {})
+		return
+	}
+	if mode != "legacy" {
+		logger.Error("application_mode_invalid")
+		os.Exit(1)
+	}
 
 	var correctionStore correction.RetentionStore
 	var closeCorrectionStore func() error
@@ -180,18 +194,23 @@ func main() {
 		logger.Info("discord_integration_enabled")
 	}
 
+	handler := httpapi.NewServerWithOptions(catalog, logger, httpapi.Options{
+		Recommender:       recommender,
+		Geocoder:          geocoder,
+		CorrectionService: correctionService,
+		Metrics:           metrics,
+		Now:               now,
+		OwnerAccess:       ownerAccess,
+		SlackHandler:      slackHandler,
+		DiscordHandler:    discordHandler,
+	})
+	serveHTTP(handler, logger, stopRetentionWorker)
+}
+
+func serveHTTP(handler http.Handler, logger *slog.Logger, stopWorkers func()) {
 	server := &http.Server{
-		Addr: ":" + envOrDefault("PORT", "8080"),
-		Handler: httpapi.NewServerWithOptions(catalog, logger, httpapi.Options{
-			Recommender:       recommender,
-			Geocoder:          geocoder,
-			CorrectionService: correctionService,
-			Metrics:           metrics,
-			Now:               now,
-			OwnerAccess:       ownerAccess,
-			SlackHandler:      slackHandler,
-			DiscordHandler:    discordHandler,
-		}),
+		Addr:              ":" + envOrDefault("PORT", "8080"),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -202,7 +221,7 @@ func main() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-shutdown
-		stopRetentionWorker()
+		stopWorkers()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {

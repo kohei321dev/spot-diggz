@@ -10,7 +10,7 @@
 
 入力の正本は[周辺検索仕様](nearby-search.md)です。Slack/Discord共通でメンション＋場所名を基本にし、genre/limit/sortと検索範囲を任意指定します。旧slash/modal・6条件必須・固定3件を新MVPの基本入力にしません。場所確認、非owner拒否、Bot返信によるループ防止を検証します。
 
-Slack無料プランの通常Appという方針は維持します。platform別のメンション受信transport・必要scope/intent・owner限定返信、API資格情報、受付後処理・配送失敗・retry・冪等性は#312/#315/#316で詳細化します。旧Discord HTTP Interaction専用という制約との適合も再評価し、別transportの採用や環境変更を今回承認したとはしません。既存署名・ephemeral方式の流用可否やgoroutineによる完了保証を検証なしで宣言しません。
+Slack無料プランの通常Appという方針は維持します。platform別のメンション受信transport・必要scope/intent・owner限定返信、受付後処理・配送失敗・retry・冪等性は#312/#315/#316で詳細化します。API接続は[読み取りAPI](read-api.md)のclient別Bearer/JSON/構造化statusを使います。Bot側のowner本人確認は省略できず、資格情報の実登録は後続です。旧Discord HTTP Interaction専用という制約との適合も再評価し、別transportの採用や環境変更を今回承認したとはしません。既存署名・ephemeral方式の流用可否やgoroutineによる完了保証を検証なしで宣言しません。
 
 以下の全節は移行前実装の説明です。「Discordの固定起点」「内部engine呼出し」「mention非対応」「最大3件」を新MVPの受入条件にしません。実装変更時にAPI契約・本書・setup guide・manifestを同じPRで更新します。メンションはまだ実行できる新機能ではありません。
 

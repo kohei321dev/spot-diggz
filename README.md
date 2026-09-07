@@ -16,6 +16,12 @@ spot-diggzは、施設を地図で眺めるだけではなく、「今日、今�
 
 新MVPの利用の流れは[API契約](docs/specifications/api-mvp.md)を参照してください。[How To Use](docs/guides/how-to-use.md)は移行前Web実装の参照です。現在の要求・仕様・設計・運用文書は[Documentation](docs/README.md)からたどれます。
 
+## 独立読み取りAPI（新MVPの第一実装）
+
+`APP_MODE=api`で、専用Bearer認証付き`POST /api/facilities/search`と`GET /api/facilities/{facilityId}`を起動できます。query（場所名）と任意genre/limit/radiusKm/sortを受け付け、検証済み情報から直線距離順に返します。GitHub OAuth・DB・独自Web UIはこのmodeに不要です。[API仕様](docs/specifications/read-api.md)と[ローカル設定手順](docs/guides/read-api-setup.md)を参照してください。
+
+実装済みなのはAPI部分です。Slack/Discordの新メンション接続、実データのgenre分類・鮮度再確認、Cloud Run/Gateway公開は未完了です。本番catalogの確認日を自動で更新せず、未分類/古いデータは検索から除外します。以下の旧Web構成は互換用legacy modeの説明であり、API modeの依存条件ではありません。
+
 ## 現在の状態
 
 現在の実装は、Web UI、API、検証済み施設カタログ、決定論的な推薦を1つのGo applicationに含むモジュラーモノリスです。Slack・Discord adapterは内部の共通推薦serviceを呼び出しており、独立した各bot・appがHTTP APIを利用する構成への整備は今後の作業です。
@@ -58,7 +64,7 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 
 ## 使うコマンド一覧
 
-以下は現在残っている移行前実装のコマンドです。特にWeb UI・GitHub OAuth・Vercel設定/deploy用のものは新MVPのセットアップではありません。Cloud Run用手順は#318で整備し、旧公開先・secret登録・外部設定を確認なく実行しません。
+新APIの起動は[設定手順](docs/guides/read-api-setup.md)に従い環境を注入して`go run ./cmd/api`、ネットワーク不要の回帰確認は`go test ./internal/apiauth ./internal/nearby ./internal/httpapi ./cmd/api`です。`APP_MODE=api`を必ず明示してください。その他の以下のコマンドは主に現在残っている移行前実装用です。特にWeb UI・GitHub OAuth・Vercel設定/deploy用のものは新MVPのセットアップではありません。Cloud Run用手順は#318で整備し、旧公開先・secret登録・外部設定を確認なく実行しません。
 
 ### Git
 
@@ -106,17 +112,20 @@ private MVPでは、Web UIと`/api/*`をGitHub OAuthで`GITHUB_OWNER`に一致�
 
 | Environment variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
+| `APP_MODE` | API単体起動時yes | `legacy` | `api`は認証付き読み取りrouteのみ。未知値は起動拒否 |
+| `API_OWNER_ID` | API mode yes | unset | 個人情報でない許可owner内部ID |
+| `API_CLIENTS_JSON` | API mode yes | unset | client別digest・owner・scope・期限・失効設定。APIには平文tokenを入れない |
 | `PORT` | no | `8080` | HTTP listen port |
 | `FACILITY_CATALOG_PATH` | no | `data/facilities.json` | 起動時に読む検証済みcatalog |
 | `CORRECTION_STORE_PATH` | no | `var/corrections.jsonl` | 訂正報告のJSON Lines file |
 | `DATABASE_URL` | Production Slack利用時yes | unset | Neon/PostgreSQLの訂正報告と短期Slack request状態。設定時はfile storeより優先 |
-| `GOOGLE_MAPS_API_KEY` | Slack利用時yes | unset | Google Routes / Geocodingのserver-side credential。Slack modalの地点解決に必要 |
+| `GOOGLE_MAPS_API_KEY` | API検索/旧Slack利用時yes | unset | API modeはGeocodingのみ。legacyはRoutes / Geocoding |
 | `APP_ENV` | no | `development` | JSON logのenvironment。image既定値は `production` |
 | `APP_VERSION` | no | `unknown` | JSON logへ付けるrelease SHAまたはversion |
-| `APP_BASE_URL` | Production yes | unset | GitHub OAuth callbackを構成するpathなしの正式HTTPS origin。例: `https://<deployment-host>` |
-| `AUTH_SECRET` | Production yes | unset | owner sessionとOAuth stateへ署名する32 bytes以上のrandom secret |
-| `GITHUB_CLIENT_ID` | Production yes | unset | GitHub OAuth App client ID |
-| `GITHUB_CLIENT_SECRET` | Production yes | unset | GitHub OAuth App client secret |
+| `APP_BASE_URL` | legacy Production yes | unset | GitHub OAuth callbackを構成するpathなしの正式HTTPS origin。例: `https://<deployment-host>` |
+| `AUTH_SECRET` | legacy Production yes | unset | owner sessionとOAuth stateへ署名する32 bytes以上のrandom secret |
+| `GITHUB_CLIENT_ID` | legacy Production yes | unset | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | legacy Production yes | unset | GitHub OAuth App client secret |
 | `GITHUB_OWNER` | no | `kohei321dev` | 利用を許可するGitHub login |
 | `DEV_AUTH_BYPASS` | no | unset | local UI/E2E専用。`1`で認証を省略し、Productionでは常に無効 |
 | `SLACK_BOT_TOKEN` | Slack利用時yes | unset | `views.open`と`chat.postEphemeral`に使うBot User OAuth Token |
@@ -149,6 +158,8 @@ application起動後に次を確認する。完全な手順とrollback条件は 
 production imageはscratchを使い、Google HTTPS通信用CA bundle、UID `65532` が書き込めるlocal fallback用訂正store directory、`CGO_ENABLED=0` の単一binaryだけを含む。Vercel ProductionではNeon/PostgreSQLを使うため、訂正reportをcontainer filesystemへ保存しない。通常のOCI運用でfile storeを使う場合だけ、`/var/lib/spotdiggz`へpersistent volumeをmountする。
 
 ## API
+
+API modeのroute allowlistは[読み取りAPI](docs/specifications/read-api.md#route-allowlistと互換性)を参照してください。以下はlegacy modeです。
 
 主要endpointは `GET /healthz`、`GET /readyz`、GitHub OAuth用`/auth/github/*`、owner sessionが必要な`/api/*`、Slack用`POST /integrations/slack/commands`、Discord用`POST /integrations/discord/interactions`、`GET /metrics` である。request、response、制限、error codeの正本は [OpenAPI](docs/specifications/facility-catalog.openapi.yaml) とする。
 

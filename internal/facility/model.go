@@ -77,37 +77,47 @@ type ClosurePeriod struct {
 }
 
 type Facility struct {
-	ID                 string                     `json:"facilityId"`
-	Name               string                     `json:"name"`
-	Address            string                     `json:"address"`
-	Prefecture         string                     `json:"prefecture"`
-	Municipality       string                     `json:"municipality"`
-	Location           Location                   `json:"location"`
-	Activities         []string                   `json:"activities"`
-	Hours              []OperatingHours           `json:"hours,omitempty"`
-	GeneralUseStatus   string                     `json:"generalUseStatus,omitempty"`
-	HoursBasis         string                     `json:"hoursBasis,omitempty"`
-	AvailabilityNote   string                     `json:"availabilityNote,omitempty"`
-	ScheduleNotes      []string                   `json:"scheduleNotes,omitempty"`
-	ClosurePeriods     []ClosurePeriod            `json:"closurePeriods,omitempty"`
-	Price              string                     `json:"price,omitempty"`
-	Reservation        string                     `json:"reservation,omitempty"`
-	BeginnerFriendly   bool                       `json:"beginnerFriendly"`
-	Features           []string                   `json:"features,omitempty"`
-	Rules              []string                   `json:"rules,omitempty"`
-	Access             Access                     `json:"access,omitempty"`
-	EnglishTranslation FacilityEnglishTranslation `json:"englishTranslation"`
-	Media              *FacilityMedia             `json:"media,omitempty"`
-	SocialLinks        []SocialLink               `json:"socialLinks,omitempty"`
-	SourceURL          string                     `json:"sourceUrl"`
-	SourceType         string                     `json:"sourceType"`
-	Status             string                     `json:"status"`
-	Confidence         string                     `json:"confidence,omitempty"`
-	UpdatedAt          *time.Time                 `json:"updatedAt,omitempty"`
-	VerifiedAt         time.Time                  `json:"verifiedAt"`
-	DynamicVerifiedAt  time.Time                  `json:"dynamicVerifiedAt"`
-	StableVerifiedAt   time.Time                  `json:"stableVerifiedAt"`
+	ID                         string                     `json:"facilityId"`
+	Genre                      Genre                      `json:"genre,omitempty"`
+	SkatingPermissionSourceURL string                     `json:"skatingPermissionSourceUrl,omitempty"`
+	Name                       string                     `json:"name"`
+	Address                    string                     `json:"address"`
+	Prefecture                 string                     `json:"prefecture"`
+	Municipality               string                     `json:"municipality"`
+	Location                   Location                   `json:"location"`
+	Activities                 []string                   `json:"activities"`
+	Hours                      []OperatingHours           `json:"hours,omitempty"`
+	GeneralUseStatus           string                     `json:"generalUseStatus,omitempty"`
+	HoursBasis                 string                     `json:"hoursBasis,omitempty"`
+	AvailabilityNote           string                     `json:"availabilityNote,omitempty"`
+	ScheduleNotes              []string                   `json:"scheduleNotes,omitempty"`
+	ClosurePeriods             []ClosurePeriod            `json:"closurePeriods,omitempty"`
+	Price                      string                     `json:"price,omitempty"`
+	Reservation                string                     `json:"reservation,omitempty"`
+	BeginnerFriendly           bool                       `json:"beginnerFriendly"`
+	Features                   []string                   `json:"features,omitempty"`
+	Rules                      []string                   `json:"rules,omitempty"`
+	Access                     Access                     `json:"access,omitempty"`
+	EnglishTranslation         FacilityEnglishTranslation `json:"englishTranslation"`
+	Media                      *FacilityMedia             `json:"media,omitempty"`
+	SocialLinks                []SocialLink               `json:"socialLinks,omitempty"`
+	SourceURL                  string                     `json:"sourceUrl"`
+	SourceType                 string                     `json:"sourceType"`
+	Status                     string                     `json:"status"`
+	Confidence                 string                     `json:"confidence,omitempty"`
+	UpdatedAt                  *time.Time                 `json:"updatedAt,omitempty"`
+	VerifiedAt                 time.Time                  `json:"verifiedAt"`
+	DynamicVerifiedAt          time.Time                  `json:"dynamicVerifiedAt"`
+	StableVerifiedAt           time.Time                  `json:"stableVerifiedAt"`
 }
+
+// Genre describes the place, not the style of its skateboarding sections.
+type Genre string
+
+const (
+	GenreSkatepark Genre = "skatepark"
+	GenreStreet    Genre = "street"
+)
 
 const (
 	GeneralUseRegular               = "regular"

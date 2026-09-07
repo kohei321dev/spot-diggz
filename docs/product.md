@@ -6,6 +6,10 @@
 - Baseline evidence: remote `main` `0a8cd3ba38cd67654c2bde0c4e4d2fc0d75302f9`（実装）、2026-09-06のownerによるProduct定義の訂正（[DR-0018](decisions/0018-api-first-product-definition.md)）
 - Migrated from: [`product_baseline.md`](product_baseline.md) under Issue #305
 
+## 今回の実装境界（DR-0021）
+
+`APP_MODE=api`でBearer認証付き周辺検索・詳細取得を独立起動できる。旧Web/OAuth/DB/Bot入口はこのmodeで起動せず、互換用legacy modeに保持する。既存データのgenre・確認日は推測更新せず、未分類・期限超過は候補から除外する。APIの実装と、利用者がSlack/Discordから実際に使えるMVP全体の完成は別である。以降の旧構成の記述はlegacy modeの観測として読む。
+
 ## Product statement
 
 SpotDiggzは、スケボーをしたい人が、その日の目的や条件に合う行き先を決めるためのサービスです。対象地域を限定せず、UIやSlack・Discordのbot・appなどから呼び出せるAPIとして、施設情報と推薦機能を提供できるように整備していきます。
@@ -39,7 +43,7 @@ private MVPでは同じ許可済みownerの1名だけへ利用を許可します
 
 `skatepark`はパーク、`street`はパーク外の街中の滑走可能スポットです。滑走可否不明の場所は対象にしません。「探す・確認する」を基本にする方向で、MVPの入力は周辺検索に絞ります。詳細操作mode、複雑なキーワード/目的別検索、移動・到着・滑走時間の計算は後続の契約と分けます。
 
-採用した入力と提案段階の数値・出力は[周辺検索仕様](specifications/nearby-search.md)、変更理由は[DR-0020](decisions/0020-mention-nearby-search.md)を参照してください。実装・本番対応済みとはしません。
+採用した入力は[周辺検索仕様](specifications/nearby-search.md)、API側の数値・出力・認証は[読み取りAPI](specifications/read-api.md)を参照してください。DR-0021のAPI単体はソース実装し、Bot接続・実データ整備・本番公開は未完了です。
 
 ### 提供価値と観測した旧実装
 
