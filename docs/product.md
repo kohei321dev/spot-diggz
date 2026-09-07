@@ -1,7 +1,7 @@
 # SpotDiggz Product
 
 - Status: Current
-- Last reviewed: 2026-09-06
+- Last reviewed: 2026-09-07
 - Product branch: `main`
 - Baseline evidence: remote `main` `0a8cd3ba38cd67654c2bde0c4e4d2fc0d75302f9`（実装）、2026-09-06のownerによるProduct定義の訂正（[DR-0018](decisions/0018-api-first-product-definition.md)）
 - Migrated from: [`product_baseline.md`](product_baseline.md) under Issue #305
@@ -32,6 +32,16 @@ private MVPでは同じ許可済みownerの1名だけへ利用を許可します
 - [DR-0019](decisions/0019-api-client-boundary.md)でCloud Run、位置・条件入力、検索中→結果/エラー、スポット追加は後続、月額目安USD 3・予算メール通知のみ・超過時停止なしを採用しました。方針承認と実装・公開完了を区別し、[MVP API提供契約](specifications/api-mvp.md)で未確定の技術詳細を管理します。
 
 ## Value
+
+### MVPの利用者ユースケース（DR-0020）
+
+利用者が「この駅・場所の周辺でスケボーしたい」とき、Slack/DiscordでBotにメンションして場所名を渡し、登録済み・検証済みスポットを直線距離が近い順で比較します。必要ならgenre・候補数・並び順・検索範囲を指定します。出発地、現在地取得、気分、移動手段などを最初から求めません。
+
+`skatepark`はパーク、`street`はパーク外の街中の滑走可能スポットです。滑走可否不明の場所は対象にしません。「探す・確認する」を基本にする方向で、MVPの入力は周辺検索に絞ります。詳細操作mode、複雑なキーワード/目的別検索、移動・到着・滑走時間の計算は後続の契約と分けます。
+
+採用した入力と提案段階の数値・出力は[周辺検索仕様](specifications/nearby-search.md)、変更理由は[DR-0020](decisions/0020-mention-nearby-search.md)を参照してください。実装・本番対応済みとはしません。
+
+### 提供価値と観測した旧実装
 
 - 利用するUI・bot・appから条件を伝え、検証済み施設を根拠付きで比較して行き先を決められることを目指します。
 - 施設情報と推薦の判断をAPIから利用できるようにし、入口ごとに別の施設情報や推薦ロジックを持たずに済むようにします。

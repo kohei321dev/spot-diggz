@@ -2,7 +2,7 @@
 
 - Status: Current
 - Product: [`product.md`](product.md)
-- Last reviewed: 2026-09-06
+- Last reviewed: 2026-09-07
 
 要求IDは移行前のProduct Baselineにある`R-NNN`を維持します。Issue、仕様、test、Decision RecordはこのIDを参照します。
 
@@ -17,6 +17,12 @@
 - Required decision: ownerが既存APIの再利用範囲と不足する契約を別Issueで明確にし、必要なDecision Recordを承認してから実装する。匿名公開や複数userへの開放はこの訂正に含めない。
 
 [DR-0019](decisions/0019-api-client-boundary.md)で独立HTTP API、Slack/Discord Bot、独自Web UI不要、Cloud Run、スポット追加は後続、検索中→結果/エラー、月額目安USD 3・メール通知・予算超過時停止なしを採用しました。正本は[MVP API提供契約](specifications/api-mvp.md)と[運用計画](operations/cloud-run-plan.md)。#312と[詳細案](research/api-client-contract-plan.md)で残る技術判断を追跡します。以下の旧Web条件や現行OpenAPIを実装完了の証拠にはしません。
+
+## 新MVP入力の採用事項
+
+[DR-0020](decisions/0020-mention-nearby-search.md)で、メンション＋場所名と任意genre/limit/sortによる周辺検索を採用し、検索範囲も指定可能にします。正本は[周辺検索仕様](specifications/nearby-search.md)。R-001の6条件必須、R-002の固定3件、R-003の目的別評価、R-018のmodal/固定起点は、[要求ID適用表](specifications/api-mvp.md#要求idの適用移行)の新MVP契約へ部分置換します。以下の旧ID本文は移行前の追跡情報です。
+
+受入方向は、場所名だけで検索、genreでpark/streetを区別、指定範囲と件数を独立に適用、直線距離順、曖昧地点を勝手に確定しないことです。limitの提案数値、radius構文/単位/上下限、応答schema、genreのデータ移行、場所解決とprivacy、platform別メンション受信/owner限定返信は#312〜#316で確定・検証します。文書更新はruntime対応を意味しません。
 
 ## Functional requirements (migration baseline)
 

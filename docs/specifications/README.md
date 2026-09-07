@@ -8,7 +8,8 @@
 
 | Specification | Related requirements | Status |
 | --- | --- | --- |
-| [`api-mvp.md`](api-mvp.md) | DR-0019による新MVPと既存要求IDの移行 | 方針Accepted、実装Incomplete |
+| [`api-mvp.md`](api-mvp.md) | DR-0019/DR-0020による新MVPと既存要求IDの移行 | 方針Accepted、実装Incomplete |
+| [`nearby-search.md`](nearby-search.md) | R-001〜R-003、R-018の入力と周辺検索への移行 | 入力方針Accepted、数値/応答/受信方式の詳細Incomplete、未実装 |
 | [`web-ui.md`](web-ui.md) | R-001–R-005、R-007、R-013–R-017 | 旧Web実装の参照。新MVP対象外 |
 | [`facility-data.md`](facility-data.md) | R-004、R-006、R-008–R-010、R-014–R-016、NFR-001–NFR-003 | Current |
 | [`chat-integrations.md`](chat-integrations.md) | R-002–R-005、R-008、R-017–R-020 | 新返信方針と移行前実装を区別 |

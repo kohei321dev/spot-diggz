@@ -1,8 +1,8 @@
 # MVP API提供契約
 
 - Status: Accepted direction; implementation incomplete
-- Last reviewed: 2026-09-06
-- Decision: [DR-0019](../decisions/0019-api-client-boundary.md)
+- Last reviewed: 2026-09-07
+- Decision: [DR-0019](../decisions/0019-api-client-boundary.md)、[DR-0020](../decisions/0020-mention-nearby-search.md)
 - Tracking: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)、後続#313〜#316、#318
 
 ## 提供範囲と責務
@@ -22,19 +22,19 @@ BotとAPIは責務と信頼境界を分ける。APIを独立clientから呼べ�
 
 ## 認証・入力・施設情報
 
-- Botはplatform署名・timestampと設定済みownerのIDを検証する。API側でもclient認証・権限を検証し、未設定時はfail closedにする。
+- Botは受信transportに適したplatform真正性・再送対策と設定済みownerのIDを検証する。旧HTTP入口の署名・timestamp検証を無条件に解除せず、メンション受信への適合は#312/#315/#316で確認する。API側でもclient認証・権限を検証し、未設定時はfail closedにする。
 - API keyによる呼出元識別やIP制限を、利用者本人の認可と同一視しない。credentialの具体方式、発行・期限・失効・更新は未確定。
-- 利用者が出発地・位置と行きたい条件を入力する。端末の現在地を自動取得できるとは約束しない。必須項目、既定値、地点候補の曖昧性解消、Discordのoption/modal選択は#312/#316で詳細化する。
-- 検証済みデータと共通engineを再利用し、AIで施設事実を補わない。既存の最大3件、出典・確認時刻、鮮度と休場判定を維持する。
+- [周辺検索仕様](nearby-search.md)に従い、メンションと場所名から周辺を探す。genre・limit・sortを任意指定し、検索範囲も指定可能にする。出発地・現在地・旧6条件は基本検索で必須にしない。場所が曖昧なら利用者へ確認する。
+- 検証済みデータと決定論的処理を再利用し、AIで施設事実を補わない。固定の最大3件を新MVPへ引き継がず、候補数はlimitで指定し直線距離順に返す。出典・確認時刻・品質原則は維持し、検索掲載可否と当日の滑走判断の違いは#312/#314で詳細化する。
 - 実スポットデータの追加は後続作業。#314では地域固定制約・品質検証・更新手順を整え、実施設の追加件数や特定施設の再調査を今回の必須成果にしない。実運用前の鮮度確認は免除しない。
 - 候補、会話履歴、正確な位置、地点query、返信tokenを永続保存しない。保存Listsは設けない。短期状態の既存制約を変更する場合は明示的な設計レビューが必要。
 
 ## 承認済み返信フロー
 
-1. 明示的なcommandをトリガーに条件を入力する。Slackは通常AppのHTTP連携とmodalを基本にし、無料プランでの利用を前提とする。Slack-hosted workflow、Socket Mode、過去message監視を追加しない。
-2. 署名・認可・入力の検証後、条件送信に対し先に「検索中」を表示する。platformへのHTTP ACKと利用者が見える受付表示の両方を検証する。
+1. 明示的なメンションと場所名をトリガーにする（DR-0020）。Slackは無料プランの通常Appを前提とし、slash command/modalを新MVPの基本入口にしない。Slack-hosted workflow、Socket Mode、履歴巡回を自動採用しない。platform別受信transport・scope/intent・返信方式は#312/#315/#316で検証する。
+2. 真正性・認可・入力の検証後、条件送信に対し先に「検索中」を表示する。受信方式に必要なprotocol上の受付（HTTPの場合はACK）と利用者が見える受付表示を別々に検証する。
 3. Botが認証付きAPIへ条件を渡し、完了後にownerだけへ結果を返す。利用者にWeb UIを開かせない。
-4. 処理失敗時も利用者向けエラーと再実行など次の行動を返す。内部診断、入力本文、位置、secretは返信しない。
+4. 処理失敗時も利用者向けエラーと再実行など次の行動を返す。内部診断、入力本文の不要な再掲、正確な検索座標、secretを返信しない。場所確認に必要な情報の扱いと旧R-008の整合は[周辺検索仕様](nearby-search.md#安全境界と実装開始前の確認)で未確定として追跡する。
 
 候補0件は処理障害と区別する。未収録・情報不足・条件不一致を区別する具体的なresponse code、条件変更案、返信文面はまだ設計案であり、#312で確定する。条件の自動緩和や未確認情報の補完を実装済みとしない。
 
@@ -42,16 +42,18 @@ platform障害などでエラー通知自体を配送できない場合もある
 
 ## 要求IDの適用移行
 
-既存IDは振り直さない。[Requirements](../requirements.md)の移行前受入条件に対して、DR-0019による以下の変更を適用する。
+既存IDは振り直さない。[Requirements](../requirements.md)の移行前受入条件に対して、DR-0019/DR-0020による以下の変更を適用する。
 
 | 対象 | 新MVPでの扱い | 残る確認 |
 | --- | --- | --- |
-| R-001〜R-005、R-007、R-009〜R-012、R-015〜R-016 | 入力・推薦・出典・日英・外部導線・品質・安全性をAPI/Botへ引き継ぐ | JSON field・文面・互換性の詳細 |
+| R-001 | メンション＋場所名、任意genre/limit/sort/検索範囲。旧6条件必須を置換 | 文法、数値範囲、場所解決、API field |
+| R-002〜R-003 | 固定3件と目的別scoreを基本検索から外し、limitと直線距離順で比較する | 件数既定値/上限、同距離順、応答schema |
+| R-004〜R-005、R-007、R-009〜R-012、R-015〜R-016 | 出典・日英・外部導線・品質・安全性をAPI/Botへ引き継ぐ | 検索と即時滑走判定の区別、JSON field・文面・互換性 |
 | R-006 | 訂正機能・保存データを今回削除しない | APIの公開範囲・権限・Botからの導線を#312で決定 |
 | R-008、R-019〜R-020 | 位置・履歴・候補の非保存を維持 | 非同期処理が保存制約に反しないこと |
 | R-013〜R-014のWeb操作領域・iframe表示、NFR-005の独自Web E2E | 独自Web UI向け提供要件は対象外。Botの読みやすさ・日英・安全な導線は維持 | 旧UIコード・テストの廃止範囲を#313で確認 |
 | R-017 | Web OAuth cookie必須を新API client認証の必須方式にしない。owner限定は維持 | 認証方式、旧OAuthの廃止範囲 |
-| R-018 | Slack/Discordで位置・条件入力→検索中→API結果またはエラー通知 | Discordの具体的入力方式、非同期実行・配送 |
+| R-018 | Slack/Discordでメンション＋場所名/任意option→検索中→API結果またはエラー通知 | platform別メンション受信、owner限定返信、非同期実行・配送 |
 
 独自Web UIの新規提供:
 
@@ -62,7 +64,7 @@ platform障害などでエラー通知自体を配送できない場合もある
 ## 実装前に残る事項
 
 - Status: Incomplete
-- Missing evidence: API認証方式、ownerへの対応付け、権限・失効、入力/responseの詳細schema、旧API互換性、Bot配置、受付後処理の実行保証・配送失敗対策、短期状態store、Cloud Run公開設定。
+- Missing evidence: API認証方式、ownerへの対応付け、権限・失効、採用済み入力の構文/数値・検索範囲とresponseの詳細schema、旧API互換性、platform別メンション受信/owner限定返信、Bot配置、受付後処理の実行保証・配送失敗対策、短期状態store、Cloud Run公開設定。
 - Required decision: #312で技術案とテストを具体化し、認証・保存・運用の意味が変わる箇所をownerがレビューする。#318で環境と費用を検証する。すでに承認されたAPI提供・Web不要・返信フロー・予算通知方針は再び未決定に戻さない。
 
 ## 検証と文書更新

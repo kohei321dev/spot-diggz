@@ -8,6 +8,8 @@
 
 ## Product delivery direction
 
+[DR-0020](decisions/0020-mention-nearby-search.md)により、新MVPの入力はメンション＋場所名と任意option、検索は基準地点からの直線距離による周辺検索とします。Botは入力解釈/場所確認/返信、APIは構造化入力検証・genre/地理範囲/件数による選定を担当する方向です。場所解決APIの分割・fieldやplatform別受信transport/owner限定返信は未確定です。旧sessionの6条件に架空の既定値を補い、移動/滑走時間を生成する方式は基本検索に採用しません。[周辺検索仕様](specifications/nearby-search.md)で詳細を管理します。
+
 [DR-0019](decisions/0019-api-client-boundary.md)により、Slack/Discord → 自分のBotサーバー → 認証付きSpotDiggz HTTP APIをMVPの経路とし、APIのホストにCloud Runを採用します。独自Web UIは提供しません。API内部は既存Goモジュールと決定論的engineを再利用します。Bot/APIの物理配置・credential・非同期実行方式は未確定です。[API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)を正本とします。
 
 以下の構成・component・データ所有・起動条件・配置図は移行前の観測した実装です。Web/Vercel/GitHub OAuthを新MVPの採用要件とせず、旧実装と新方針の差分は#312/#313/#318で扱います。
