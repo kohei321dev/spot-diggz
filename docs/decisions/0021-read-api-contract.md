@@ -4,7 +4,7 @@
 - Date: 2026-09-07
 - Type: Architecture
 - Related Issues: [#313](https://github.com/kohei321dev/spot-diggz/issues/313)、#312、#314
-- Related Pull Requests: Incomplete — 実装PR作成後に追記
+- Related Pull Requests: [#321](https://github.com/kohei321dev/spot-diggz/pull/321)
 - Affected Docs: `specifications/read-api.md`, `specifications/nearby-search.md`, `specifications/facility-catalog.openapi.yaml`, `security.md`, `architecture.md`, `requirements.md`, `guides/read-api-setup.md`
 - Supersedes: DR-0019のAPI認証方式未確定、DR-0020の検索APIの数値・応答未確定のみ。Bot受信/返信・外部運用は別途。
 - Superseded By: None
