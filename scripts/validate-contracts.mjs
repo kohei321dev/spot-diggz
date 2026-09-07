@@ -24,6 +24,7 @@ const expectedPaths = new Set([
   "/readyz",
   "/api/facilities",
   "/api/facilities/{facilityId}",
+  "/api/facilities/search",
   "/api/locations/search",
   "/api/recommendations",
   "/api/corrections",
@@ -35,6 +36,17 @@ const expectedPaths = new Set([
 const actualPaths = new Set(Object.keys(openAPI.paths ?? {}));
 if (actualPaths.size !== expectedPaths.size || [...expectedPaths].some((path) => !actualPaths.has(path))) {
   throw new Error(`OpenAPI paths do not match the application routes: ${[...actualPaths].join(", ")}`);
+}
+
+const nearbyInput = openAPI.components.schemas.NearbySearchInput;
+if (nearbyInput.additionalProperties !== false ||
+    nearbyInput.required.join(",") !== "query" ||
+    nearbyInput.properties.limit.default !== 5 || nearbyInput.properties.limit.maximum !== 10 ||
+    nearbyInput.properties.radiusKm.default !== 10 || nearbyInput.properties.radiusKm.minimum !== 0.1 || nearbyInput.properties.radiusKm.maximum !== 50 ||
+    nearbyInput.properties.genre.enum.join(",") !== "skatepark,street" ||
+    nearbyInput.properties.sort.enum.join(",") !== "distance" ||
+    !openAPI.paths["/api/facilities/search"].post.security?.[0]?.apiBearer) {
+  throw new Error("Nearby read API contract differs from DR-0021");
 }
 
 const references = [];

@@ -28,7 +28,7 @@ Cloud Runの無料枠は請求先アカウント内で集計され、実行時�
 
 | 項目 | 状態・確認内容 | 担当Issue |
 | --- | --- | --- |
-| API認証とGateway迂回防止 | credential方式、権限、Cloud Run直アクセスの制限を設計・検証する | #312/#313/#318 |
+| API認証とGateway迂回防止 | API内のclient別Bearer/read scope/期限/設定反映後失効はDR-0021で実装。Cloud Run secret注入・全revision失効反映・直アクセス制限・Gatewayとのheader契約を設計/検証する | #312/#313/#318 |
 | 回数・頻度・送信元IP | Gatewayのサービス上限と独自のclient別制限を混同しない。API keyのIP制限、実際のBot出口IP、必要な固定IP費用を検証する。IPを本人確認の代用にしない | #312/#318 |
 | 受付後の処理 | 「検索中→結果/エラー」の実行・配送・retry・停止時を設計する。ACK後のgoroutineだけで完了保証とはしない | #312/#315/#316/#318 |
 | 配置・課金・scale | Bot/APIの配置、region、最小/最大instance、CPU・メモリ、課金方式を試算。最小0・リクエスト課金は候補であり確定設定ではない | #318 |

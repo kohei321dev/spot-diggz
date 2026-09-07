@@ -8,11 +8,19 @@
 
 ## Product delivery direction
 
-[DR-0020](decisions/0020-mention-nearby-search.md)により、新MVPの入力はメンション＋場所名と任意option、検索は基準地点からの直線距離による周辺検索とします。Botは入力解釈/場所確認/返信、APIは構造化入力検証・genre/地理範囲/件数による選定を担当する方向です。場所解決APIの分割・fieldやplatform別受信transport/owner限定返信は未確定です。旧sessionの6条件に架空の既定値を補い、移動/滑走時間を生成する方式は基本検索に採用しません。[周辺検索仕様](specifications/nearby-search.md)で詳細を管理します。
+[DR-0020](decisions/0020-mention-nearby-search.md)により、新MVPの入力はメンション＋場所名と任意option、検索は基準地点からの直線距離による周辺検索とします。Botは入力解釈/場所確認/返信、APIは構造化入力検証・genre/地理範囲/件数による選定を担当する方向です。場所解決/JSONはDR-0021の検索APIに集約しました。platform別受信transport/owner限定返信は未確定です。旧sessionの6条件に架空の既定値を補い、移動/滑走時間を生成する方式は基本検索に採用しません。[周辺検索仕様](specifications/nearby-search.md)で詳細を管理します。
 
-[DR-0019](decisions/0019-api-client-boundary.md)により、Slack/Discord → 自分のBotサーバー → 認証付きSpotDiggz HTTP APIをMVPの経路とし、APIのホストにCloud Runを採用します。独自Web UIは提供しません。API内部は既存Goモジュールと決定論的engineを再利用します。Bot/APIの物理配置・credential・非同期実行方式は未確定です。[API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)を正本とします。
+[DR-0019](decisions/0019-api-client-boundary.md)により、Slack/Discord → 自分のBotサーバー → 認証付きSpotDiggz HTTP APIをMVPの経路とし、APIのホストにCloud Runを採用します。独自Web UIは提供しません。API内部は既存Goモジュールと決定論的engineを再利用します。API credentialはDR-0021のper-client Bearerです。Bot/APIの物理配置・Bot非同期実行方式は未確定です。[API契約](specifications/api-mvp.md)と[Cloud Run運用計画](operations/cloud-run-plan.md)を正本とします。
 
 以下の構成・component・データ所有・起動条件・配置図は移行前の観測した実装です。Web/Vercel/GitHub OAuthを新MVPの採用要件とせず、旧実装と新方針の差分は#312/#313/#318で扱います。
+
+## 読み取りAPI modeの構成（DR-0021）
+
+`cmd/api`は明示的`APP_MODE=api`で別handlerを構築する。`internal/apiauth`がimmutableなdigest/期限/失効設定を所有し、`internal/httpapi/read_api.go`がroute allowlist・認証・入力size・rate limitを担当する。`internal/nearby`は地点providerで場所を解決し、catalogの品質/genre/半径/距離順/limitを適用する。施設モデル・Google Geocoding・HTTP観測middlewareを再利用し、旧session/旅程engineには依存しない。
+
+同一Go binary内のmodule分離であり、新しいDB・queue・cache・常駐Botは導入しない。config/canonical catalogは起動時snapshot、queryと検索中心はrequest内のメモリのみ。API modeはGitHub OAuth、訂正store/保持worker、旧chatを初期化せず、Web/旧API/公開metricsも登録しない。HTTPのtimeout/shutdownを旧modeと共用する。認証後のprocess-local rate limitは全体quotaではない。公開時のTLS・Gateway・監視とBotの配置は#318等の残項目。
+
+詳細は[読み取りAPI](specifications/read-api.md)。以下のsystem context以降は保持したlegacy modeの説明であり、API modeの依存条件ではない。
 
 ## Current system context
 

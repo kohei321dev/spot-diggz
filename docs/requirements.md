@@ -13,7 +13,7 @@
 以下のR-001〜R-020は移行前の要求・受入条件をID保持のため記載しています。新MVPでは[DR-0019の要求ID適用表](specifications/api-mvp.md#要求idの適用移行)を優先し、独自Web UI・iframe・Web OAuth必須・Discord固定条件を新しい提供要件として引き継ぎません。現在のWeb向けAPIと内部serviceを呼ぶchat adapterの契約を、独立したAPI client向けの整備が完了した証拠とは扱いません。現在のowner認証、入力の許可値、推薦可能なcatalog範囲は、この方針訂正だけでは変更しません。
 
 - Status: Incomplete
-- Missing evidence: API認証・失効・owner対応付けの具体方式、入力・応答schema、互換性、受付後の実行・配送失敗対策、Gateway制限機能、Cloud Run環境と予算通知の実設定。
+- Missing evidence: Botの構文・受付後の実行/配送失敗対策、旧コード退役、Gateway制限機能、Cloud Run環境と予算通知の実設定。読み取りAPIの認証・失効・owner対応付け・JSON・互換modeはDR-0021で具体化。
 - Required decision: ownerが既存APIの再利用範囲と不足する契約を別Issueで明確にし、必要なDecision Recordを承認してから実装する。匿名公開や複数userへの開放はこの訂正に含めない。
 
 [DR-0019](decisions/0019-api-client-boundary.md)で独立HTTP API、Slack/Discord Bot、独自Web UI不要、Cloud Run、スポット追加は後続、検索中→結果/エラー、月額目安USD 3・メール通知・予算超過時停止なしを採用しました。正本は[MVP API提供契約](specifications/api-mvp.md)と[運用計画](operations/cloud-run-plan.md)。#312と[詳細案](research/api-client-contract-plan.md)で残る技術判断を追跡します。以下の旧Web条件や現行OpenAPIを実装完了の証拠にはしません。
@@ -22,7 +22,15 @@
 
 [DR-0020](decisions/0020-mention-nearby-search.md)で、メンション＋場所名と任意genre/limit/sortによる周辺検索を採用し、検索範囲も指定可能にします。正本は[周辺検索仕様](specifications/nearby-search.md)。R-001の6条件必須、R-002の固定3件、R-003の目的別評価、R-018のmodal/固定起点は、[要求ID適用表](specifications/api-mvp.md#要求idの適用移行)の新MVP契約へ部分置換します。以下の旧ID本文は移行前の追跡情報です。
 
-受入方向は、場所名だけで検索、genreでpark/streetを区別、指定範囲と件数を独立に適用、直線距離順、曖昧地点を勝手に確定しないことです。limitの提案数値、radius構文/単位/上下限、応答schema、genreのデータ移行、場所解決とprivacy、platform別メンション受信/owner限定返信は#312〜#316で確定・検証します。文書更新はruntime対応を意味しません。
+受入方向は、場所名だけで検索、genreでpark/streetを区別、指定範囲と件数を独立に適用、直線距離順、曖昧地点を勝手に確定しないことです。APIのlimit/radiusKm/応答/場所解決/privacyはDR-0021で具体化しテストする。Bot構文、genreの実データ移行、platform別メンション受信/owner限定返信は#312〜#316で継続する。
+
+## 読み取りAPIの受入条件（DR-0021）
+
+- R-001〜R-003: queryだけで検索し、任意genre/limit/radiusKm/sortを境界検証する。距離・IDの安定順、範囲/件数の独立適用、曖昧地点・0件・データ不足・provider障害の区別をHTTP testで確認する。
+- R-004: genre・滑走根拠・鮮度を満たすrecordだけ候補へ出す。現在営業中/滑走可を保証しないことをresponseへ明示する。実データの再調査は後続。
+- R-008: query・検索中心・credentialをlog/storeへ残さない。検索中心/元queryをresponseへ返さず、曖昧地点確認用ラベルと公開施設情報のみ認証済みclientへ返す。旧地点APIの退役は別途。
+- R-017: per-client Bearer、owner mapping、facilities:read、期限・個別失効、設定欠落fail closedを検証する。Botでの人間の認可は別境界。API modeはWeb/OAuth/DBなしで起動する。
+- 検証正本: [読み取りAPI](specifications/read-api.md#検証根拠)。HTTP provider stubと固定clockによるtestは実Google/Bot/Cloud Run E2Eの代替ではない。
 
 ## Functional requirements (migration baseline)
 

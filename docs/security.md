@@ -12,13 +12,22 @@
 
 ## 1. MVP security posture
 
-[DR-0019](decisions/0019-api-client-boundary.md)で独立HTTP APIとBot側のplatform本人確認を分ける方針を採用しました。[MVP API契約](specifications/api-mvp.md)が新しい提供境界の正本です。API clientの資格情報・失効・owner対応付けはIncompleteです。旧Web OAuthを外すだけでAPIを匿名公開してはいけません。
+[DR-0019](decisions/0019-api-client-boundary.md)で独立HTTP APIとBot側のplatform本人確認を分ける方針を採用しました。[MVP API契約](specifications/api-mvp.md)が新しい提供境界の正本です。API clientの資格情報・失効・owner対応付けは[DR-0021](decisions/0021-read-api-contract.md)と[読み取りAPI](specifications/read-api.md)で具体化しました。旧Web OAuthを外すだけでAPIを匿名公開してはいけません。
 
 新MVPでは独自Web UIは提供しません。以下は移行前の実装・保持契約・過去の検証記録です。Web操作・OAuth・Vercelの条件を新MVPへ自動適用せず、必要なAPI保護、既存データの保持、最小権限を#312/#313で移行します。
 
 - Bot→APIの認証と、Slack/Discord署名・owner ID認可を別々に検証します。IP制限を本人確認の代わりにしません。
 - API Gatewayの制限機能、Cloud Runへの直接アクセス迂回、非同期処理と短期状態storeを[運用計画](operations/cloud-run-plan.md)に沿って検証します。位置・返信tokenをqueueへ保存する変更は未承認です。
 - 月額USD 3は目安です。予算メールのみで超過による自動停止をしません。濫用防止と認可拒否は維持します。通知に位置・本文・secret・個人IDを含めません。
+
+### API modeの信頼境界・残存リスク（DR-0021）
+
+- per-client 32 byte乱数のBearer tokenを使い、APIにはSHA-256 digestだけを注入する。owner/scope不整合は起動拒否、期限/個別失効を毎requestで確認。token比較は固定長・定時間比較。cookie/owner自己申告headerは受理しない。
+- token漏えい時は有効期限または全revisionの設定置換まで読み取り権限を行使できる。動的失効DBはなく、全instance/旧revisionの反映確認を失効完了条件にする。credentialはBot側secret storeで保護する。
+- Bot侵害/owner認可漏れは正しいtokenの悪用につながる。API認証で人間の本人確認を代替しない。TLS終端、Gateway迂回防止、secret注入、Bot owner認可、公開log制限は実環境の公開gate。
+- API modeにWeb/OAuth/書き込み/公開metricsを登録しない。JSON未知field/重複/null/型/範囲/sizeを検証し、認証後にprocess-local rate limitとprovider timeoutを適用する。全体quota/IP制限・未認証flood対策はGateway/Cloud Runで別途検証。
+- queryはGoogle Geocodingへ送信するが、API responseへ元query/検索中心を返さずlog/storeにも残さない。曖昧地点の確認ラベルだけを認証済みclientへ返す。公開施設住所/座標は検索中心と区別する。R-008の新API適用をこの範囲で明確化し、旧地点APIの退役は後続とする。
+- provider障害は汎用503とし、raw response/secretを診断へ含めない。履歴・queue・候補・位置・返信tokenの保存は追加しない。実運用のtrace/export/通知は未構築。
 
 ### 移行前の実装上の対策
 

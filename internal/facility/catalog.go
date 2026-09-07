@@ -137,6 +137,17 @@ func (c *Catalog) Find(id string) (Facility, error) {
 }
 
 func validateFacility(item Facility) error {
+	if item.Genre != "" && item.Genre != GenreSkatepark && item.Genre != GenreStreet {
+		return fmt.Errorf("%w: unsupported genre", ErrInvalidData)
+	}
+	if item.SkatingPermissionSourceURL != "" {
+		if _, ok := parseCanonicalHTTPSURL(item.SkatingPermissionSourceURL); !ok {
+			return fmt.Errorf("%w: skating permission source must use HTTPS", ErrInvalidData)
+		}
+	}
+	if item.Genre != "" && item.SkatingPermissionSourceURL == "" {
+		return fmt.Errorf("%w: classified spots require a skating permission source", ErrInvalidData)
+	}
 	if strings.TrimSpace(item.ID) == "" || strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Address) == "" {
 		return fmt.Errorf("%w: facilityId, name, and address are required", ErrInvalidData)
 	}

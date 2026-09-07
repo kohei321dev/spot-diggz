@@ -10,9 +10,13 @@
 
 ## Current geographic coverage
 
-[DR-0020](../decisions/0020-mention-nearby-search.md)で新MVPは`genre=skatepark` / `genre=street`による周辺検索を採用しました。streetはパーク外で滑走可能な根拠・利用ルールを確認した場所であり、パーク内のstreet sectionとは別です。今回catalog/schemaへgenreを追加したわけではありません。既存recordの分類、streetの属性・利用可否・鮮度・時間情報の表現と検証は#312/#314で設計します。下記のschema・固定3件・到着時刻判定は移行前実装の参照です。新入力は[周辺検索仕様](nearby-search.md)を優先し、未確認情報を無条件利用可として補完しません。
+[DR-0020](../decisions/0020-mention-nearby-search.md)で新MVPは`genre=skatepark` / `genre=street`による周辺検索を採用しました。streetはパーク外で滑走可能な根拠・利用ルールを確認した場所であり、パーク内のstreet sectionとは別です。DR-0021でmodel/OpenAPIへ任意`genre`と`skatingPermissionSourceUrl`を追加しました。genreを指定するrecordには滑走根拠のHTTPS URL（userinfo/明示port不可）を必須とし、旧recordの欠落は互換性のため受理しますが周辺検索から除外します。本番catalogの分類・確認日は変更していません。既存recordの分類、streetの営業時間等が存在しない場合の表現、地域制約の解除は#314で継続します。下記のschema・固定3件・到着時刻判定は移行前実装の参照です。新入力は[周辺検索仕様](nearby-search.md)を優先し、未確認情報を無条件利用可として補完しません。
 
 現行catalogの収録地域とschema・validatorの都道府県許可値は、大阪府、兵庫県、和歌山県、奈良県、徳島県です。2026-07-19調査基準の公開catalogは31施設（大阪府24施設）です。これは現在のデータと実装の制約であり、プロダクトのターゲット地域の制限ではありません。地域を限定しない定義へ訂正しても、この制約の解除や全国データの一括登録を実施したことにはなりません。収録範囲の変更時は、検証・更新できる施設データとschema・validator・testを合わせて整備します。
+
+## 周辺検索掲載の追加条件
+
+[読み取りAPI](read-api.md)はgenre/滑走根拠、dynamic 30日・stable 180日、一般利用が日付確認必須でないrecordを対象にする。出典の存在だけで滑走可と推測せず、curatorが許可・利用ルールを確認して分類する。現時点の営業時間/休場はfilterせず、注意情報を返し訪問前確認を要求する。現在の必須hours/料金等を満たせないstreetの追加は、欠落値を捏造せず#314のschema検討まで待つ。
 
 ## Required facility fields
 

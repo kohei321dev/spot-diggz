@@ -12,6 +12,10 @@
 - 配送失敗、timeout、retry上限、重複抑止、受付後のprocess停止を秘密情報なしで観測する。詳細実装は#312/#315/#316で設計する。
 - 月額目安USD 3のGoogle Cloud予算アラートはメール通知のみ。予算超過時の自動停止を行わない。budget scope、受信者、threshold、通知確認は#318で設定・検証する。現時点は未設定。
 
+### API modeの現在の観測
+
+[DR-0021](../decisions/0021-read-api-contract.md)の読み取りAPIはHTTP件数/所要時間、Google Geocoding結果/所要時間を既存registryへ記録し、`nearby_search_completed`にrequest_id/result/countのみをlog出力する。query・検索中心・Authorizationを記録しない。API modeに公開`/metrics`は登録しないため、以下のPrometheus endpoint手順はlegacy mode用である。private export/収集、分散trace、実アラートの要否/設定は#318の公開前検証とし、局所的な計測を運用監視の完成としない。
+
 ## 1. 目的
 
 利用者が「今日どこで滑るか」を決める主要flowを、HTTP成功だけでなく、推薦結果、catalog鮮度、訂正受付まで観測する。MVP runtimeに実装したsignalと、production基盤が必要な未実装signalを分ける。

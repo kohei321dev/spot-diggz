@@ -8,6 +8,12 @@
 - Related decision: [DR-0019](../decisions/0019-api-client-boundary.md)、[DR-0020](../decisions/0020-mention-nearby-search.md)（方針Accepted、技術詳細Incomplete）
 - Implementation authority: ownerは新計画の実装着手とdocs更新を依頼し、今回検討内容のdocs/Issue整合を指示した。未提示のcredential・保存方式、外部設定・merge・deployの承認とは分ける。
 
+## 最新の適用範囲
+
+PR #320はremote main `2f3982ea40ddade04770139d02b3ba26549448ac`へマージ済み。ownerの実装再開依頼に基づき[DR-0021](../decisions/0021-read-api-contract.md)で読み取りAPIのBearer/期限/失効/owner mapping、JSONの数値・応答・場所解決・品質filter、明示的API modeを具体化した。[読み取りAPI](../specifications/read-api.md)とOpenAPIがこの部分の正本であり、以下の「文書のみ」「認証/数値未確定」はその時点の調査記録として読む。
+
+#312全体を閉じず、#313の第一実装単位だけを先行する。Bot文法/受信/owner限定返信/配送保証、旧コード退役、streetの欠落属性表現、実catalog分類、Cloud Run/Gatewayの実設定は未完了。新規保存・外部変更の権限は拡大しない。
+
 ## 決定済み方針と本書の役割
 
 独立clientが呼べるAPI（旧案B）、Slack/Discord → 自分のBotサーバー → SpotDiggz API、独自Web UI不要、APIホストCloud Run、スポット追加は後続、検索中→結果/エラー通知、月額目安USD 3・メール通知のみ・予算超過で停止しない方針は承認された。

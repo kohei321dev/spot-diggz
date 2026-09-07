@@ -8,6 +8,7 @@
 
 | Guide | Audience | Related specification | Status |
 | --- | --- | --- | --- |
+| [`read-api-setup.md`](read-api-setup.md) | API/Bot管理者 | [`read-api.md`](../specifications/read-api.md) | ローカル起動・credential lifecycle。公開設定は後続 |
 | [`how-to-use.md`](how-to-use.md) | SpotDiggz利用者 | [`web-ui.md`](../specifications/web-ui.md) | 旧Web操作の参照。新MVP対象外 |
 | [`github-oauth-setup.md`](github-oauth-setup.md) | Production owner | [`web-ui.md`](../specifications/web-ui.md) | 旧設定の参照。新構成へ流用しない |
 | [`slack-setup.md`](slack-setup.md) | Slack App owner | [`chat-integrations.md`](../specifications/chat-integrations.md) | 再設定参考。公開先未確認 |
