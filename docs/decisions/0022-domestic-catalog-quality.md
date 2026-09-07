@@ -4,7 +4,7 @@
 - Date: 2026-09-07
 - Type: Specification
 - Related Issues: [#314](https://github.com/kohei321dev/spot-diggz/issues/314)、#312、#313、#318
-- Related Pull Requests: Incomplete — 本実装PR作成後に追記
+- Related Pull Requests: [#322](https://github.com/kohei321dev/spot-diggz/pull/322)
 - Affected Docs: `specifications/facility-data.md`, `specifications/read-api.md`, `specifications/facility-catalog.openapi.yaml`, `requirements.md`, `product.md`, `security.md`, `guides/catalog-maintenance.md`, `operations/mvp-runbook.md`
 - Supersedes: ADR-0011の5府県validator制約、DR-0021後続事項の地域表現・streetの営業時間未定義表現のみ。既存record本文・ID・収録履歴は保持。
 - Superseded By: None

@@ -29,7 +29,7 @@
 | [DR-0019](0019-api-client-boundary.md) | Accepted | 2026-09-06 | Architecture | API利用clientと認証境界の初期構成 | #312 | [#319](https://github.com/kohei321dev/spot-diggz/pull/319)（Merged） | DR-0020（入力/検索）、DR-0021（API認証の具体化） |
 | [DR-0020](0020-mention-nearby-search.md) | Accepted | 2026-09-07 | Specification | メンションと場所名による周辺スポット検索をMVPにする | #312 | [#320](https://github.com/kohei321dev/spot-diggz/pull/320) | DR-0021（API数値/応答等のみ） |
 | [DR-0021](0021-read-api-contract.md) | Accepted | 2026-09-07 | Architecture | 読み取りAPIのBearer認証と周辺検索の最小契約 | #313、#312、#314 | [#321](https://github.com/kohei321dev/spot-diggz/pull/321) | DR-0022（地域・営業時間状態の具体化） |
-| [DR-0022](0022-domestic-catalog-quality.md) | Accepted | 2026-09-07 | Specification | 国内の地域表現と営業時間の確認状態を分離する | #314、#312、#313、#318 | Incomplete | — |
+| [DR-0022](0022-domestic-catalog-quality.md) | Accepted | 2026-09-07 | Specification | 国内の地域表現と営業時間の確認状態を分離する | #314、#312、#313、#318 | [#322](https://github.com/kohei321dev/spot-diggz/pull/322) | — |
 
 ## Supersession map
 
