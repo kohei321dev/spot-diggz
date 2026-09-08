@@ -2,7 +2,7 @@
 
 - Status: Current
 - Date: 2026-08-01
-- Last reviewed: 2026-09-07
+- Last reviewed: 2026-09-08
 - Scope: GitHub owner認証、Web UI、HTTP API、Slack/Discord command、verified facility catalog、検索位置、訂正報告、手動キュレーションmedia、公式SNS外部リンク、optional Google連携、CI/CD
 - Related: [Product](product.md)
 - Related: [Architecture](architecture.md)
@@ -35,6 +35,14 @@
 - 営業時間非該当は根拠・日英説明・明示的な一般利用状態のあるstreetのみ。24時間営業を補完せず、不明や日付別確認必須は検索から除外する。詳細参照可能と今滑走可能を混同しない。
 - 検索・API readiness・公開前の検索掲載gateは同じ品質判定を使う。従来の全件鮮度gateを弱めず、実recordの確認日時やgenreを自動更新しない。新しい外部API・log field・永続保存は追加しない。
 - [カタログ保守](guides/catalog-maintenance.md)に従い、公開情報だけで更新・reviewする。変更理由は[DR-0022](decisions/0022-domestic-catalog-quality.md)。code/schema/catalogの互換な組でrollbackし、旧validatorに合わせたデータ削除を行わない。
+
+### Bot共通APIクライアント（DR-0023）
+
+- `internal/botsearch`は運用者設定のHTTPS originへだけBearerを送る。userinfo/query/fragmentと全redirectを拒否し、cookie jar・再送・無認証fallbackを持たない。TLS検証を無効にするruntime optionは設けない。
+- 入力とresponseの境界で型・必須field・未知/重複key・サイズ・候補整合を検証する。通信全体8秒、body 1 MiB、header 16 KiBが初期上限。欠落をゼロ座標や確認済みbooleanへ変換せず、障害は正常0件にしない。
+- tokenはBot runtimeメモリに保持するが通常のclient表示では伏せ、URL/query/body/header/provider診断をerror/log/storeへ出さない。secret storeや環境変数の実登録は行わない。
+- 本部品は人間の認証/認可をしない。真正性・owner認可済みadapterからのみ呼ぶ。結果のplatform用エスケープ・owner限定配送・冪等性・ACK後実行は未接続であり、共通client testの成功を公開gate完了としない。
+- 判断・検証・互換性/rollbackは[DR-0023](decisions/0023-bot-api-client.md)と[共通client仕様](specifications/bot-api-client.md)を参照。
 
 ### 移行前の実装上の対策
 

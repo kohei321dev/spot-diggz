@@ -5,6 +5,8 @@
 - Decision: [DR-0020](../decisions/0020-mention-nearby-search.md)、[DR-0021](../decisions/0021-read-api-contract.md)
 
 検索APIの認証・JSON・数値・応答・品質条件は[読み取りAPI](read-api.md)が正本です。以下のメンション例はBot未実装のため実行できません。APIのソース実装と本番公開を区別します。
+
+[Bot共通APIクライアント](bot-api-client.md)で構造化入力→HTTP API→構造化結果の部品を実装しています。入力文法や表示は含まず、下記のメンション受信/確認/返信フローにはまだ接続していません。
 - Tracking: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)、#313〜#316、#318
 
 ## 利用者とMVPの目的

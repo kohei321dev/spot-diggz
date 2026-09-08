@@ -1,11 +1,13 @@
 # MVP API提供契約
 
 - Status: Accepted direction; implementation incomplete
-- Last reviewed: 2026-09-07
+- Last reviewed: 2026-09-08
 - Decision: [DR-0019](../decisions/0019-api-client-boundary.md)、[DR-0020](../decisions/0020-mention-nearby-search.md)
 - Tracking: [#312](https://github.com/kohei321dev/spot-diggz/issues/312)、後続#313〜#316、#318
 
 [DR-0021](../decisions/0021-read-api-contract.md)で読み取りAPIの最小契約を確定し、`APP_MODE=api`をソース実装した。[読み取りAPI](read-api.md)が認証・検索JSON・応答・互換性の正本。Bot接続・旧コード退役・Cloud Run公開は未完了。
+
+#315の第一単位として[Bot共通APIクライアント](bot-api-client.md)を追加した（[DR-0023](../decisions/0023-bot-api-client.md)）。構造化条件から認証付き検索APIを呼び、正常statusと通信/契約エラーを区別する部品であり、メンション文法・受信・表示・owner限定配送は未実装。#312/#315/#316を完了とはしない。
 
 ## 提供範囲と責務
 

@@ -20,7 +20,7 @@ spot-diggzは、施設を地図で眺めるだけではなく、「今日、今�
 
 `APP_MODE=api`で、専用Bearer認証付き`POST /api/facilities/search`と`GET /api/facilities/{facilityId}`を起動できます。query（場所名）と任意genre/limit/radiusKm/sortを受け付け、検証済み情報から直線距離順に返します。GitHub OAuth・DB・独自Web UIはこのmodeに不要です。[API仕様](docs/specifications/read-api.md)と[ローカル設定手順](docs/guides/read-api-setup.md)を参照してください。
 
-実装済みなのはAPI部分です。Slack/Discordの新メンション接続、実データのgenre分類・鮮度再確認、Cloud Run/Gateway公開は未完了です。本番catalogの確認日を自動で更新せず、未分類/古いデータは検索から除外します。以下の旧Web構成は互換用legacy modeの説明であり、API modeの依存条件ではありません。
+APIと、Botから認証付き検索を呼ぶ[共通クライアント部品](docs/specifications/bot-api-client.md)をソース実装しています。共通部品はまだ入口へ接続しておらず、Slack/Discordの新メンション接続、実データのgenre分類・鮮度再確認、Cloud Run/Gateway公開は未完了です。本番catalogの確認日を自動で更新せず、未分類/古いデータは検索から除外します。以下の旧Web構成は互換用legacy modeの説明であり、API modeの依存条件ではありません。
 
 ## 現在の状態
 
