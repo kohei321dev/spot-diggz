@@ -4,7 +4,7 @@
 - Date: 2026-09-08
 - Type: Architecture
 - Related Issues: [#315](https://github.com/kohei321dev/spot-diggz/issues/315)、#312、#316
-- Related Pull Requests: Incomplete（ローカル実装。PR作成時に追記）
+- Related Pull Requests: [#323](https://github.com/kohei321dev/spot-diggz/pull/323)
 - Affected Docs: `specifications/bot-api-client.md`, `specifications/chat-integrations.md`, `specifications/api-mvp.md`, `specifications/nearby-search.md`, `requirements.md`, `architecture.md`, `security.md`
 - Supersedes: None（DR-0019/DR-0021のHTTP利用を具体化。Bot文法・platform・保存・配置の未確定は維持）
 - Superseded By: None
